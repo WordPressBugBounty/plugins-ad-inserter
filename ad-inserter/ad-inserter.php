@@ -2,7 +2,7 @@
 
 /*
 Plugin Name: Ad Inserter
-Version: 2.7.36
+Version: 2.7.37
 Description: Ad management with many advanced advertising features to insert ads at optimal positions
 Author: Igor Funa
 Author URI: http://igorfuna.com/
@@ -16,6 +16,10 @@ Requires PHP: 7.2
 /*
 
 Change Log
+
+Ad Inserter 2.7.37 - 2024-09-16
+- Removed deprecated setting Wait for jQuery
+- Few minor bug fixes, cosmetic changes and code improvements
 
 Ad Inserter 2.7.36 - 2024-08-11
 - Added support for WPML languages in the taxonomy list
@@ -5818,6 +5822,9 @@ function get_disable_caching (){
 
 function get_wait_for_jquery (){
   global $ai_db_options;
+
+  // Deprecated - return false
+  return false;
 
   if (!isset ($ai_db_options [AI_OPTION_GLOBAL]['WAIT_FOR_JQUERY'])) $ai_db_options [AI_OPTION_GLOBAL]['WAIT_FOR_JQUERY'] = DEFAULT_WAIT_FOR_JQUERY;
 

@@ -6,7 +6,7 @@ Tags: ads, adsense, amp, ad rotation, ad manager
 Requires at least: 4.9
 Tested up to: 6.6
 Requires PHP: 7.2
-Stable tag: 2.7.36
+Stable tag: 2.7.37
 License: GPLv3
 
 Manage Google AdSense, Media.net, Amazon banners, ads.txt, ad rotation, sticky widgets, AMP ads, DFP, tracking, AdSense header and footer code
@@ -362,6 +362,10 @@ If you are not happy to reveal this information and you have opted in, simply di
 
 == Changelog ==
 
+= 2.7.37 =
+- Removed deprecated setting Wait for jQuery
+- Few minor bug fixes, cosmetic changes and code improvements
+
 = 2.7.36 =
 - Added support for WPML languages in the taxonomy list
 - Added support to disable caching for LiteSpeed Cache and WP Fastest Cache plugins
@@ -578,6 +582,10 @@ If you are not happy to reveal this information and you have opted in, simply di
 For the changelog of earlier versions, please refer to the separate changelog.txt file.
 
 == Upgrade Notice ==
+
+= 2.7.37 =
+Removed deprecated setting Wait for jQuery;
+Few minor bug fixes, cosmetic changes and code improvements
 
 = 2.7.36 =
 Added support for WPML languages in the taxonomy list;
