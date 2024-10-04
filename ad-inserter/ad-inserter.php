@@ -2,7 +2,7 @@
 
 /*
 Plugin Name: Ad Inserter
-Version: 2.7.37
+Version: 2.7.38
 Description: Ad management with many advanced advertising features to insert ads at optimal positions
 Author: Igor Funa
 Author URI: http://igorfuna.com/
@@ -11,11 +11,15 @@ Text Domain: ad-inserter
 Domain Path: /languages
 Requires at least: 5
 Requires PHP: 7.2
+License: GPLv3
 */
 
 /*
 
 Change Log
+
+Ad Inserter 2.7.38 - 2024-10-03
+- Security fix for potential cross site scripting
 
 Ad Inserter 2.7.37 - 2024-09-16
 - Removed deprecated setting Wait for jQuery
@@ -2709,7 +2713,7 @@ function ai_replace_js_data ($js) {
   if (preg_match_all ('/AI_POST_([_A-Z0-9]+)/', $js, $match)) {
     foreach ($match [1] as $index => $post) {
       $post_name = strtolower ($post);
-      $js = str_replace ($match [0][$index], isset ($_POST [$post_name]) ? sanitize_text_field (urldecode ($_POST [$post_name])) : '', $js);
+      $js = str_replace ($match [0][$index], isset ($_POST [$post_name]) ? esc_js (sanitize_text_field (urldecode ($_POST [$post_name]))) : '', $js);
     }
   }
 
