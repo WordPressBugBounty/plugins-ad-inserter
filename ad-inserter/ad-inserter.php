@@ -2,7 +2,7 @@
 
 /*
 Plugin Name: Ad Inserter
-Version: 2.7.38
+Version: 2.7.39
 Description: Ad management with many advanced advertising features to insert ads at optimal positions
 Author: Igor Funa
 Author URI: http://igorfuna.com/
@@ -17,6 +17,12 @@ License: GPLv3
 /*
 
 Change Log
+
+Ad Inserter 2.7.39 - 2024-12-17
+- Improved frontend code
+- Fix for warning "Function _load_textdomain_just_in_time was called incorrectly"
+- Updated Maxmind library (Pro only)
+- Few minor bug fixes, cosmetic changes and code improvements
 
 Ad Inserter 2.7.38 - 2024-10-03
 - Security fix for potential cross site scripting
@@ -7370,7 +7376,8 @@ function ai_load_settings () {
   } else $used_blocks = false;
 
   $obj = new ai_Block (0);                  // translators: block name (block with default settings)
-  $obj->wp_options [AI_OPTION_BLOCK_NAME] = _x('Default', 'Block name', 'ad-inserter');
+//  $obj->wp_options [AI_OPTION_BLOCK_NAME] = _x('Default', 'Block name', 'ad-inserter'); // Function _load_textdomain_just_in_time was called incorrectly. Translation loading for the ad-inserter domain was triggered too early.
+  $obj->wp_options [AI_OPTION_BLOCK_NAME] = 'Default';
   $block_object [0] = $obj;
 
   for ($block = 1; $block <= 96; $block ++) {

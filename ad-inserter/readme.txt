@@ -4,9 +4,9 @@ Contributors: adinserter, spacetime
 Donate link: https://www.paypal.com/cgi-bin/webscr?cmd=_s-xclick&hosted_button_id=LHGZEMRTR7WB4
 Tags: ads, adsense, amp, ad rotation, ad manager
 Requires at least: 5.0
-Tested up to: 6.6
+Tested up to: 6.7
 Requires PHP: 7.2
-Stable tag: 2.7.38
+Stable tag: 2.7.39
 License: GPLv3
 
 Manage Google AdSense, Media.net, Amazon banners, ads.txt, ad rotation, sticky widgets, AMP ads, DFP, tracking, AdSense header and footer code
@@ -366,6 +366,12 @@ If you are not happy to reveal this information and you have opted in, simply di
 
 == Changelog ==
 
+= 2.7.39 =
+- Improved frontend code
+- Fix for warning "Function _load_textdomain_just_in_time was called incorrectly"
+- Updated Maxmind library (Pro only)
+- Few minor bug fixes, cosmetic changes and code improvements
+
 = 2.7.38 =
 - Security fix for potential cross site scripting
 
@@ -417,6 +423,12 @@ If you are not happy to reveal this information and you have opted in, simply di
 For the changelog of earlier versions, please refer to the separate changelog.txt file.
 
 == Upgrade Notice ==
+
+= 2.7.39 =
+Improved frontend code;
+Fix for warning "Function _load_textdomain_just_in_time was called incorrectly";
+Updated Maxmind library (Pro only);
+Few minor bug fixes, cosmetic changes and code improvements;
 
 = 2.7.38 =
 Security fix for potential cross site scripting
