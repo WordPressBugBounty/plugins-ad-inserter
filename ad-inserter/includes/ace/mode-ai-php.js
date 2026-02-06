@@ -37,7 +37,7 @@ function add_ai_highlighting_rules (highlighter, highlight_rules) {
   highlighter.$ai_separators2 = highlighter.$lang.arrayToMap ("head|amp".split ("|"));
   highlighter.$ai_separators3 = highlighter.$lang.arrayToMap ("rotate|index".split ("|"));
   highlighter.$ai_separators4 = highlighter.$lang.arrayToMap ("fallback".split ("|"));
-  highlighter.$ai_attributes  = highlighter.$lang.arrayToMap ("block|code|name|group|ignore|viewport|debugger|adb|tracking|css|text|selectors|custom-field|random|data|share|time|counter|categories|category|tags|tag|taxonomies|taxonomy|ids|id|urls|url|url-parameters|url-parameter|referrers|referrer|clients|client|scheduling|ip-addresses|ip-address|countries|country|cookies|cookie|disable".split ("|"));
+  highlighter.$ai_attributes  = highlighter.$lang.arrayToMap ("block|code|name|group|global-custom-field|ignore|viewport|debugger|adb|tracking|css|text|selectors|custom-field|random|data|share|time|counter|categories|category|tags|tag|taxonomies|taxonomy|ids|id|urls|url|url-parameters|url-parameter|referrers|referrer|clients|client|scheduling|ip-addresses|ip-address|countries|country|cookies|cookie|disable".split ("|"));
 
   //WP shortcodes
   highlighter.$rules ['start'].unshift (

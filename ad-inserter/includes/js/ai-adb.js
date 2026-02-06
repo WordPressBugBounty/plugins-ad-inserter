@@ -202,7 +202,7 @@ function ai_adb_process_blocks (element) {
             el.style.display = 'none';
             el.style.visibility = 'hidden';
 
-            el.classList.remove ('ai-adb-hide');
+//            el.classList.remove ('ai-adb-hide'); // Should not be removed as some delayed action might be triggered after ad blocking is detected
 
             // Disable tracking
             var wrapping_div = el.closest ('div[data-ai]');
@@ -230,7 +230,7 @@ function ai_adb_process_blocks (element) {
             el.style.display = 'block';
             el.style.visibility = 'visible';
 
-            el.classList.remove ('ai-adb-show');
+//            el.classList.remove ('ai-adb-show'); // Should not be removed as some delayed action might be triggered after ad blocking is detected
 
             if ('code' in el.dataset) {
               var adb_code = b64d (el.dataset.code);
@@ -288,7 +288,7 @@ function ai_adb_process_blocks (element) {
 
           if (ai_adb_debugging) console.log ('AI ai-adb-hide', el, el.offsetHeight, el.closest ('.ai-adb-show') != null);
 
-          el.classList.remove ('ai-adb-hide');
+//          el.classList.remove ('ai-adb-hide'); // Should not be removed as some delayed action might be triggered after ad blocking is detected
 
           if (el.offsetHeight == 0 && el.closest ('.ai-adb-show') != null) {
             // Top level (not nested) block
@@ -314,7 +314,7 @@ function ai_adb_process_blocks (element) {
         element.querySelectorAll ('.ai-adb-show').forEach ((el, index) => {
           ai_disable_processing (el);
 
-          el.classList.remove ('ai-adb-show');
+//          el.classList.remove ('ai-adb-show'); // Should not be removed as some delayed action might be triggered after ad blocking is detected
 
           if (ai_adb_debugging) console.log ('AI AD BLOCKING SHOW disable processing', el.tagName + el.getAttribute ('class') != null ? ('.' + el.getAttribute ('class')) : '');
         });

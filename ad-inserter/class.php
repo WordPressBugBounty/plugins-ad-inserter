@@ -9477,12 +9477,6 @@ echo '</body>
         $urls_listed [$index] = trim ($url_listed);
     }
 
-//    print_r ($urls_listed);
-//    echo "<br />\n";
-//    echo ' page url: ' . $page_url, "<br />\n";
-//    echo ' listed urls: ' . $urls, "\n";
-//    echo "<br />\n";
-
     foreach ($urls_listed as $url_listed) {
       if ($url_listed == '*') return $return;
 
@@ -11141,5 +11135,432 @@ class ai_block_labels {
   public function adb_visible_section_end () {
     return "</section>\n";
   }
+
+}
+
+// CUSTOM FIELDS
+
+function ai_register_global_fields () {
+  new ai_global_fileds ();
+}
+
+define ('AI_MAX_GLOBAL_FIELD_PAGES',     4);
+define ('AI_MAX_GLOBAL_FIELDS',         20);
+
+class ai_global_fileds {
+
+    public function __construct () {
+        add_action ( 'admin_menu', array ($this, 'add_admin_menu'));
+
+        add_action ('admin_head', function () {
+          $current_screen = get_current_screen ();
+          $ai_global_fields_pos = strpos ($current_screen->base, 'ai-global-fields-');
+          if ($ai_global_fields_pos !== false && wp_is_mobile ()) {
+            echo '<meta name="viewport" content="width=762">', PHP_EOL;
+          }
+?>
+<style>
+.ai-wrap {
+  width: 735px;
+}
+
+.ai-global-field {
+  width: 733px;
+  height: auto;
+  overflow: hidden;
+
+  background-color:#F9F9F9;
+  font-family: monospace, Courier, 'Courier New';
+  font-size: 13px;
+  line-height: 18.2px;
+}
+
+input[type=submit] {
+  float: right;
+  vertical-align: middle;
+  font-weight: bold;
+  padding: .4em 1em !important;
+  border: 1px solid #d3d3d3;
+  border-radius: 4px;
+  background: #e6e6e6 url(images/ui-bg_glass_75_e6e6e6_1x400.png) 50% 50% repeat-x;
+  color: #666;
+  cursor: pointer;
+}
+
+h2.ai-global-field-name {
+  margin-top:1.5em;
+}
+
+.CodeMirror-gutters {
+  border-right: none;
+}
+
+.CodeMirror-lint-markers {
+  width: 0 !important;
+}
+
+.CodeMirror {
+  height: auto;
+
+  border-top:    1px solid #d7d7d7;
+  border-left:   1px solid #e7e5e5;
+  border-right:  1px solid #e7e5e5;
+  border-bottom: 1px solid #ffffff;
+
+  border-radius: 2px;
+
+  box-shadow:
+   inset 1px 1px 2px rgba(0, 0, 0, 0.25),
+   inset -1px -1px 2px rgba(255, 255, 255, 0.8);
+}
+</style>
+<?php
+        });
+
+        add_action ('admin_enqueue_scripts', function ($hook) {
+          global $ai_global_fileds_settings;
+
+          $ai_global_fields_pos = strpos ($hook, 'ai-global-fields-');
+          if ($ai_global_fields_pos !== false) {
+
+            $settings_html = wp_enqueue_code_editor ([
+              'type' => 'text/html',
+            ]);
+            if ($settings_html === false) {
+              return;
+            }
+
+            $settings_html ['codemirror']['lineNumbers'] = false;
+            $settings_html ['codemirror']['indentUnit']  = 2;
+            $settings_html ['codemirror']['tabSize']     = 2;
+            $settings_html ['codemirror']['lineWrapping'] = true;
+            $settings_html ['codemirror']['styleActiveLine'] = false;
+            $settings_html ['codemirror']['lint'] = false;
+            $settings_html ['codemirror']['matchTags'] = false;
+
+            $settings_php = wp_enqueue_code_editor ([
+              'type' => 'text/x-php',
+            ]);
+            if ($settings_php === false) {
+              return;
+            }
+
+            $settings_php ['codemirror']['lineNumbers'] = false;
+            $settings_php ['codemirror']['indentUnit']  = 2;
+            $settings_php ['codemirror']['tabSize']     = 2;
+            $settings_php ['codemirror']['lineWrapping'] = true;
+            $settings_php ['codemirror']['styleActiveLine'] = false;
+            $settings_php ['codemirror']['lint'] = false;
+            $settings_php ['codemirror']['matchTags'] = false;
+
+            $ai_global_fields = get_option (AI_GLOBAL_FIELDS_NAME, array ());
+
+            wp_enqueue_script ('wp-theme-plugin-editor');
+            wp_enqueue_style ('wp-codemirror');
+
+            $js_code = "";
+            $current_global_page_index = str_replace ('ai-global-fields-', '', substr ($hook, $ai_global_fields_pos)) - 1;
+            foreach ($ai_global_fileds_settings ['fields'] as $field_index => $field_data) {
+              if ($field_data ['enabled'] && $field_data ['page'] == $current_global_page_index && $field_index < AI_MAX_GLOBAL_FIELDS) {
+                $field_id = 'ai-global-field-' . $field_index;
+                $field_value = isset ($ai_global_fields [$field_index]) ? $ai_global_fields [$field_index] : '';
+                if (is_string ($field_value) && substr ($field_value, 0, 4) === ':AI:') {
+                  $field_value = base64_decode (substr ($field_value, 4), true);
+                }
+
+                $settings = $settings_html;
+                if (strpos ($field_value, '<?') !== false) {
+                  $settings = $settings_php;
+                }
+
+                $js_code .= "  ai_editor_{$field_index} = wp.codeEditor.initialize ('ai-global-field-{$field_index}', " . wp_json_encode ($settings ) . ").codemirror;\n";
+              }
+            }
+
+            if ($js_code != '') {
+              wp_add_inline_script (
+                'wp-theme-plugin-editor',
+                'jQuery (function () {' . "\n".$js_code . '});'
+              );
+            }
+          }
+        });
+
+
+    }
+
+    public function get_role_capability ($role) {
+      switch ($role) {
+        case 'super-admin':
+          return 'manage_sites';
+          break;
+        case 'administrator':
+          return 'manage_options';
+          break;
+        case 'editor':
+          return 'edit_pages';
+          break;
+        case 'author':
+          return 'upload_files';
+          break;
+        case 'contributor':
+          return 'edit_posts';
+          break;
+        case 'subscriber':
+          return 'read';
+          break;
+        default:
+          return 'read';
+          break;
+      }
+
+      return '';
+    }
+
+    public function add_admin_menu () {
+      global $menu, $ai_global_fileds_settings;
+
+      foreach ($ai_global_fileds_settings ['pages'] as $global_fileds_menu_index => $ai_global_fileds_menu) {
+
+        if (!$this->can_access_global_fields_page ($global_fileds_menu_index)) continue;
+
+        $menu_found = false;
+        foreach ($menu as $menu_item) {
+          if ($menu_item [2] == $ai_global_fileds_menu ['menu_position']) {
+            $menu_found = true;
+            break;
+          }
+        }
+        if (!$menu_found && $ai_global_fileds_menu ['menu_position'] != '') continue;
+
+        $access = $ai_global_fileds_menu ['access'];
+
+        if (strpos ($access, 'capability:') === 0) {
+          $capability = str_replace ('capability:', '', $access);
+        }
+        elseif (strpos ($access, 'user:') === 0) {
+          $capability = 'read';
+        } else
+        $capability = $this->get_role_capability ($access);
+
+        if ($ai_global_fileds_menu ['enabled'] && trim ($ai_global_fileds_menu ['menu_name']) != '') {
+          switch ($ai_global_fileds_menu ['menu_position']) {
+
+            case '':
+              add_menu_page (
+                // translators: first %s: Ad Inserter, second %s: Page name
+                sprintf (__('%s Global Custom Fields - %s', 'ad-inserter'), AD_INSERTER_NAME, $ai_global_fileds_menu ['menu_name']),
+                $ai_global_fileds_menu ['menu_name'],
+                $capability,
+                'ai-global-fields-' . ($global_fileds_menu_index + 1),
+                array ($this, 'ai_global_fields_settings_page'),
+                'dashicons-layout',
+                $ai_global_fileds_menu ['priority']
+              );
+              break;
+
+            default:
+              $ai_global_fileds_page = add_submenu_page (
+                $ai_global_fileds_menu ['menu_position'],
+                // translators: %s: Ad Inserter Global Custom Fields - %s: page name
+                sprintf (__('%s Global Custom Fields - %s', 'ad-inserter'), AD_INSERTER_NAME, $ai_global_fileds_menu ['menu_name']),
+                $ai_global_fileds_menu ['menu_name'],
+                $capability,
+                'ai-global-fields-' . ($global_fileds_menu_index + 1),
+                array ($this, 'ai_global_fields_settings_page'),
+                $ai_global_fileds_menu ['priority']
+              );
+              break;
+          }
+        }
+      }
+    }
+
+    public function can_access_global_fields_page ($page_index) {
+      global $ai_global_fileds_settings;
+
+      if (current_user_can ('manage_options')) return true;
+
+      $access = $ai_global_fileds_settings ['pages'][$page_index]['access'];
+
+      if (strpos ($access, 'capability:') === 0) {
+        return current_user_can (str_replace ('capability:', '', $access));
+      }
+      elseif (strpos ($access, 'user:') === 0) {
+        $current_user = wp_get_current_user ();
+        return $current_user->user_login == str_replace ('user:', '', $access);
+      } else
+      return current_user_role () >= current_user_role ($access);
+    }
+
+    public function can_access_global_field ($field_index) {
+      global $ai_global_fileds_settings;
+
+      if (current_user_can ('manage_options')) return true;
+
+      return $this->can_access_global_field_page ($ai_global_fileds_settings ['fields'][$field_index]['page']);
+    }
+
+    public function ai_global_fields_settings_page () {
+      global $ai_global_fileds_settings;
+
+      $current_screen = get_current_screen ();
+      $ai_global_fields_pos = strpos ($current_screen->base, 'ai-global-fields-');
+
+      if ($ai_global_fields_pos !== false) {
+        $current_global_page_index = str_replace ('ai-global-fields-', '', substr ($current_screen->base, $ai_global_fields_pos)) - 1;
+
+        $display_page = false;
+        if (isset ($ai_global_fileds_settings ['pages'][$current_global_page_index])) {
+          if ($ai_global_fileds_settings ['pages'][$current_global_page_index]['enabled']) {
+            if ($this->can_access_global_fields_page ($current_global_page_index)) {
+              $display_page = true;
+            }
+          }
+        }
+      }
+
+      if (!$display_page) {
+        wp_die (__('You do not have sufficient permissions to access this page.'));
+      }
+
+      if (isset ($_POST ['ai_save'])) {
+        $this->save_global_fields ();
+      }
+
+      $save_url = "";
+      $ai_global_fields = get_option (AI_GLOBAL_FIELDS_NAME, array ());
+
+      $syntax_highlighting = get_user_option ('syntax_highlighting');
+
+      $css = '';
+      if ($syntax_highlighting !== 'false') {
+        $css = 'visibility: hidden;';
+      }
+?>
+        <div class="ai-wrap">
+
+            <h1><?php echo $ai_global_fileds_settings ['pages'][$current_global_page_index]['menu_name']; ?></h1>
+            <br />
+
+            <form id="ai-global-fields-form" method="post" action="<?php echo esc_attr ($save_url); ?>">
+                <?php
+
+                foreach ($ai_global_fileds_settings ['fields'] as $field_index => $field_data) {
+                  if ($field_data ['enabled'] && $field_data ['page'] == $current_global_page_index && $field_index < AI_MAX_GLOBAL_FIELDS) {
+                    $field_name = 'ai-global-field-' . $field_index;
+                    $field_value = isset ($ai_global_fields [$field_index]) ? $ai_global_fields [$field_index] : '';
+
+                    if (is_string ($field_value) && substr ($field_value, 0, 4) === ':AI:') {
+                      $field_value = base64_decode (substr ($field_value, 4), true);
+                    }
+
+                    $rows = count (explode ("\n", $field_value));
+
+                    ?>
+                    <h2 class="ai-global-field-name"><?php echo esc_html ($field_data ['name']); ?></h2>
+                    <div style="margin: 8px 0;">
+                      <textarea id="ai-global-field-<?php echo $field_index; ?>" class="ai-global-field" rows="<?php echo $rows; ?>" style="<?php echo $css; ?>" name="<?php echo $field_name; ?>" index="<?php echo $field_index; ?>"><?php echo esc_textarea ($field_value); ?></textarea>
+                    </div>
+
+                <?php
+                  }
+                }
+                ?>
+
+              <br />
+
+              <input name="<?php echo AI_FORM_SAVE; ?>" value="<?php echo __('Save Changes', 'ad-inserter'); ?>" type="submit" />
+
+              <div class="clear">
+
+              <?php wp_nonce_field ('save_ai_global_fields'); ?>
+
+            </form>
+
+          </div>
+<script>
+function b64e (str) {
+  // first we use encodeURIComponent to get percent-encoded UTF-8,
+  // then we convert the percent encodings into raw bytes which
+  // can be fed into btoa.
+  return btoa (encodeURIComponent (str).replace (/%([0-9A-F]{2})/g,
+    function toSolidBytes (match, p1) {
+      return String.fromCharCode ('0x' + p1);
+  }));
+}
+
+function b64d (str) {
+  // Going backwards: from bytestream, to percent-encoding, to original string.
+  return decodeURIComponent (atob (str).split ('').map (function(c) {
+    return '%' + ('00' + c.charCodeAt (0).toString (16)).slice (-2);
+  }).join (''));
+}
+
+String.prototype.stripSlashes = function(){
+  return this.replace(/\\(.)/mg, "$1");
+}
+
+jQuery("#ai-global-fields-form").on ("submit", function (event) {
+  jQuery(".ai-global-field").each (function() {
+    var textarea = jQuery (this);
+
+    var editor_name = 'ai_editor_' + textarea.attr ('index');
+    if (typeof window [editor_name] != typeof undefined) {
+      // update textarea
+      window [editor_name].save ();
+    }
+
+    var copy_id = textarea.attr ('id') + '-copy';
+    jQuery ('#' + copy_id).remove ();
+    var textarea_copy = textarea.clone ().attr ('id', copy_id).hide ();
+    textarea.removeAttr ("name");
+    textarea_copy.val (':AI:' + b64e (textarea.val ()));
+    textarea.after (textarea_copy);
+  });
+});
+</script>
+<?php
+    }
+
+    public function save_global_fields () {
+      global $ai_db_options, $ai_global_fileds_settings;
+
+      if (isset ($_REQUEST ['_wpnonce']) && wp_verify_nonce ($_REQUEST ['_wpnonce'], 'save_ai_global_fields')) {
+
+        $ai_global_fields = get_option (AI_GLOBAL_FIELDS_NAME, array ());
+
+        $fields = array ();
+        $valid_fields = 0;
+        foreach ($_POST as $name => $post_field) {
+          if (strpos ($name, 'ai-global-field-') === 0) {
+            $field_index = (int) str_replace ('ai-global-field-', '', $name);
+            if ($field_index < AI_MAX_GLOBAL_FIELDS) {
+              $fields []= $field_index + 1;
+              $ai_global_fields [$field_index] = $post_field;
+              $valid_fields ++;
+            }
+          }
+        }
+
+        if ($valid_fields != 0) {
+          update_option (AI_GLOBAL_FIELDS_NAME, $ai_global_fields);
+
+          $page_name = '';
+
+          $current_screen = get_current_screen ();
+          $ai_global_fields_pos = strpos ($current_screen->base, 'ai-global-fields-');
+
+          if ($ai_global_fields_pos !== false) {
+            $current_global_page_index = str_replace ('ai-global-fields-', '', substr ($current_screen->base, $ai_global_fields_pos)) - 1;
+            $page_name = ' ('.__('page', 'ad-inserter').' ' . $ai_global_fileds_settings ['pages'][$current_global_page_index]['menu_name']. ', '.__('fields', 'ad-inserter').': ' . implode (', ', $fields) . ')';
+          }
+
+          echo '<div class="notice notice-success is-dismissible" style="margin: 5px 15px 2px 0px;"><p>' . __('Global custom fields saved.', 'ad-inserter') . '</p></div>';
+
+          apply_filters ('simple_history_log', AD_INSERTER_NAME . ' ' . __('global custom fields saved', 'ad-inserter') . $page_name);
+        }
+      }
+    }
 
 }

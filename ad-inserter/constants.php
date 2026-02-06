@@ -4,6 +4,7 @@
 //error_reporting (E_ALL);
 
 define ('AI_OPTION_NAME',                'ad_inserter');
+define ('AI_GLOBAL_FIELDS_NAME',         'ad_inserter_global_fields');
 define ('AI_EXTRACT_NAME',               'ad_inserter_extract');
 define ('AI_FLAGS_NAME',                 'ad_inserter_flags');
 define ('AI_INSTALL_NAME',               'ai-install');
@@ -35,7 +36,7 @@ if (!defined( 'AD_INSERTER_NAME'))
   define ('AD_INSERTER_NAME', 'Ad Inserter');
 
 if (!defined( 'AD_INSERTER_VERSION'))
-  define ('AD_INSERTER_VERSION', '2.8.7');
+  define ('AD_INSERTER_VERSION', '2.8.10');
 
 if (!defined ('AD_INSERTER_PLUGIN_BASENAME'))
   define ('AD_INSERTER_PLUGIN_BASENAME', plugin_basename (__FILE__));
@@ -1006,7 +1007,9 @@ define ('DEFAULT_SETTINGS_MENU_PRIORITY',       81);
 define ('DEFAULT_SETTINGS_SUBMENU_PRIORITY',    10);
 define ('DEFAULT_MENU_FOR_LINK',                AI_SETTINGS_SUBMENU);
 define ('DEFAULT_PARALLAX_MODE',                AI_PARALLAX_MODE_BACKGROUND);
-
+define ('DEFAULT_GLOBAL_PAGE_USER_ROLE',        'administrator');
+define ('DEFAULT_GLOBAL_PAGE_MENU_PRIORITY',    85);
+define ('DEFAULT_GLOBAL_FIELD_PAGE',            0);
 
 define ('AI_ADBLOCKING_DETECTION',              true);
 define ('AI_NORMAL_HEADER_STYLES',              true);

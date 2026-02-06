@@ -1,9 +1,10 @@
-var javascript_version = "2.8.7";
+var javascript_version = "2.8.10";
 var ignore_key = true;
 var start = 1;
 var end = 16;
 var active_tab = 1;
 var active_tab_0 = 0;
+var active_tab_0_general = 0;
 var tabs_to_configure   = new Array();
 var debug = false;
 var debug_title = false;
@@ -682,8 +683,7 @@ function encode_code (block) {
 
 //    console.log (':AI:', block);
   }
-
-  jQuery("#ai-active-tab").attr ("value", '[' + active_tab + ',' + active_tab_0 + ']');
+  jQuery("#ai-active-tab").attr ("value", '[' + active_tab + ',' + active_tab_0 + ',' + active_tab_0_general + ']');
 
   var named_parameters = jQuery("#tab-" + block + ' [name]');
   var block_parameters = new Array();
@@ -6413,6 +6413,7 @@ jQuery(document).ready (function($) {
     if (active_tab != 0) index = active_tab - start;
     var block_tabs = $("#ai-tab-container").tabs ({active: index});
     $("#ai-plugin-settings-tab-container").tabs ({active: active_tab_0});
+    $("#tab-general").tabs ({active: active_tab_0_general});
 
 //    $('#ai-settings').tooltip({
 //      show: {effect: "blind",
@@ -6481,7 +6482,9 @@ jQuery(document).ready (function($) {
 //    $('.ai-plugin-tab').click (function () {
     $('.ai-plugin-tab').on ("click", function () {
       active_tab_0 = $("#ai-plugin-settings-tab-container").tabs ('option', 'active');
+      active_tab_0_general = $("#tab-general").tabs ('option', 'active');
       if (debug) console.log ("active_tab_0: " + active_tab_0);
+      if (debug) console.log ("active_tab_0_general: " + active_tab_0_general);
 
       if (syntax_highlighting) {
         var tab_block = $(this).attr ("id");
@@ -6643,19 +6646,21 @@ jQuery(document).ready (function($) {
   start         = parseInt ($('#ai-form').attr('start'));
   end           = parseInt ($('#ai-form').attr('end'));
 
-  active_tab    = start;
-  active_tab_0  = 0;
+  active_tab            = start;
+  active_tab_0          = 0;
+  active_tab_0_general  = 0;
   try {
     var active_tabs = JSON.parse ($("#ai-active-tab").attr ("value"));
     if (typeof active_tabs !== "undefined" && active_tabs.constructor === Array && Number.isInteger (active_tabs [0]) && Number.isInteger (active_tabs [1])) {
       active_tab    = parseInt (active_tabs [0]);
       if (active_tab != 0)
         if (active_tab < start || active_tab > end) active_tab = start;
-      active_tab_0  = parseInt (active_tabs [1]);
+      active_tab_0          = parseInt (active_tabs [1]);
+      active_tab_0_general  = parseInt (active_tabs [2]);
     }
   } catch (e) {}
 
-  if (debug) console.log ("active_tabs:", active_tab, active_tab_0);
+  if (debug) console.log ("active_tabs:", active_tab, active_tab_0, active_tab_0_general);
 
   var plugin_version = $('#ai-data').attr ('version').split ('-') [0];
   if (javascript_version != plugin_version) {
