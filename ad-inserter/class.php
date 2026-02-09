@@ -2977,7 +2977,7 @@ abstract class ai_CodeBlock extends ai_BaseCodeBlock {
             $viewport_text = strtolower ($viewport_parameters [$viewport_code_index]['viewport']);
 
             $viewport_list_type = AI_WHITE_LIST;
-            if ($viewport_text [0] == '^') {
+            if (strlen ($viewport_text) >= 1 && $viewport_text [0] == '^') {
               $viewport_list_type = AI_BLACK_LIST;
               $viewport_text = substr ($viewport_text, 1);
             }
@@ -11158,70 +11158,47 @@ class ai_global_fileds {
           if ($ai_global_fields_pos !== false && wp_is_mobile ()) {
             echo '<meta name="viewport" content="width=762">', PHP_EOL;
           }
-?>
-<style>
-.ai-wrap {
-  width: 735px;
-}
-
-.ai-global-field {
-  width: 733px;
-  height: auto;
-  overflow: hidden;
-
-  background-color:#F9F9F9;
-  font-family: monospace, Courier, 'Courier New';
-  font-size: 13px;
-  line-height: 18.2px;
-}
-
-input[type=submit] {
-  float: right;
-  vertical-align: middle;
-  font-weight: bold;
-  padding: .4em 1em !important;
-  border: 1px solid #d3d3d3;
-  border-radius: 4px;
-  background: #e6e6e6 url(images/ui-bg_glass_75_e6e6e6_1x400.png) 50% 50% repeat-x;
-  color: #666;
-  cursor: pointer;
-}
-
-h2.ai-global-field-name {
-  margin-top:1.5em;
-}
-
-.CodeMirror-gutters {
-  border-right: none;
-}
-
-.CodeMirror-lint-markers {
-  width: 0 !important;
-}
-
-.CodeMirror {
-  height: auto;
-
-  border-top:    1px solid #d7d7d7;
-  border-left:   1px solid #e7e5e5;
-  border-right:  1px solid #e7e5e5;
-  border-bottom: 1px solid #ffffff;
-
-  border-radius: 2px;
-
-  box-shadow:
-   inset 1px 1px 2px rgba(0, 0, 0, 0.25),
-   inset -1px -1px 2px rgba(255, 255, 255, 0.8);
-}
-</style>
-<?php
         });
+
+        add_filter ('media_view_strings', function ($strings, $post) {
+            $strings ['insertIntoPost'] = AI_TEXT_MEDIA_USE_THIS_IMAGE;
+            $strings ['insertMediaTitle'] = AI_TEXT_MEDIA_SELECT_IMAGE;
+            return $strings;
+        }, 10, 2);
 
         add_action ('admin_enqueue_scripts', function ($hook) {
           global $ai_global_fileds_settings;
 
           $ai_global_fields_pos = strpos ($hook, 'ai-global-fields-');
           if ($ai_global_fields_pos !== false) {
+
+            wp_enqueue_media (); // loads wp.media scripts
+
+            wp_enqueue_script (
+                'ai-dummy-js',
+                plugins_url ('includes/js/missed.js', __FILE__),
+                array ('jquery'),
+                '1.0',
+                true
+            );
+
+            wp_localize_script (
+                'ai-dummy-js',
+                'media_i18n',
+                array (
+                  'title'  => AI_TEXT_MEDIA_SELECT_IMAGE,
+                  'button' => AI_TEXT_MEDIA_USE_THIS_IMAGE,
+                  'image'  => AI_TEXT_MEDIA_IMAGE,
+                  'link'   => AI_TEXT_MEDIA_LINK,
+                  'new_tab'=> AI_TEXT_MEDIA_OPEN_LINK_NEW_TAB
+                )
+            );
+
+            wp_enqueue_style  ('ai-global-fields',  plugins_url ('css/ai-global-fields.css', __FILE__),  array (), AD_INSERTER_VERSION);
+
+            if (function_exists ('ai_general_settings_5')) {
+              wp_enqueue_script ('ai-purify-js', plugins_url ('includes/purify/purify.min.js', AD_INSERTER_FILE), array (), AD_INSERTER_VERSION, false);
+            }
 
             $settings_html = wp_enqueue_code_editor ([
               'type' => 'text/html',
@@ -11237,7 +11214,7 @@ h2.ai-global-field-name {
             $settings_html ['codemirror']['styleActiveLine'] = false;
             $settings_html ['codemirror']['lint'] = false;
             $settings_html ['codemirror']['matchTags'] = false;
-
+            $settings_html ['codemirror']['extraKeys'] = ['Tab' => false];
             $settings_php = wp_enqueue_code_editor ([
               'type' => 'text/x-php',
             ]);
@@ -11252,6 +11229,7 @@ h2.ai-global-field-name {
             $settings_php ['codemirror']['styleActiveLine'] = false;
             $settings_php ['codemirror']['lint'] = false;
             $settings_php ['codemirror']['matchTags'] = false;
+            $settings_php ['codemirror']['extraKeys'] = ['Tab' => false];
 
             $ai_global_fields = get_option (AI_GLOBAL_FIELDS_NAME, array ());
 
@@ -11261,7 +11239,8 @@ h2.ai-global-field-name {
             $js_code = "";
             $current_global_page_index = str_replace ('ai-global-fields-', '', substr ($hook, $ai_global_fields_pos)) - 1;
             foreach ($ai_global_fileds_settings ['fields'] as $field_index => $field_data) {
-              if ($field_data ['enabled'] && $field_data ['page'] == $current_global_page_index && $field_index < AI_MAX_GLOBAL_FIELDS) {
+              if ($field_data ['enabled'] && ($field_data ['type'] == AI_GLOBAL_FIELD_CODE_EDITOR) &&
+                  $field_data ['page'] == $current_global_page_index && $field_index < AI_MAX_GLOBAL_FIELDS) {
                 $field_id = 'ai-global-field-' . $field_index;
                 $field_value = isset ($ai_global_fields [$field_index]) ? $ai_global_fields [$field_index] : '';
                 if (is_string ($field_value) && substr ($field_value, 0, 4) === ':AI:') {
@@ -11402,7 +11381,7 @@ h2.ai-global-field-name {
     }
 
     public function ai_global_fields_settings_page () {
-      global $ai_global_fileds_settings;
+      global $ai_global_fileds_settings, $block_object;
 
       $current_screen = get_current_screen ();
       $ai_global_fields_pos = strpos ($current_screen->base, 'ai-global-fields-');
@@ -11433,10 +11412,6 @@ h2.ai-global-field-name {
 
       $syntax_highlighting = get_user_option ('syntax_highlighting');
 
-      $css = '';
-      if ($syntax_highlighting !== 'false') {
-        $css = 'visibility: hidden;';
-      }
 ?>
         <div class="ai-wrap">
 
@@ -11455,12 +11430,188 @@ h2.ai-global-field-name {
                       $field_value = base64_decode (substr ($field_value, 4), true);
                     }
 
-                    $rows = count (explode ("\n", $field_value));
+                    $css = '';
+                    if ($field_data ['type'] == AI_GLOBAL_FIELD_IMAGE) {
+                      $css = 'display: none;';
+                    }
+                    elseif ($syntax_highlighting !== 'false') {
+                      $css = 'visibility: hidden;';
+                    }
+
+                    $rows = is_string ($field_value) ? count (explode ("\n", $field_value)) : 0;
+
+                    switch ($field_data ['type']) {
+                      case AI_GLOBAL_FIELD_CODE_EDITOR:
+                        if ($field_data ['block'] >= 1 && $field_data ['block'] <= 96) {
+                          $obj = $block_object [$field_data ['block']];
+                          $field_value = $obj->get_ad_data ();
+
+                          $rows = is_string ($field_value) ? count (explode ("\n", $field_value)) : 0;
+                        }
+                        break;
+
+                      case AI_GLOBAL_FIELD_IMAGE:
+                        $id        = '0';
+                        $image_url = '';
+                        $link_url  = '';
+                        $new_tab   = '0';
+
+                        $image_data = json_decode ($field_value);
+                        if ($field_value !== null) {
+                          $image_data = (array) $image_data;
+                          $id        = isset ($image_data ['id']) ? $image_data ['id'] : '0';
+                          $image_url = isset ($image_data ['id']) ? esc_url (wp_get_attachment_image_url ($image_data ['id'], 'full')) : '';
+                          $link_url  = isset ($image_data ['link'])  ? esc_url ($image_data ['link'])  : '';
+                          $new_tab   = isset ($image_data ['new-tab'])  ? (int) $image_data ['new-tab']  : '0';
+                        }
+                        break;
+
+                      case AI_GLOBAL_FIELD_SELECTION:
+                      case AI_GLOBAL_FIELD_CHECKBOXES:
+
+                        $block = $field_data ['block'];
+                        $option_names = array ();
+                        if ($block >= 1 && $block <= 96) {
+                          $obj = $block_object [$block];
+
+                          $code_generator = new ai_code_generator ();
+                          $rotation_data = $code_generator->import_rotation ($obj->get_ad_data (), true);
+                          $rotation_data = $rotation_data ['options'];
+
+                          foreach ($rotation_data as $rotation_data_index => $rotation_data_version) {
+                             if (isset ($rotation_data_version ['prepend-append']) && $rotation_data_version ['prepend-append'] != '') {
+                              unset ($rotation_data [$rotation_data_index]);
+                            }
+                          }
+                          $rotation_data = array_values ($rotation_data);
+
+                          if (count ($rotation_data) > 1) {
+                            foreach ($rotation_data as $rotation_data_index => $rotation_data_element) {
+                              $version = $rotation_data_index + 1;
+                              $data_index_for_name = $version;
+                              $option_index_for_name = $version;
+
+                                foreach ($rotation_data as $rotation_data_index => $rotation_data_version) {
+                                  if (isset ($rotation_data_version ['index']) && $rotation_data_version ['index'] != '') {
+                                    $option_index = (int) $rotation_data_version ['index'];
+                                    if ($option_index == $version) {
+                                      $data_index_for_name = $rotation_data_index + 1;
+                                      $option_index_for_name = $option_index;
+                                      break;
+                                    }
+                                  }
+                                }
+
+                              $option_name = isset ($rotation_data [$data_index_for_name - 1]['name']) && trim ($rotation_data [$data_index_for_name - 1]['name']) != '' ? str_replace ("'", "&#39;", $rotation_data [$data_index_for_name - 1]['name']) : chr (ord ('A') + $data_index_for_name - 1);
+                              $option_names [$option_index_for_name] = filter_string_tags ($option_name);
+                            }
+                          }
+                        }
+
+                        if ($field_data ['type'] == AI_GLOBAL_FIELD_CHECKBOXES) {
+                          $field_options = json_decode ($field_value);
+                          if ($field_options != null) {
+
+                            $field_options = (array) $field_options;
+
+                          } else $field_options = array ();
+                        }
+                        break;
+                    }
+
 
                     ?>
-                    <h2 class="ai-global-field-name"><?php echo esc_html ($field_data ['name']); ?></h2>
-                    <div style="margin: 8px 0;">
-                      <textarea id="ai-global-field-<?php echo $field_index; ?>" class="ai-global-field" rows="<?php echo $rows; ?>" style="<?php echo $css; ?>" name="<?php echo $field_name; ?>" index="<?php echo $field_index; ?>"><?php echo esc_textarea ($field_value); ?></textarea>
+                    <div class="ai-field-wrapper">
+                      <?php
+                        switch ($field_data ['type']) {
+                          case AI_GLOBAL_FIELD_CODE_EDITOR:
+                      ?>
+
+                      <h2 class="ai-global-field-name"><?php echo esc_html ($field_data ['name']); ?></h2>
+
+                      <div class="ai-field-editor">
+                        <textarea id="ai-global-field-<?php echo $field_index; ?>"class="ai-field-textarea" rows="<?php echo $rows; ?>" style="<?php echo $css; ?>" name="<?php echo $field_name; ?>" index="<?php echo $field_index; ?>"><?php echo esc_textarea ($field_value); ?></textarea>
+                      </div>
+
+                      <?php
+                            break;
+                          case AI_GLOBAL_FIELD_IMAGE:
+                      ?>
+
+                      <h2 class="ai-global-field-name"><?php echo esc_html ($field_data ['name']); ?></h2>
+
+                      <div class="ai-field-image ai-field-image-<?php echo $field_index; ?>" style="background: url(<?php echo $image_url; ?>) 0% 0% / cover;" title="<?php _e ('Select image', 'ad-inserter'); ?>">
+                        <?php echo $image_url == '' ? AI_TEXT_MEDIA_IMAGE : '' ?>
+                      </div>
+
+                      <div class="ai-field-editor">
+                        <textarea id="ai-global-field-<?php echo $field_index; ?>"class="ai-field-textarea field-image" rows="<?php echo $rows; ?>" style="<?php echo $css; ?>" name="<?php echo $field_name; ?>" image-id="<?php echo $id; ?>" link-url="<?php echo $link_url; ?>" new-tab="<?php echo $new_tab; ?>" <?php echo $image_url != '' ? 'image-ok="1"' : '' ?> index="<?php echo $field_index; ?>"><?php echo esc_textarea ($field_value); ?></textarea>
+                      </div>
+
+                      <?php
+                            break;
+                          case AI_GLOBAL_FIELD_SELECTION:
+
+
+                      ?>
+
+                      <div class="ai-field-selection">
+                        <h2 class="ai-global-field-name" style="display: inline-block;"><?php echo esc_html ($field_data ['name']); ?></h2>
+                        <select style="margin-bottom: 3px;" class="ai-field-select" name="<?php echo $field_name; ?>" index="<?php echo $field_index; ?>">
+
+                      <?php
+                          foreach ($option_names as $index => $option_name) {
+                      ?>
+                          <option value="<?php echo $index; ?>" <?php echo ($field_value == $index) ? AD_SELECT_SELECTED : AD_EMPTY_VALUE; ?>><?php echo $option_name; ?></option>
+
+                      <?php
+                          }
+                      ?>
+
+                        </select>
+                      </div>
+
+                      <?php
+                            break;
+                          case AI_GLOBAL_FIELD_CHECKBOXES:
+                      ?>
+                      <h2 class="ai-global-field-name" style="display: inline-block;"><?php echo esc_html ($field_data ['name']); ?></h2>
+                      <div class="ai-field-checkboxes">
+                        <table>
+                          <tbody>
+                      <?php
+                          foreach ($option_names as $index => $option_name) {
+                      ?>
+                            <tr>
+                              <td><span style="margin-right: 10px;"><?php echo $option_name; ?></span></td><td>
+
+                        <input type="hidden"   value="0" />
+                        <input type="checkbox" value="1" class="ai-field-checkbox-option" index="<?php echo $index; ?>" style="margin-bottom: 1px;" <?php if (isset ($field_options [$index]) && $field_options [$index]) echo 'checked '; ?> />
+                      <?php
+                          }
+                      ?>
+                              </td>
+                            </tr>
+                          </tbody>
+                        </table>
+                        <input type="text" class="ai-field-checkbox-options" name="<?php echo $field_name; ?>" value="" style="display: none;" />
+                      </div>
+
+                      <?php
+                            break;
+                          case AI_GLOBAL_FIELD_CHECKBOX:
+                      ?>
+                      <div class="ai-field-checkbox">
+                        <h2 class="ai-global-field-name" style="display: inline-block;"><?php echo esc_html ($field_data ['name']); ?></h2>
+                        <input type="hidden"   name="<?php echo $field_name; ?>" value="0" />
+                        <input type="checkbox" name="<?php echo $field_name; ?>" value="1" style="margin-bottom: 1px;" <?php if ($field_value) echo 'checked '; ?> />
+                      </div>
+
+                      <?php
+                            break;
+                        }
+                      ?>
+
                     </div>
 
                 <?php
@@ -11480,6 +11631,15 @@ h2.ai-global-field-name {
 
           </div>
 <script>
+
+const global_fileds_settings = JSON.parse ('<?php echo wp_json_encode ($ai_global_fileds_settings ['fields']); ?>');
+
+const AI_GLOBAL_FIELD_CODE_EDITOR = 0;
+const AI_GLOBAL_FIELD_IMAGE       = 1;
+const AI_GLOBAL_FIELD_CHECKBOX    = 2;
+const AI_GLOBAL_FIELD_SELECTION   = 3;
+const AI_GLOBAL_FIELD_CHECKBOXES  = 4;
+
 function b64e (str) {
   // first we use encodeURIComponent to get percent-encoded UTF-8,
   // then we convert the percent encodings into raw bytes which
@@ -11497,15 +11657,251 @@ function b64d (str) {
   }).join (''));
 }
 
+function insertAtCursor ($textarea, text) {
+  const el = $textarea[0];
+
+  const start = el.selectionStart;
+  const end = el.selectionEnd;
+  const val = el.value;
+
+  el.value = val.slice(0, start) + text + val.slice(end);
+
+  const pos = start + text.length;
+  el.selectionStart = el.selectionEnd = pos;
+
+  el.focus();
+}
+
+function isValidImageURL (str) {
+  try {
+    const url = new URL(str);
+
+    return /\.(jpg|jpeg|png|gif|webp|svg|bmp)$/i.test(url.pathname);
+  } catch (e) {
+      return false;
+  }
+}
+
+function checkImageURL (url) {
+  return new Promise ((resolve) => {
+    const img = new Image ();
+
+    img.onload = () => resolve (true);
+    img.onerror = () => resolve (false);
+
+    img.src = url;
+  });
+}
+
+async function isValidImage (str) {
+  if (!isValidImageURL (str)) return false;
+
+  return await checkImageURL (str);
+}
+
+async function check_image (field_index, image_url, textarea) {
+
+  var image_button = jQuery ('.ai-field-image-' + field_index);
+
+  const valid = await isValidImage (image_url);
+  jQuery (textarea).removeAttr ('image-ok');
+
+  if (valid) {
+    image_button.css ('background', 'url('+image_url+') 0% 0% / cover');
+    image_button.text ('');
+    jQuery (textarea).attr ('image-ok', '1');
+  } else {
+      image_button.css ('background', 'unset');
+      image_button.text (media_i18n.image);
+  }
+}
+
+function check_image_editor (editor) {
+
+  if (jQuery (editor).hasClass ('ai-field-textarea')) {
+    var textarea = jQuery (editor);
+  } else {
+      var textarea = jQuery (editor).prev ();
+    }
+  var field_index = textarea.attr ('index');
+  var editor_name = 'ai_editor_' + field_index;
+
+  if (typeof window [editor_name] != typeof undefined) {
+    var field = window [editor_name].getValue ();
+  } else {
+      var field = textarea.val();
+    }
+
+  const attachment = wp.media.attachment (field);
+
+  attachment.fetch ().then(function () {
+    check_image (field_index, attachment.get ('url'), textarea);
+  });
+
+}
+
+let imageOptions = {
+  id: 0,
+  linkUrl: '',
+  openInNewTab: true
+};
+
+jQuery (document).on('change', '.link-url', function () {
+  imageOptions.linkUrl = this.value;
+});
+
+jQuery (document).on('change', '.new-tab', function () {
+  imageOptions.openInNewTab = this.checked;
+});
+
+
+let mediaUploader;
+var field_index = 0;
+var editor_name = '';
+var textarea;
+
+jQuery ('.ai-field-image').on ('click', function (e) {
+
+  e.preventDefault ();
+
+  textarea = jQuery (this).closest ('.ai-field-wrapper').find ('.ai-field-textarea');
+  field_index = textarea.attr ('index');
+  editor_name = 'ai_editor_' + field_index;
+
+  if (event.ctrlKey || event.metaKey) {
+    textarea.attr ('image-id', 0);
+    textarea.attr ('link-url', '');
+    textarea.attr ('new-tab', 0);
+
+    check_image (field_index, '', textarea);
+    return;
+  }
+
+  imageOptions.id = textarea.attr ('image-id');
+  imageOptions.linkUrl = textarea.attr ('link-url');
+  if (!imageOptions.linkUrl) imageOptions.linkUrl = '';
+  imageOptions.openInNewTab = textarea.attr ('new-tab') == '1' ? true : false;
+
+  // If already created, reopen
+  if (mediaUploader) {
+    mediaUploader.open ();
+    return;
+  }
+
+  mediaUploader = wp.media ({
+    frame: 'post',     // IMPORTANT
+    state: 'insert',  // IMPORTANT
+    title: media_i18n.title,
+    button: {
+      text: media_i18n.button
+    },
+    library: {
+      type: 'image'
+    },
+    displaySettings: true,
+    multiple: false
+  });
+
+  mediaUploader.on ('open', function () {
+
+    const attachment = wp.media.attachment (imageOptions.id);
+    attachment.fetch ();
+
+    mediaUploader.state()
+      .get ('selection')
+      .reset ([attachment]);
+  });
+
+  mediaUploader.on ('select insert', function () {
+    const state = mediaUploader.state ();
+    const selection = state.get ('selection').first();
+    const attachment = selection.toJSON ();
+
+    textarea.attr ('image-id', attachment.id);
+    textarea.attr ('link-url', imageOptions.linkUrl);
+    textarea.attr ('new-tab', imageOptions.openInNewTab ? '1' : '0');
+
+    const image_data = {'id': attachment.id, 'link': imageOptions.linkUrl, 'new-tab': imageOptions.openInNewTab ? '1' : '0'};
+
+    const value = JSON.stringify (image_data);
+
+    if (typeof window [editor_name] != typeof undefined) {
+      window [editor_name].setValue (value);
+      window [editor_name].save ();
+    } else {
+        textarea.val (value);
+      }
+
+    check_image (field_index, attachment.url, textarea);
+  });
+
+  mediaUploader.open ();
+});
+
+setTimeout (function () {
+  jQuery(function ($) {
+
+  const Base = wp.media.view.Settings.AttachmentDisplay;
+
+  wp.media.view.Settings.AttachmentDisplay = Base.extend({
+    render: function () {
+      Base.prototype.render.apply(this, arguments);
+
+      const url     = imageOptions.linkUrl || '';
+      const checked = imageOptions.openInNewTab ? 'checked' : '';
+
+      this.$el.find(".setting").remove ();
+
+      this.$el.append(`
+          <label class="setting">
+              <span>${media_i18n.link}</span>
+              <input type="text"
+                     class="link-url"
+                     value="${url}" />
+          </label>
+
+          <label class="setting">
+              <span>${media_i18n.new_tab}</span>
+              <input type="checkbox"
+                     class="new-tab"
+                     ${checked} />
+          </label>
+      `);
+
+      return this;
+    }
+  });
+});
+
+}, 1500);
+
 String.prototype.stripSlashes = function(){
   return this.replace(/\\(.)/mg, "$1");
 }
 
+function extractComments (html) {
+  const comments = [];
+
+  const replaced = html.replace(/<!--([\s\S]*?)-->/g, (match, content) => {
+    const token = `__COMMENT_${comments.length}__`;
+    comments.push(match); // store full comment
+    return token;
+  });
+
+  return {replaced, comments};
+}
+
+function restoreComments (html, comments) {
+  return html.replace(/__COMMENT_(\d+)__/g, (m, i) => comments[i]);
+}
+
 jQuery("#ai-global-fields-form").on ("submit", function (event) {
-  jQuery(".ai-global-field").each (function() {
+  jQuery(".ai-field-textarea").each (function() {
+
     var textarea = jQuery (this);
 
-    var editor_name = 'ai_editor_' + textarea.attr ('index');
+    var field_index = textarea.attr ('index');
+    var editor_name = 'ai_editor_' + field_index;
     if (typeof window [editor_name] != typeof undefined) {
       // update textarea
       window [editor_name].save ();
@@ -11515,10 +11911,97 @@ jQuery("#ai-global-fields-form").on ("submit", function (event) {
     jQuery ('#' + copy_id).remove ();
     var textarea_copy = textarea.clone ().attr ('id', copy_id).hide ();
     textarea.removeAttr ("name");
-    textarea_copy.val (':AI:' + b64e (textarea.val ()));
+
+    var field_text = textarea.val ();
+
+    const field_type = global_fileds_settings [field_index]['type'];
+
+
+    if (field_type == AI_GLOBAL_FIELD_CODE_EDITOR) {
+
+      const tags = global_fileds_settings [field_index]['tags']
+        .toLowerCase ()
+        .split (',')
+        .map (t => t.trim ())
+        .filter (Boolean);
+
+      const attributes = global_fileds_settings [field_index]['attributes']
+        .toLowerCase ()
+        .split (',')
+        .map (t => t.trim ())
+        .filter (Boolean);
+
+      var allow_tags        = !!global_fileds_settings [field_index]['tags_type']       == <?php echo AI_ALLOWED_TAGS; ?>;
+      var allow_attributes  = !!global_fileds_settings [field_index]['attributes_type'] == <?php echo AI_ALLOWED_ATTRIBUTES; ?>;
+
+      if (tags.length || allow_tags || attributes.length || allow_attributes) {
+
+        var options = {
+          KEEP_CONTENT: true,
+          FORCE_BODY: true,
+          ALLOW_UNKNOWN_PROTOCOLS: true
+        };
+
+        if (!allow_tags) {
+          options.ADD_TAGS = ['script', 'iframe', 'object'];
+        }
+
+        if (!allow_attributes) {
+          options.ADD_ATTR = ['src', 'type'];
+          options.ALLOW_ARIA_ATTR = true;
+          options.ALLOW_DATA_ATTR = true;
+        }
+
+        if (allow_tags) {
+          options.ALLOWED_TAGS = tags;
+        }
+
+        if (!allow_tags && tags.length) {
+          options.FORBID_TAGS = tags;
+        }
+
+        if (allow_attributes) {
+          options.ALLOWED_ATTR = attributes;
+        }
+
+        if (!allow_attributes && attributes.length) {
+          options.FORBID_ATTR = attributes;
+        }
+
+        const allow_html_comments = !allow_tags && !tags.includes ("comment") || allow_tags && tags.includes ("comment");
+
+        if (allow_html_comments) {
+          const {replaced, comments} = extractComments (field_text);
+          sanitized = DOMPurify.sanitize (replaced, options);
+          field_text = restoreComments (sanitized, comments);
+        } else {
+            field_text = DOMPurify.sanitize (field_text, options);
+          }
+      }
+    } else
+    if (field_type == AI_GLOBAL_FIELD_IMAGE) {
+      if (typeof textarea.attr ('image-ok') == typeof undefined) {
+        field_text = '';
+      }
+    }
+
+    textarea_copy.val (':AI:' + b64e (field_text));
     textarea.after (textarea_copy);
   });
+
+  jQuery(".ai-field-checkboxes").each (function() {
+    var field = this;
+
+    var check_options = {};
+    jQuery("input.ai-field-checkbox-option", field).each (function() {
+      const index = jQuery(this).attr ('index');
+      check_options [index] = jQuery(this).is(":checked") ? 1 : 0;
+    });
+
+    jQuery("input.ai-field-checkbox-options", field).val (':AI:' + b64e (JSON.stringify (check_options)));
+  });
 });
+
 </script>
 <?php
     }
@@ -11537,7 +12020,20 @@ jQuery("#ai-global-fields-form").on ("submit", function (event) {
             $field_index = (int) str_replace ('ai-global-field-', '', $name);
             if ($field_index < AI_MAX_GLOBAL_FIELDS) {
               $fields []= $field_index + 1;
-              $ai_global_fields [$field_index] = $post_field;
+
+              $block = isset ($ai_global_fileds_settings ['fields'][$field_index]['block']) ? $ai_global_fileds_settings ['fields'][$field_index]['block'] : 0;
+              if ($ai_global_fileds_settings ['fields'][$field_index]['type'] == AI_GLOBAL_FIELD_CODE_EDITOR && $block != 0) {
+                if (is_string ($post_field) && substr ($post_field, 0, 4) === ':AI:') {
+                  $post_field = base64_decode (substr ($post_field, 4), true);
+                }
+
+                $ai_db_options [$block][AI_OPTION_CODE] = $post_field;
+                ai_save_options ($ai_db_options);
+                unset ($ai_global_fields [$field_index]);
+              } else {
+                  $ai_global_fields [$field_index] = $post_field;
+                }
+
               $valid_fields ++;
             }
           }

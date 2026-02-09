@@ -6,10 +6,10 @@ Tags: ads, adsense, amp, ad rotation, ad manager
 Requires at least: 5.0
 Tested up to: 6.9
 Requires PHP: 7.4
-Stable tag: 2.8.10
+Stable tag: 2.8.11
 License: GPLv3
 
-Manage Google AdSense ads, Amazon banners, ad rotation, sticky widgets, AMP ads, DFP, ads.txt, tracking, header and footer code, PHP code
+Manage Google AdSense ads, banners, ad rotation, sticky widgets, AMP ads, ads.txt, tracking, header and footer code, PHP code, global custom fields
 
 == Description ==
 
@@ -82,7 +82,7 @@ It's all about the [settings](https://adinserter.pro/documentation).
 *   PHP code processing
 *   Ad labels - show customized label above adverts
 *   ads.txt editor
-*   Global custom fields
+*   [Global custom fields](https://adinserter.pro/documentation/global-custom-fields)
 *   Support for [GDPR consent checks](https://adinserter.pro/faq/gdpr-compliance-cookies-consent)
 *   Support for IAB TCF 2.0 GDPR consent API (used by Quantcast Choice)
 *   Ad rotation (server-side and client-side - works with caching)
@@ -365,6 +365,10 @@ If you are not happy to reveal this information and you have opted in, simply di
 
 == Changelog ==
 
+= 2.8.11 =
+- Added global custom field types (Pro only)
+- Few minor bug fixes, cosmetic changes and code improvements
+
 = 2.8.10 =
 - Added support for global custom fields
 - Few minor bug fixes, cosmetic changes and code improvements
@@ -468,6 +472,10 @@ If you are not happy to reveal this information and you have opted in, simply di
 For the changelog of earlier versions, please refer to the separate changelog.txt file.
 
 == Upgrade Notice ==
+
+= 2.8.11 =
+Added global custom field types (Pro only);
+Few minor bug fixes, cosmetic changes and code improvements
 
 = 2.8.10 =
 Added support for global custom fields;

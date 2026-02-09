@@ -1,8 +1,5 @@
 <?php
 
-//ini_set ('display_errors', 1);
-//error_reporting (E_ALL);
-
 define ('AI_OPTION_NAME',                'ad_inserter');
 define ('AI_GLOBAL_FIELDS_NAME',         'ad_inserter_global_fields');
 define ('AI_EXTRACT_NAME',               'ad_inserter_extract');
@@ -36,7 +33,7 @@ if (!defined( 'AD_INSERTER_NAME'))
   define ('AD_INSERTER_NAME', 'Ad Inserter');
 
 if (!defined( 'AD_INSERTER_VERSION'))
-  define ('AD_INSERTER_VERSION', '2.8.10');
+  define ('AD_INSERTER_VERSION', '2.8.11');
 
 if (!defined ('AD_INSERTER_PLUGIN_BASENAME'))
   define ('AD_INSERTER_PLUGIN_BASENAME', plugin_basename (__FILE__));
@@ -785,6 +782,18 @@ define ('AI_TEXT_ENG_BACKGROUND',      'Background');
 define ('AI_SETTINGS_SUBMENU',  0);
 define ('AI_TOP_MENU',          1);
 
+// Global fields
+define('AI_FORBIDDEN_TAGS',         0);
+define('AI_ALLOWED_TAGS',           1);
+define('AI_FORBIDDEN_ATTRIBUTES',   0);
+define('AI_ALLOWED_ATTRIBUTES',     1);
+
+define('AI_GLOBAL_FIELD_CODE_EDITOR', 0);
+define('AI_GLOBAL_FIELD_IMAGE',       1);
+define('AI_GLOBAL_FIELD_CHECKBOX',    2);
+define('AI_GLOBAL_FIELD_SELECTION',   3);
+define('AI_GLOBAL_FIELD_CHECKBOXES',  4);
+
 define ('AI_TEXT_CSS', 'CSS');
 define ('AI_TEXT_CSS_PUSH', 'CSS Push');
 define ('AI_TEXT_JS',  'JavaScript ');
@@ -1010,6 +1019,10 @@ define ('DEFAULT_PARALLAX_MODE',                AI_PARALLAX_MODE_BACKGROUND);
 define ('DEFAULT_GLOBAL_PAGE_USER_ROLE',        'administrator');
 define ('DEFAULT_GLOBAL_PAGE_MENU_PRIORITY',    85);
 define ('DEFAULT_GLOBAL_FIELD_PAGE',            0);
+define ('DEFAULT_GLOBAL_FIELD_TAGS_TYPE',       AI_FORBIDDEN_TAGS);
+define ('DEFAULT_GLOBAL_FIELD_ATTRIBUTES_TYPE', AI_FORBIDDEN_ATTRIBUTES);
+define ('DEFAULT_GLOBAL_FIELD_TYPE',            AI_GLOBAL_FIELD_CODE_EDITOR);
+
 
 define ('AI_ADBLOCKING_DETECTION',              true);
 define ('AI_NORMAL_HEADER_STYLES',              true);

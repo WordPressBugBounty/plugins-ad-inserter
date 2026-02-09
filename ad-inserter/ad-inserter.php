@@ -1,8 +1,11 @@
 <?php
 
+//ini_set ('display_errors', 1);
+//error_reporting (E_ALL);
+
 /*
 Plugin Name: Ad Inserter
-Version: 2.8.10
+Version: 2.8.11
 Description: Ad management with many advanced advertising features to insert ads at optimal positions
 Author: Igor Funa
 Author URI: http://igorfuna.com/
@@ -17,6 +20,10 @@ License: GPLv3
 /*
 
 Change Log
+
+Ad Inserter 2.8.11 - 2026-02-08
+- Added global custom field types (Pro only)
+- Few minor bug fixes, cosmetic changes and code improvements
 
 Ad Inserter 2.8.10 - 2026-01-25
 - Added support for global custom fields
@@ -2309,7 +2316,6 @@ function ai_admin_enqueue_scripts_late ($hook_suffix) {
   global $ai_settings_page;
 
   if ($hook_suffix == $ai_settings_page) {
-//    wp_enqueue_style  ('ai-admin',       plugins_url ('css/ad-inserter.css', __FILE__),                 array (), AD_INSERTER_VERSION);
     wp_enqueue_style  ('ai-admin',       plugins_url ('css/ai-settings.css', __FILE__),                 array (), AD_INSERTER_VERSION);
     wp_add_inline_style ('ai-admin', '.notice {margin: 5px 15px 15px 0;}');
   }
@@ -5585,13 +5591,30 @@ function ai_check_plugin_options ($plugin_options = array ()) {
   }
 
   for ($field = 1; $field <= AI_MAX_GLOBAL_FIELDS; $field ++) {
+    $field_type_settings_name     = 'GLOBAL_FIELD_TYPE_' . $field;
+
     $field_enabled_settings_name  = 'GLOBAL_FIELD_ENABLED_' . $field;
     $field_name_settings_name     = 'GLOBAL_FIELD_NAME_' . $field;
     $field_page_settings_name     = 'GLOBAL_FIELD_PAGE_' . $field;
 
+    $field_tags_type_settings_name       = 'GLOBAL_FIELD_TAGS_TYPE_' . $field;
+    $field_tags_settings_name            = 'GLOBAL_FIELD_TAGS_' . $field;
+    $field_attributes_type_settings_name = 'GLOBAL_FIELD_ATTRIBUTES_TYPE_' . $field;
+    $field_attributes_settings_name      = 'GLOBAL_FIELD_ATTRIBUTES_' . $field;
+    $field_block_for_sel_settings_name   = 'GLOBAL_FIELD_BLOCK_FOR_SEL_' . $field;
+
+    if (!isset ($plugin_options [$field_type_settings_name]))       $plugin_options [$field_type_settings_name] = DEFAULT_GLOBAL_FIELD_TYPE;
+    if (!isset ($plugin_options [$field_iamge_sel_settings_name]))  $plugin_options [$field_iamge_sel_settings_name] = AI_DISABLED;
+
     if (!isset ($plugin_options [$field_enabled_settings_name]))  $plugin_options [$field_enabled_settings_name] = AI_DISABLED;
     if (!isset ($plugin_options [$field_name_settings_name]))     $plugin_options [$field_name_settings_name] = '';
-    if (!isset ($plugin_options [$field_page_settings_name]))      $plugin_options [$field_page_settings_name] = DEFAULT_GLOBAL_FIELD_PAGE;
+    if (!isset ($plugin_options [$field_page_settings_name]))     $plugin_options [$field_page_settings_name] = DEFAULT_GLOBAL_FIELD_PAGE;
+
+    if (!isset ($plugin_options [$field_tags_type_settings_name]))        $plugin_options [$field_tags_type_settings_name] = DEFAULT_GLOBAL_FIELD_TAGS_TYPE;
+    if (!isset ($plugin_options [$field_tags_settings_name]))             $plugin_options [$field_tags_settings_name] = "";
+    if (!isset ($plugin_options [$field_attributes_type_settings_name]))  $plugin_options [$field_attributes_type_settings_name] = DEFAULT_GLOBAL_FIELD_ATTRIBUTES_TYPE;
+    if (!isset ($plugin_options [$field_attributes_settings_name]))       $plugin_options [$field_attributes_settings_name] = "";
+    if (!isset ($plugin_options [$field_block_for_sel_settings_name]))    $plugin_options [$field_block_for_sel_settings_name] = 0;
   }
 
   if (function_exists ('ai_check_options')) ai_check_options ($plugin_options);
@@ -6269,7 +6292,7 @@ function get_hook_priority ($hook_number) {
 }
 
 
-// Global pages
+// Custom pages
 
 function get_global_page_enabled ($page_number) {
   global $ai_db_options;
@@ -6342,6 +6365,60 @@ function get_global_field_page ($field_number) {
 
   $global_field_settings_name = 'GLOBAL_FIELD_PAGE_' . $field_number;
   if (!isset ($ai_db_options [AI_OPTION_GLOBAL][$global_field_settings_name])) $ai_db_options [AI_OPTION_GLOBAL][$global_field_settings_name] = DEFAULT_GLOBAL_FIELD_PAGE;
+
+  return ($ai_db_options [AI_OPTION_GLOBAL][$global_field_settings_name]);
+}
+
+function get_global_field_type ($field_number) {
+  global $ai_db_options;
+
+  $global_field_settings_name = 'GLOBAL_FIELD_TYPE_' . $field_number;
+  if (!isset ($ai_db_options [AI_OPTION_GLOBAL][$global_field_settings_name])) $ai_db_options [AI_OPTION_GLOBAL][$global_field_settings_name] = DEFAULT_GLOBAL_FIELD_TYPE;
+
+  return ($ai_db_options [AI_OPTION_GLOBAL][$global_field_settings_name]);
+}
+
+function get_global_field_tags_type ($field_number) {
+  global $ai_db_options;
+
+  $global_field_settings_name = 'GLOBAL_FIELD_TAGS_TYPE_' . $field_number;
+  if (!isset ($ai_db_options [AI_OPTION_GLOBAL][$global_field_settings_name])) $ai_db_options [AI_OPTION_GLOBAL][$global_field_settings_name] = DEFAULT_GLOBAL_FIELD_TAGS_TYPE;
+
+  return ($ai_db_options [AI_OPTION_GLOBAL][$global_field_settings_name]);
+}
+
+function get_global_field_tags ($field_number) {
+  global $ai_db_options;
+
+  $global_field_settings_name = 'GLOBAL_FIELD_TAGS_' . $field_number;
+  if (!isset ($ai_db_options [AI_OPTION_GLOBAL][$global_field_settings_name])) $ai_db_options [AI_OPTION_GLOBAL][$global_field_settings_name] = "";
+
+  return ($ai_db_options [AI_OPTION_GLOBAL][$global_field_settings_name]);
+}
+
+function get_global_field_attributes_type ($field_number) {
+  global $ai_db_options;
+
+  $global_field_settings_name = 'GLOBAL_FIELD_ATTRIBUTES_TYPE_' . $field_number;
+  if (!isset ($ai_db_options [AI_OPTION_GLOBAL][$global_field_settings_name])) $ai_db_options [AI_OPTION_GLOBAL][$global_field_settings_name] = DEFAULT_GLOBAL_FIELD_ATTRIBUTES_TYPE;
+
+  return ($ai_db_options [AI_OPTION_GLOBAL][$global_field_settings_name]);
+}
+
+function get_global_field_attributes ($field_number) {
+  global $ai_db_options;
+
+  $global_field_settings_name = 'GLOBAL_FIELD_ATTRIBUTES_' . $field_number;
+  if (!isset ($ai_db_options [AI_OPTION_GLOBAL][$global_field_settings_name])) $ai_db_options [AI_OPTION_GLOBAL][$global_field_settings_name] = "";
+
+  return ($ai_db_options [AI_OPTION_GLOBAL][$global_field_settings_name]);
+}
+
+function get_global_field_block_for_selection ($field_number) {
+  global $ai_db_options;
+
+  $global_field_settings_name = 'GLOBAL_FIELD_BLOCK_FOR_SEL_' . $field_number;
+  if (!isset ($ai_db_options [AI_OPTION_GLOBAL][$global_field_settings_name])) $ai_db_options [AI_OPTION_GLOBAL][$global_field_settings_name] = 0;
 
   return ($ai_db_options [AI_OPTION_GLOBAL][$global_field_settings_name]);
 }
@@ -6650,6 +6727,8 @@ function filter_option ($option, $value, $delete_escaped_backslashes = true){
           $option == AI_OPTION_BACKGROUND_COLOR ||
           $option == AI_OPTION_BLOCK_BACKGROUND_COLOR ||
           $option == AI_OPTION_PARAGRAPH_TAGS ||
+          $option == 'GLOBAL_FIELD_TAGS' ||
+          $option == 'GLOBAL_FIELD_ATTRIBUTES' ||
           $option == AI_OPTION_COUNT_INSIDE_ELEMENTS ||
           $option == AI_OPTION_IP_ADDRESS_LIST ||
           $option == AI_OPTION_COUNTRY_LIST) {
@@ -7658,9 +7737,17 @@ function ai_load_settings () {
 
   for ($field = 1; $field <= AI_MAX_GLOBAL_FIELDS; $field ++) {
     $field_settings = array (
-      'enabled' => get_global_field_enabled ($field),
+      'type' => (int) get_global_field_type ($field),
+
+      'enabled' => boolval (get_global_field_enabled ($field)),
       'page' => get_global_field_page ($field) - 1,
-      'name' => get_global_field_name ($field));
+      'name' => get_global_field_name ($field),
+
+      'tags_type' => (int) get_global_field_tags_type ($field),
+      'tags' => str_replace (' ', '', get_global_field_tags ($field)),
+      'attributes_type' => (int) get_global_field_attributes_type ($field),
+      'attributes' => str_replace (' ', '', get_global_field_attributes ($field)),
+      'block' => (int) get_global_field_block_for_selection ($field));
 
     $ai_global_fileds_settings ['fields'] []= $field_settings;
   }
@@ -8373,9 +8460,17 @@ function ai_settings () {
         }
 
         for ($field = 1; $field <= AI_MAX_GLOBAL_FIELDS; $field ++) {
-          if (isset ($_POST ['global-field-enabled-'.$field]))       $options ['GLOBAL_FIELD_ENABLED_'.$field]  = filter_option ('GLOBAL_PAGE_ENABLED', $_POST ['global-field-enabled-'.$field]);
-          if (isset ($_POST ['global-field-name-'.$field]))          $options ['GLOBAL_FIELD_NAME_'.$field]     = filter_string_tags ($_POST ['global-field-name-'.$field]);
-          if (isset ($_POST ['global-field-page-'.$field]))          $options ['GLOBAL_FIELD_PAGE_'.$field]     = filter_option ('GLOBAL_FIELD_PAGE', $_POST ['global-field-page-'.$field]);
+          if (isset ($_POST ['global-field-type-'.$field]))             $options ['GLOBAL_FIELD_TYPE_'.$field]      = filter_option ('GLOBAL_FIELD_TYPE', $_POST ['global-field-type-'.$field]);
+
+          if (isset ($_POST ['global-field-enabled-'.$field]))          $options ['GLOBAL_FIELD_ENABLED_'.$field]  = filter_option ('GLOBAL_PAGE_ENABLED', $_POST ['global-field-enabled-'.$field]);
+          if (isset ($_POST ['global-field-name-'.$field]))             $options ['GLOBAL_FIELD_NAME_'.$field]     = filter_string_tags ($_POST ['global-field-name-'.$field]);
+          if (isset ($_POST ['global-field-page-'.$field]))             $options ['GLOBAL_FIELD_PAGE_'.$field]     = filter_option ('GLOBAL_FIELD_PAGE', $_POST ['global-field-page-'.$field]);
+
+          if (isset ($_POST ['global-field-tags-type-'.$field]))        $options ['GLOBAL_FIELD_TAGS_TYPE_'.$field]        = filter_option ('GLOBAL_FIELD_TAGS_TYPE', $_POST ['global-field-tags-type-'.$field]);
+          if (isset ($_POST ['global-field-tags-'.$field]))             $options ['GLOBAL_FIELD_TAGS_'.$field]             = filter_option ('GLOBAL_FIELD_TAGS', $_POST ['global-field-tags-'.$field]);
+          if (isset ($_POST ['global-field-attributes-type-'.$field]))  $options ['GLOBAL_FIELD_ATTRIBUTES_TYPE_'.$field]  = filter_option ('GLOBAL_FIELD_ATTRIBUTES_TYPE', $_POST ['global-field-attributes-type-'.$field]);
+          if (isset ($_POST ['global-field-attributes-'.$field]))       $options ['GLOBAL_FIELD_ATTRIBUTES_'.$field]       = filter_option ('GLOBAL_FIELD_ATTRIBUTES', $_POST ['global-field-attributes-'.$field]);
+          if (isset ($_POST ['global-field-block-for-sel-'.$field]))    $options ['GLOBAL_FIELD_BLOCK_FOR_SEL_'.$field]    = filter_option ('GLOBAL_FIELD_BLOCK_FOR_SEL', $_POST ['global-field-block-for-sel-'.$field]);
         }
 
         $ai_options [AI_OPTION_GLOBAL] = ai_check_plugin_options ($options);
@@ -8610,39 +8705,274 @@ function adinserter ($block = '', $options = '') {
   return $code;
 }
 
-function adinserter_global_custom_field ($field = '') {
-  if (is_numeric ($field)) {
-    $field_index = intval ($field) - 1;
+function generate_rotation_code ($option_data, $rotate_options = '') {
 
-    global $ai_global_fileds_settings;
+  $attributes = '';
 
-    $ai_global_fields = get_option (AI_GLOBAL_FIELDS_NAME, array ());
+  if (isset ($option_data ['name']) && $option_data ['name']) {
+    $attributes = ' name="' . $option_data ['name'] . '"';
+  }
+  if (isset ($option_data ['share']) && $option_data ['share']) {
+    $attributes .= ' share="' . $option_data ['share'] . '"';
+  }
+  if (isset ($option_data ['time']) && $option_data ['time']) {
+    $attributes .= ' time="' . $option_data ['time'] . '"';
+  }
+  if (isset ($option_data ['index']) && $option_data ['index']) {
+    $attributes .= ' index="' . $option_data ['index'] . '"';
+  }
+  if (isset ($option_data ['scheduling']) && $option_data ['scheduling']) {
+    $attributes .= ' scheduling="' . $option_data ['scheduling'] . '"';
+  }
+  if (isset ($option_data ['groups']) && $option_data ['groups']) {
+    $attributes .= ' groups="' . $option_data ['groups'] . '"';
+  }
+  if (isset ($option_data ['prepend-append']) && $option_data ['prepend-append']) {
+    $attributes .= ' code="' . $option_data ['prepend-append'] . '"';
+  }
 
-    $global_page = $ai_global_fileds_settings ['fields'][$field_index]['page'];
-    if (isset ($ai_global_fileds_settings ['pages'][$global_page]) && $ai_global_fileds_settings ['pages'][$global_page]['enabled'] && $ai_global_fileds_settings ['fields'][$field_index]['enabled']) {
+  if ($rotate_options != '') {
+    $rotate_options = '="' . $rotate_options . '"';
+  }
+  return '[ADINSERTER ROTATE' . $rotate_options . $attributes . ']' ."\n" . $option_data ['code'] . "\n\n";
+}
+
+function adinserter_global_custom_field_value ($field_index, $field_data, $data_as_array = false) {
+  global $block_object, $ai_wp_data, $ai_global_fileds_settings;
+
+  $ai_global_fields = get_option (AI_GLOBAL_FIELDS_NAME, array ());
+
+  switch ($field_data ['type']) {
+    case AI_GLOBAL_FIELD_SELECTION:
+    case AI_GLOBAL_FIELD_CHECKBOXES:
+
+      $field_value = '';
+
+      $block = $field_data ['block'];
+      $option_names = array ();
+      $option_codes = array ();
+      $rotation_data = array ();
+      $rotation_data_indexed = array ();
+      $rotate_options = '';
+
+      if ($block >= 1 && $block <= 96) {
+        $obj = $block_object [$block];
+
+        $code_generator = new ai_code_generator ();
+        $rotation_data = $code_generator->import_rotation ($obj->get_ad_data (), true);
+
+        $rotation_data = $rotation_data ['options'];
+        $prepend_option = array ();
+        $append_option = array ();
+
+        foreach ($rotation_data as $rotation_data_index => $rotation_data_version) {
+           if (isset ($rotation_data_version ['prepend-append']) && $rotation_data_version ['prepend-append'] != '') {
+            if (strpos ($rotation_data_version ['prepend-append'], 'prepend') !== false) {
+              $prepend_option = $rotation_data_version;
+            }
+            elseif (strpos ($rotation_data_version ['prepend-append'], 'append') !== false) {
+              $append_option = $rotation_data_version;
+            }
+
+            unset ($rotation_data [$rotation_data_index]);
+          }
+          if (isset ($ai_wp_data [AI_SHORTCODES]['rotate'][$rotation_data_index]['rotate']) && $ai_wp_data [AI_SHORTCODES]['rotate'][$rotation_data_index]['rotate'] != '') {
+            $rotate_options = $ai_wp_data [AI_SHORTCODES]['rotate'][$rotation_data_index]['rotate'];
+          }
+        }
+        $rotation_data = array_values ($rotation_data);
+
+        if (count ($rotation_data) > 1) {
+          foreach ($rotation_data as $rotation_data_index => $rotation_data_element) {
+            $version = $rotation_data_index + 1;
+            $data_index = $version;
+            $option_index = $version;
+
+              foreach ($rotation_data as $rotation_data_index => $rotation_data_version) {
+                if (isset ($rotation_data_version ['index']) && $rotation_data_version ['index'] != '') {
+                  $option_index = (int) $rotation_data_version ['index'];
+                  if ($option_index == $version) {
+                    $data_index = $rotation_data_index + 1;
+                    $option_index = $option_index;
+                    break;
+                  }
+                }
+              }
+
+            $option_name = isset ($rotation_data [$data_index - 1]['name']) && trim ($rotation_data [$data_index - 1]['name']) != '' ? str_replace ("'", "&#39;", $rotation_data [$data_index - 1]['name']) : chr (ord ('A') + $data_index_for_name - 1);
+            $option_names [$option_index] = filter_string_tags ($option_name);
+
+            $option_code = isset ($rotation_data [$data_index - 1]['code']) ? $rotation_data [$data_index - 1]['code'] : '';
+            $option_codes [$option_index] = $option_code;
+
+            $rotation_data_indexed [$option_index] = $rotation_data [$data_index - 1];
+          }
+        }
+      }
+
+      break;
+  }
+
+  switch ($field_data ['type']) {
+    case AI_GLOBAL_FIELD_CODE_EDITOR:
+
+      if ($data_as_array) {
+        return '';
+      }
+
+      $block = isset ($ai_global_fileds_settings ['fields'][$field_index]['block']) ? $ai_global_fileds_settings ['fields'][$field_index]['block'] : 0;
+      if ($block != 0) {
+        $obj = $block_object [$block];
+        $field_value = $obj->get_ad_data ();
+      } else {
+          $field_value = isset ($ai_global_fields [$field_index]) ? $ai_global_fields [$field_index] : '';
+          if (is_string ($field_value) && substr ($field_value, 0, 4) === ':AI:') {
+            $field_value = base64_decode (substr ($field_value, 4), true);
+          }
+        }
+      break;
+
+    case AI_GLOBAL_FIELD_IMAGE:
+
       $field_value = isset ($ai_global_fields [$field_index]) ? $ai_global_fields [$field_index] : '';
       if (is_string ($field_value) && substr ($field_value, 0, 4) === ':AI:') {
         $field_value = base64_decode (substr ($field_value, 4), true);
       }
 
-      return $field_value;
+      $image_data = json_decode ($field_value);
+      $field_value = '';
+
+      if ($image_data !== null) {
+        $image_data = (array) $image_data;
+
+        if ($data_as_array) {
+          return $image_data;
+        }
+
+        if (isset ($image_data ['id']) && is_int ($image_data ['id'])) {
+          $field_value = wp_get_attachment_image ($image_data ['id'], 'full', false);
+
+          if (isset ($image_data ['link']) && $image_data ['link'] != '') {
+            $target = '';
+            if (isset ($image_data ['new-tab']) && $image_data ['new-tab'] == '1') {
+              $target = ' target="_blank"';
+            }
+            $field_value = '<a href="' . esc_url ($image_data ['link']) . '"' . $target .'>' . $field_value . '</a>';
+          }
+        }
+      }
+
+      break;
+
+    case AI_GLOBAL_FIELD_SELECTION:
+      $field_value_array = array ();
+      $field_value = '';
+
+      if (isset ($obj) && count ($rotation_data) == 1) {
+        $field_value = $obj->get_ad_data ();
+      }
+      elseif (isset ($ai_global_fields [$field_index]) && count ($option_codes) > 1) {
+        $selection_value = (int) $ai_global_fields [$field_index];
+
+        if ($data_as_array) {
+          foreach ($option_names as $index => $option_name) {
+            $field_value_array [$index] = array ('name' => $option_name, 'code' => $option_codes [$index], 'selected' => $index == $selection_value ? 1 : 0);
+          }
+
+          return $field_value_array;
+        }
+
+        $field_value  = isset ($prepend_option ['code']) ? $prepend_option ['code'] : '';
+        $field_value .= isset ($option_codes [$selection_value]) ? $option_codes [$selection_value] : '';
+        $field_value .= isset ($append_option ['code']) ? $append_option ['code'] : '';
+      }
+
+      break;
+
+    case AI_GLOBAL_FIELD_CHECKBOXES:
+      $field_value_array = array ();
+      $field_options = array ();
+      $field_value = '';
+
+      $field_data = isset ($ai_global_fields [$field_index]) ? $ai_global_fields [$field_index] : '';
+
+      if ($field_data != '') {
+        if (is_string ($field_data) && substr ($field_data, 0, 4) === ':AI:') {
+          $field_data = base64_decode (substr ($field_data, 4), true);
+        }
+
+        $field_options = json_decode ($field_data);
+        if ($field_options != null) {
+          $field_options = (array) $field_options;
+
+          foreach ($option_names as $index => $option_name) {
+            $field_value_array [$index] = array ('name' => $option_name, 'code' => $option_codes [$index], 'selected' => isset ($field_options [$index]) && $field_options [$index] ? 1 : 0);
+          }
+        }
+      }
+
+      if ($data_as_array) {
+        return $field_value_array;
+      }
+
+      $counter = 0;
+      if (!empty ($prepend_option)) {
+        $field_value .= generate_rotation_code ($prepend_option, $rotate_options);
+        $rotate_options = '';
+      }
+      foreach ($rotation_data_indexed as $index => $option_data) {
+        if (isset ($field_options [$index]) && $field_options [$index]) {
+          $field_value .= generate_rotation_code ($option_data, $rotate_options);
+          $rotate_options = '';
+          $counter ++;
+        }
+      }
+      if (!empty ($append_option)) {
+        $field_value .= generate_rotation_code ($append_option, $rotate_options);
+        $rotate_options = '';
+      }
+
+      $field_value = trim ($field_value);
+
+      if ($counter == 0) {
+        $field_value = '';
+      }
+
+      break;
+
+    case AI_GLOBAL_FIELD_CHECKBOX:
+      if ($data_as_array) {
+        return '';
+      }
+
+      $field_value = (int) isset ($ai_global_fields [$field_index]) ? $ai_global_fields [$field_index] : 0;
+      break;
+  }
+
+  return $field_value;
+}
+
+function adinserter_global_custom_field ($field = '', $data_as_array = false) {
+  if (is_numeric ($field)) {
+    $field_index = intval ($field) - 1;
+
+    global $ai_global_fileds_settings;
+
+
+    if (isset ($ai_global_fileds_settings ['fields'][$field_index])) {
+      $global_page = $ai_global_fileds_settings ['fields'][$field_index]['page'];
+      if (isset ($ai_global_fileds_settings ['pages'][$global_page]) && $ai_global_fileds_settings ['pages'][$global_page]['enabled'] && $ai_global_fileds_settings ['fields'][$field_index]['enabled']) {
+        return adinserter_global_custom_field_value ($field_index, $ai_global_fileds_settings ['fields'][$field_index], $data_as_array);
+      }
     }
   } else {
       global $ai_global_fileds_settings;
-
-      $ai_global_fields = get_option (AI_GLOBAL_FIELDS_NAME, array ());
 
       foreach ($ai_global_fileds_settings ['fields'] as $field_index => $ai_global_field) {
         $global_page = $ai_global_field ['page'];
         if (isset ($ai_global_fileds_settings ['pages'][$global_page]) && $ai_global_fileds_settings ['pages'][$global_page]['enabled']) {
           if ($ai_global_field ['enabled'] && $ai_global_field ['name'] == $field) {
-
-            $field_value = isset ($ai_global_fields [$field_index]) ? $ai_global_fields [$field_index] : '';
-            if (is_string ($field_value) && substr ($field_value, 0, 4) === ':AI:') {
-              $field_value = base64_decode (substr ($field_value, 4), true);
-            }
-
-            return $field_value;
+            return adinserter_global_custom_field_value ($field_index, $ai_global_field, $data_as_array);
           }
         }
       }

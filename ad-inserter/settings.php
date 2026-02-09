@@ -2610,7 +2610,7 @@ function generate_settings_form (){
       <ul id="ai-general-plugin-settings-tabs" style="margin-top: 10px; display: none;">
         <li id="ai-fe" class="ai-plugin-tab"><a href="#tab-general-frontend"><?php _e ('Frontend', 'ad-inserter'); ?></a></li>
         <li id="ai-ad" class="ai-plugin-tab"><a href="#tab-general-admin"><?php _e ('Administration', 'ad-inserter'); ?></a></li>
-        <li id="ai-co" class="ai-plugin-tab"><a href="#tab-general-custom-pages"><?php _e ('Pages for custom fields', 'ad-inserter'); ?></a></li>
+        <li id="ai-co" class="ai-plugin-tab"><a href="#tab-general-custom-pages"><?php _e ('Custom pages', 'ad-inserter'); ?></a></li>
         <li id="ai-co" class="ai-plugin-tab"><a href="#tab-general-global-custom-fields"><?php _e ('Global custom fields', 'ad-inserter'); ?></a></li>
         <li id="ai-co" class="ai-plugin-tab"><a href="#tab-general-constants"><?php _e ('Constants', 'ad-inserter'); ?></a></li>
 <?php if (function_exists ('ai_plugin_recaptcha_tab') && ai_settings_check_1 ('AD_INSERTER_RECAPTCHA')): ?>
@@ -2938,32 +2938,6 @@ function generate_settings_form (){
 
         global $menu;
 
-//        echo '<pre>';
-//        print_r( $menu );
-//        echo '</pre>';
-
-//                Array (
-//          [0] => Array (
-//            [0] => Menu title
-//            [1] => Capability required
-//            [2] => Menu slug
-//            [3] => Page title
-//            [4] => CSS classes
-//            [5] => Menu ID
-//            [6] => Icon URL / dashicon
-//          )
-//        )
-//         [81] => Array
-//        (
-//            [0] => Ad Inserter Pro
-//            [1] => manage_options
-//            [2] => ad-inserter.php
-//            [3] => Ad Inserter Pro Settings
-//            [4] => menu-top toplevel_page_ad-inserter
-//            [5] => toplevel_page_ad-inserter
-//            [6] => dashicons-layout
-//        )
-
         $position = array (0 => array (0 => 'Top menu', 1 => 'read', 2 => '', 3 => 'Top menu', 4 => '', 5 => 'top-menu', 6 => ''));
         foreach ($menu as $menu_priority => $menu_item) {
           if ($menu_item [0] != ''  && strpos ($menu_item [2], '.php') !== false && strpos ($menu_item [2], 'data:') !== 0) {
@@ -2997,19 +2971,19 @@ function generate_settings_form (){
               </tr>
 <?php
 
-              if (function_exists ('ai_general_settings_4')) {
-                $users = get_users ();
-//                $capabilities = ai_all_capabilities ();
-              }
+//              if (function_exists ('ai_general_settings_4')) {
+//                $users = get_users ();
+////                $capabilities = ai_all_capabilities ();
+//              }
               for ($page = 1; $page <= AI_MAX_GLOBAL_FIELD_PAGES; $page ++) {
 
                 $page_access = get_global_page_access ($page);
                 $user_capability_options = '';
 
-                if (function_exists ('ai_general_settings_4')) {
-//                  $user_capability_options = ai_general_settings_4 ($page, $users, $capabilities);
-                  $user_capability_options = ai_general_settings_4 ($page, $users);
-                }
+//                if (function_exists ('ai_general_settings_4')) {
+////                  $user_capability_options = ai_general_settings_4 ($page, $users, $capabilities);
+//                  $user_capability_options = ai_general_settings_4 ($page, $users);
+//                }
 ?>
               <tr>
                 <td style="padding: 0 0 2px 0;">
@@ -3041,7 +3015,7 @@ function generate_settings_form (){
 <?php
                     wp_dropdown_roles ($page_access);
 
-                    echo $user_capability_options;
+//                    echo $user_capability_options;
 ?>
                   </select>
                 </td>
@@ -3077,6 +3051,8 @@ function generate_settings_form (){
                 <th style="text-align: left; padding-left: 5px;">
                   <?php _e ('Page', 'ad-inserter'); ?>
                 </th>
+                <th>
+                </th>
               </tr>
 <?php
               for ($field = 1; $field <= AI_MAX_GLOBAL_FIELDS; $field ++) {
@@ -3086,7 +3062,7 @@ function generate_settings_form (){
                   <input type="hidden"   name="global-field-enabled-<?php echo $field; ?>" value="0" />
                   <input type="checkbox" name="global-field-enabled-<?php echo $field; ?>" value="1" default="<?php echo AI_DISABLED; ?>" id="global-field-enabled-<?php echo $field; ?>" title="<?php _e ('Enable field', 'ad-inserter'); ?>" <?php if (get_global_field_enabled ($field) == AI_ENABLED) echo 'checked '; ?> />
                 </td>
-                <td style="text-align: right;">
+                <td class="ai-field" field-index="<?php echo $field; ?>" style="text-align: right; cursor: pointer;" title='<?php echo _e('Copy field shortcode', 'ad-inserter'); ?>[BR][ADINSERTER global-custom-field="<?php echo $field; ?>"]'>
                   <?php echo $field; ?>&nbsp;
                 </td>
                 <td>
@@ -3102,6 +3078,24 @@ function generate_settings_form (){
                     }
 ?>
                   </select>
+                </td>
+                <td>
+<?php
+              if (function_exists ('ai_general_settings_5')):
+?>
+                  <button id="global-field-button-<?php echo $field; ?>" type="button" field-index="<?php echo $field; ?>" class='ai-button ai-button-small global-field-settings-button' style="display: none; outline: transparent; float: right; margin-top: 1px; width: 15px; height: 15px;" title="<?php _e ('Toggle field settings', 'ad-inserter'); ?>"></button>
+<?php
+              endif;
+?>
+                </td>
+              </tr>
+              <tr>
+                <td colspan="5" style="padding: 0;">
+<?php
+                  if (function_exists ('ai_general_settings_5')) {
+                    ai_general_settings_5 ($field);
+                  }
+?>
                 </td>
               </tr>
 <?php
@@ -4856,6 +4850,20 @@ function code_block_list ($start, $end, $search_text, $show_all_blocks, $active_
           }
         }
 
+        // Update block numbers in custom fields
+        for ($field = 1; $field <= AI_MAX_GLOBAL_FIELDS; $field ++) {
+          $global_field_settings_name = 'GLOBAL_FIELD_BLOCK_FOR_SEL_' . $field;
+          if (isset ($new_options [AI_OPTION_GLOBAL][$global_field_settings_name])) {
+            $ai_field_block = $new_options [AI_OPTION_GLOBAL][$global_field_settings_name];
+            if ($ai_field_block != 0)
+              foreach ($blocks_new as $index => $org_block) {
+                if ($ai_field_block == $org_block) {
+                  $new_options [AI_OPTION_GLOBAL][$global_field_settings_name] = $blocks_org [$index];
+                }
+              }
+          }
+        }
+
         ai_save_options ($new_options, null, $blocks_org, $blocks_new);
       }
     }
@@ -4893,7 +4901,7 @@ function code_block_list ($start, $end, $search_text, $show_all_blocks, $active_
           $option_index_for_name = $version;
 
             foreach ($rotation_data as $rotation_data_index => $rotation_data_version) {
-              if (isset ($rotation_data_version ['index'])) {
+              if (isset ($rotation_data_version ['index']) && $rotation_data_version ['index'] != '') {
                 $option_index = (int) $rotation_data_version ['index'];
                 if ($option_index == $version) {
                   $data_index_for_name = $rotation_data_index + 1;
@@ -5883,6 +5891,7 @@ function ai_clear_settings () {
   delete_option (AD_OPTIONS);
 
   delete_option (AI_OPTION_NAME);
+  delete_option (AI_GLOBAL_FIELDS_NAME);
   delete_option (AI_EXTRACT_NAME);
   delete_option (AI_FLAGS_NAME);
 

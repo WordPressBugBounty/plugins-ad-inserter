@@ -51,6 +51,17 @@ define ('AI_TEXT_DIRECTION_FROM_BOTTOM',__('from bottom', 'ad-inserter'));
 define ('AI_TEXT_CONTAIN',              _x('contain', 'paragraphs', 'ad-inserter'));
 define ('AI_TEXT_DO_NOT_CONTAIN',       _x('do not contain', 'paragraphs', 'ad-inserter'));
 
+define ('AI_TEXT_GLOBAL_FIELD_CODE_EDITOR', __('Code editor', 'ad-inserter'));
+define ('AI_TEXT_GLOBAL_FIELD_IMAGE',       __('Image', 'ad-inserter'));
+define ('AI_TEXT_GLOBAL_FIELD_SELECTION',   __('Selection', 'ad-inserter'));
+define ('AI_TEXT_GLOBAL_FIELD_CHECKBOXES',  __('Checkboxes', 'ad-inserter'));
+define ('AI_TEXT_GLOBAL_FIELD_CHECKBOX',    __('Checkbox', 'ad-inserter'));
+
+define ('AI_TEXT_ALLOWED_TAGS',         __('Allowed tags', 'ad-inserter'));
+define ('AI_TEXT_FORBIDDEN_TAGS',       __('Forbidden tags', 'ad-inserter'));
+define ('AI_TEXT_ALLOWED_ATTRIBUTES',   __('Allowed attributes', 'ad-inserter'));
+define ('AI_TEXT_FORBIDDEN_ATTRIBUTES', __('Forbidden attributes', 'ad-inserter'));
+
 define ('AI_TEXT_DO_NOT_COUNT',         __('Do not count', 'ad-inserter'));
 define ('AI_TEXT_COUNT_ONLY',           __('Count only',  'ad-inserter'));
 
@@ -210,6 +221,11 @@ define ('AI_TEXT_TOP_MENU',               __('Top menu', 'ad-inserter'));
 define ('AI_TEXT_BLOCK',                  __('Block', 'ad-inserter'));
 define ('AI_TEXT_BACKGROUND',             __('Background', 'ad-inserter'));
 
+define ('AI_TEXT_MEDIA_SELECT_IMAGE',     __('Select image', 'ad-inserter'));
+define ('AI_TEXT_MEDIA_USE_THIS_IMAGE',   __('Use this image', 'ad-inserter'));
+define ('AI_TEXT_MEDIA_IMAGE',            __('IMAGE', 'ad-inserter'));
+define ('AI_TEXT_MEDIA_LINK',             __('Link', 'ad-inserter'));
+define ('AI_TEXT_MEDIA_OPEN_LINK_NEW_TAB',__('Open link in a new tab', 'ad-inserter'));
 
                                                 // Translators: %s: Ad Inserter Pro
 define ('DEFAULT_REPORT_HEADER_TITLE',          sprintf (__('%s Report', 'ad-inserter'), 'Ad Inserter Pro'));
