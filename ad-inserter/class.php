@@ -10050,6 +10050,10 @@ echo '</body>
             $ai_wp_data [AI_CLIENT_SIDE_DETECTION] = true;
             $ai_wp_data [AI_CLIENT_SIDE_INSERTION] = true;
           }
+          if (stripos ($code, 'global-custom-field=') !== false) {
+            // Might generate viewport shortcodes
+            $ai_wp_data [AI_CLIENT_SIDE_DETECTION] = true;
+          }
           if (stripos ($code, 'fallback=') !== false) {
             $ai_wp_data [AI_CLIENT_SIDE_INSERTION] = true;
           }
@@ -11150,12 +11154,16 @@ define ('AI_MAX_GLOBAL_FIELDS',         20);
 class ai_global_fileds {
 
     public function __construct () {
+
         add_action ( 'admin_menu', array ($this, 'add_admin_menu'));
 
         add_action ('admin_head', function () {
           $current_screen = get_current_screen ();
-          $ai_global_fields_pos = strpos ($current_screen->base, 'ai-global-fields-');
-          if ($ai_global_fields_pos !== false && wp_is_mobile ()) {
+          $ai_global_fields_pos        = strpos ($current_screen->base, 'ai-global-fields-');
+          $ai_remote_global_fields_pos = strpos ($current_screen->base, 'ai-remote_global-fields-');
+          $ai_global_fields_page = $ai_global_fields_pos !== false || $ai_remote_global_fields_pos !== false;
+
+          if ($ai_global_fields_page && wp_is_mobile ()) {
             echo '<meta name="viewport" content="width=762">', PHP_EOL;
           }
         });
@@ -11169,8 +11177,20 @@ class ai_global_fileds {
         add_action ('admin_enqueue_scripts', function ($hook) {
           global $ai_global_fileds_settings;
 
-          $ai_global_fields_pos = strpos ($hook, 'ai-global-fields-');
-          if ($ai_global_fields_pos !== false) {
+          // TEMP solution
+          if (!defined ('AI_CONNECTED_WEBSITE') || get_transient (AI_CONNECTED_WEBSITE) === false) {
+            $option = get_option (AI_OPTION_GCF_NAME, '');
+            if ($option === '') {
+              update_option (AI_OPTION_GCF_NAME, $ai_global_fileds_settings);
+            }
+          }
+
+          $ai_global_fields_pos        = strpos ($hook, 'ai-global-fields-');
+          $ai_remote_global_fields_pos = strpos ($hook, 'ai-remote-global-fields-');
+          $remote_page = $ai_remote_global_fields_pos !== false;
+          $ai_global_fields_page = $ai_global_fields_pos !== false || $remote_page;
+
+          if ($ai_global_fields_page) {
 
             wp_enqueue_media (); // loads wp.media scripts
 
@@ -11190,7 +11210,8 @@ class ai_global_fileds {
                   'button' => AI_TEXT_MEDIA_USE_THIS_IMAGE,
                   'image'  => AI_TEXT_MEDIA_IMAGE,
                   'link'   => AI_TEXT_MEDIA_LINK,
-                  'new_tab'=> AI_TEXT_MEDIA_OPEN_LINK_NEW_TAB
+                  'new_tab'=> AI_TEXT_MEDIA_OPEN_LINK_NEW_TAB,
+                  'viewports'=> AI_TEXT_MEDIA_VIEWPORTS
                 )
             );
 
@@ -11231,17 +11252,21 @@ class ai_global_fileds {
             $settings_php ['codemirror']['matchTags'] = false;
             $settings_php ['codemirror']['extraKeys'] = ['Tab' => false];
 
-            $ai_global_fields = get_option (AI_GLOBAL_FIELDS_NAME, array ());
+            $ai_global_fields = get_global_fields ($remote_page);
 
             wp_enqueue_script ('wp-theme-plugin-editor');
             wp_enqueue_style ('wp-codemirror');
 
             $js_code = "";
-            $current_global_page_index = str_replace ('ai-global-fields-', '', substr ($hook, $ai_global_fields_pos)) - 1;
+            if ($ai_global_fields_pos !== false) {
+              $current_global_page_index = str_replace ('ai-global-fields-', '', substr ($hook, $ai_global_fields_pos)) - 1;
+            }
             foreach ($ai_global_fileds_settings ['fields'] as $field_index => $field_data) {
+
               if ($field_data ['enabled'] && ($field_data ['type'] == AI_GLOBAL_FIELD_CODE_EDITOR) &&
-                  $field_data ['page'] == $current_global_page_index && $field_index < AI_MAX_GLOBAL_FIELDS) {
-                $field_id = 'ai-global-field-' . $field_index;
+                  ($remote_page || $field_data ['page'] == $current_global_page_index) &&
+                  $field_index < AI_MAX_GLOBAL_FIELDS) {
+
                 $field_value = isset ($ai_global_fields [$field_index]) ? $ai_global_fields [$field_index] : '';
                 if (is_string ($field_value) && substr ($field_value, 0, 4) === ':AI:') {
                   $field_value = base64_decode (substr ($field_value, 4), true);
@@ -11299,18 +11324,64 @@ class ai_global_fileds {
     public function add_admin_menu () {
       global $menu, $ai_global_fileds_settings;
 
-      foreach ($ai_global_fileds_settings ['pages'] as $global_fileds_menu_index => $ai_global_fileds_menu) {
+      $top_menu_items = array ();
+      $sub_menu_items = array ();
+
+      if (defined ('AD_INSERTER_WEBSITES')) {
+        $websites = get_option (AI_WEBSITES, array ());
+
+        if (!empty ($websites)) {
+          foreach ($websites as $index => $website) {
+            if (isset ($website ['enabled']) && $website ['enabled'] && trim ($website ['name']) != '') {
+              $capability = isset ($website ['access']) ? $this->get_role_capability ($website ['access']) : 'administrator';
+
+              if (!isset ($first_slug)) {
+                $first_slug = 'ai-remote-global-fields-' . ($index + 1);
+              }
+              $sub_menu_items []= array (
+                'menu_position' => $first_slug,
+                // translators: first %s: Ad Inserter, second %s: Website name
+                'page_name' => sprintf (__('%s Global Custom Fields on %s', 'ad-inserter'), AD_INSERTER_NAME, $website ['name']),
+                'menu_name' => $website ['name'],
+                'capability' => $capability,
+                'slug' => 'ai-remote-global-fields-' . ($index + 1),
+                'page_function' => array ($this, 'ai_global_fields_settings_page'),
+                'priority' => $index + 1
+              );
+            }
+          }
+          if (!empty ($sub_menu_items)) {
+            $top_menu_items []= array (
+                // translators: %s: Ad Inserter
+              'page_name' => sprintf (__('%s Global Custom Fields', 'ad-inserter'), AD_INSERTER_NAME),
+              'menu_name' => get_remote_pages_menu_name (),
+              'capability' => 'read',
+              'slug' => $sub_menu_items [0]['slug'],
+              'page_function' => '',
+              'icon' => 'dashicons-admin-site',
+              'priority' => defined ('AI_SETTINGS_MENU_PRIORITY') ? AI_SETTINGS_MENU_PRIORITY : DEFAULT_SETTINGS_MENU_PRIORITY
+            );
+          }
+        }
+      }
+
+      // For menus always use local global fileds settings
+      $global_fileds_settings = get_option (AI_OPTION_GCF_NAME, array ('pages' => array (), 'fields' => array ()));
+
+      foreach ($global_fileds_settings ['pages'] as $global_fileds_menu_index => $ai_global_fileds_menu) {
 
         if (!$this->can_access_global_fields_page ($global_fileds_menu_index)) continue;
 
         $menu_found = false;
-        foreach ($menu as $menu_item) {
-          if ($menu_item [2] == $ai_global_fileds_menu ['menu_position']) {
-            $menu_found = true;
-            break;
+        if ($ai_global_fileds_menu ['menu_position'] != '') {
+          foreach ($menu as $menu_item) {
+            if ($menu_item [2] == $ai_global_fileds_menu ['menu_position']) {
+              $menu_found = true;
+              break;
+            }
           }
+          if (!$menu_found && $ai_global_fileds_menu ['menu_position'] != '') continue;
         }
-        if (!$menu_found && $ai_global_fileds_menu ['menu_position'] != '') continue;
 
         $access = $ai_global_fileds_menu ['access'];
 
@@ -11326,32 +11397,55 @@ class ai_global_fileds {
           switch ($ai_global_fileds_menu ['menu_position']) {
 
             case '':
-              add_menu_page (
+              $top_menu_items []= array (
                 // translators: first %s: Ad Inserter, second %s: Page name
-                sprintf (__('%s Global Custom Fields - %s', 'ad-inserter'), AD_INSERTER_NAME, $ai_global_fileds_menu ['menu_name']),
-                $ai_global_fileds_menu ['menu_name'],
-                $capability,
-                'ai-global-fields-' . ($global_fileds_menu_index + 1),
-                array ($this, 'ai_global_fields_settings_page'),
-                'dashicons-layout',
-                $ai_global_fileds_menu ['priority']
+              'page_name' => sprintf (__('%s Global Custom Fields - %s', 'ad-inserter'), AD_INSERTER_NAME, $ai_global_fileds_menu ['menu_name']),
+              'menu_name' => $ai_global_fileds_menu ['menu_name'],
+              'capability' => $capability,
+              'slug' => 'ai-global-fields-' . ($global_fileds_menu_index + 1),
+              'page_function' => array ($this, 'ai_global_fields_settings_page'),
+              'icon' => 'dashicons-layout',
+              'priority' => $ai_global_fileds_menu ['priority']
               );
               break;
 
             default:
-              $ai_global_fileds_page = add_submenu_page (
-                $ai_global_fileds_menu ['menu_position'],
+              $sub_menu_items []= array (
+                'menu_position' => $ai_global_fileds_menu ['menu_position'],
                 // translators: %s: Ad Inserter Global Custom Fields - %s: page name
-                sprintf (__('%s Global Custom Fields - %s', 'ad-inserter'), AD_INSERTER_NAME, $ai_global_fileds_menu ['menu_name']),
-                $ai_global_fileds_menu ['menu_name'],
-                $capability,
-                'ai-global-fields-' . ($global_fileds_menu_index + 1),
-                array ($this, 'ai_global_fields_settings_page'),
-                $ai_global_fileds_menu ['priority']
+                'page_name' => sprintf (__('%s Global Custom Fields - %s', 'ad-inserter'), AD_INSERTER_NAME, $ai_global_fileds_menu ['menu_name']),
+                'menu_name' => $ai_global_fileds_menu ['menu_name'],
+                'capability' => $capability,
+                'slug' => 'ai-global-fields-' . ($global_fileds_menu_index + 1),
+                'page_function' => array ($this, 'ai_global_fields_settings_page'),
+                'priority' => $ai_global_fileds_menu ['priority']
               );
               break;
           }
         }
+      }
+
+      foreach ($top_menu_items as $top_menu_item) {
+        add_menu_page (
+          $top_menu_item ['page_name'],
+          $top_menu_item ['menu_name'],
+          $top_menu_item ['capability'],
+          $top_menu_item ['slug'],
+          $top_menu_item ['page_function'],
+          $top_menu_item ['icon'],
+          $top_menu_item ['priority']
+        );
+      }
+      foreach ($sub_menu_items as $sub_menu_item) {
+        add_submenu_page (
+          $sub_menu_item ['menu_position'],
+          $sub_menu_item ['page_name'],
+          $sub_menu_item ['menu_name'],
+          $sub_menu_item ['capability'],
+          $sub_menu_item ['slug'],
+          $sub_menu_item ['page_function'],
+          $sub_menu_item ['priority']
+        );
       }
     }
 
@@ -11368,32 +11462,95 @@ class ai_global_fileds {
       elseif (strpos ($access, 'user:') === 0) {
         $current_user = wp_get_current_user ();
         return $current_user->user_login == str_replace ('user:', '', $access);
-      } else
-      return current_user_role () >= current_user_role ($access);
-    }
+      } else {
+          $wp_roles = wp_roles ();
+          $roles = array_keys ($wp_roles->role_names);
 
-    public function can_access_global_field ($field_index) {
-      global $ai_global_fileds_settings;
+          if (!in_array ($access, $roles)) {
+            $access = DEFAULT_GLOBAL_PAGE_USER_ROLE;
+          }
 
-      if (current_user_can ('manage_options')) return true;
-
-      return $this->can_access_global_field_page ($ai_global_fileds_settings ['fields'][$field_index]['page']);
+          return current_user_role () >= current_user_role ($access);
+      }
     }
 
     public function ai_global_fields_settings_page () {
-      global $ai_global_fileds_settings, $block_object;
+      global $ai_global_fileds_settings, $block_object, $ai_wp_data;
+
+      $display_page = false;
+      $remote_page = false;
+      $write_fields = false;
+      $hide_fields = false;
+
+      $error_messages = '';
 
       $current_screen = get_current_screen ();
+      $current_url = wp_parse_url (home_url());
+
       $ai_global_fields_pos = strpos ($current_screen->base, 'ai-global-fields-');
 
       if ($ai_global_fields_pos !== false) {
         $current_global_page_index = str_replace ('ai-global-fields-', '', substr ($current_screen->base, $ai_global_fields_pos)) - 1;
 
-        $display_page = false;
         if (isset ($ai_global_fileds_settings ['pages'][$current_global_page_index])) {
           if ($ai_global_fileds_settings ['pages'][$current_global_page_index]['enabled']) {
             if ($this->can_access_global_fields_page ($current_global_page_index)) {
               $display_page = true;
+              $write_fields = true;
+            }
+          }
+        }
+      }
+
+      if (!$display_page) {
+        $ai_remote_global_fields_pos = strpos ($current_screen->base, 'ai-remote-global-fields-');
+
+        if ($ai_remote_global_fields_pos !== false) {
+          $current_remote_website_index = str_replace ('ai-remote-global-fields-', '', substr ($current_screen->base, $ai_remote_global_fields_pos)) - 1;
+          $remote_page = true;
+          $connected_website = false;
+          $connected = false;
+          $limited = false;
+          $website_name = '';
+          $website_url = '';
+
+          if (defined ('AD_INSERTER_WEBSITES')) {
+            $websites = get_option (AI_WEBSITES, array ());
+
+            if (!empty ($websites)) {
+              if (isset ($websites [$current_remote_website_index])) {
+                $display_page = true;
+                $website_name = $websites [$current_remote_website_index]['name'];
+                $website_url = $websites [$current_remote_website_index]['url'];
+
+                $connected_website = get_transient (AI_CONNECTED_WEBSITE);
+                if ($connected_website !== false) {
+
+                  $rest_api_username = $connected_website ['rest_username'];
+                  $rest_api_password = $connected_website ['rest_password'];
+
+                  $connected_url = wp_parse_url ($connected_website ['url']);
+                  $page_url = wp_parse_url ($websites [$current_remote_website_index]['url']);
+
+                  if ($connected_url ['host'] == $page_url ['host'] && $connected_url ['path'] == $page_url ['path']) {
+                    if ($connected_website ['plugin-data']['write']) {
+                      $write_fields = true;
+                      $connected = true;
+
+                      if (($rest_api_username == '' || $rest_api_password == '') || $connected_url ['scheme'] != 'https') {
+                        $limited = true;
+                      }
+
+                    } else {
+                        $error_messages = __('Remote managing not enabled.');
+                      }
+                  } else {
+                      // Website not connected to this website
+                    }
+                } else {
+                    // Website not connected
+                  }
+              }
             }
           }
         }
@@ -11403,26 +11560,105 @@ class ai_global_fileds {
         wp_die (__('You do not have sufficient permissions to access this page.'));
       }
 
-      if (isset ($_POST ['ai_save'])) {
-        $this->save_global_fields ();
+      $viewport_data = array ();
+      for ($viewport = 1; $viewport <= 6; $viewport ++) {
+        $viewport_name  = get_viewport_name ($viewport);
+        $viewport_width = get_viewport_width ($viewport);
+        if ($viewport_name != '') {
+          $viewport_data []= array ('index' => $viewport, 'name' => sanitize_text_field ($viewport_name), 'width' => $viewport_width);
+        }
       }
+      $all_viewports = array_fill (0, count ($viewport_data), 1);
+      $all_viewports_json = json_encode ($all_viewports);
 
       $save_url = "";
-      $ai_global_fields = get_option (AI_GLOBAL_FIELDS_NAME, array ());
 
       $syntax_highlighting = get_user_option ('syntax_highlighting');
 
+      if (isset ($_POST ['ai_save'])) {
+        $this->save_global_fields ($remote_page);
+      }
+
+      $ai_global_fields = get_global_fields ($remote_page);
+
 ?>
-        <div class="ai-wrap">
+        <div id="ai-wrap" ai-value="<?php echo base64_encode (wp_create_nonce ("adinserter_data")); ?>" ai-page="<?php echo base64_encode ($ai_wp_data [AI_WP_URL]); ?>">
+<?php
+          $image_counter = 0;
 
+          if ($remote_page) {
+
+            foreach ($ai_global_fileds_settings ['fields'] as $field_index => $field_data) {
+              switch ($field_data ['type']) {
+                case AI_GLOBAL_FIELD_IMAGE:
+                  $field_enabled_on_page = false;
+                  $field_page = $field_data ['page'];
+
+                  if (isset ($ai_global_fileds_settings ['pages'][$field_page])) {
+                    if ($ai_global_fileds_settings ['pages'][$field_page]['enabled']) {
+                      if ($this->can_access_global_fields_page ($field_page)) {
+                        $field_enabled_on_page = $field_data ['enabled'] && $field_index < AI_MAX_GLOBAL_FIELDS;
+                      }
+                    }
+                  }
+                  if ($field_enabled_on_page) {
+                    $image_counter ++;
+                  }
+                  break;
+              }
+            }
+
+            // If there are no images then there is no need for upload
+            if ($image_counter == 0) {
+              $limited = false;
+            }
+?>
+            <div class="ai-rounded">
+              <h2 style="margin: 5px 0; float: left;"><a class="simple-link" href="<?php echo $website_url; ?>" target="_blank"><?php echo $website_name; ?></a></h2>
+              <span id="ai-connection" data-website="<?php echo $current_remote_website_index + 1; ?>" class="dashicons dashicons-controls-play <?php echo $connected ? 'connected' : ''; ?>"
+              style="margin: 1px 0px 0px 6px; float: right; cursor: pointer; border: 1px solid #bdb9b9; border-radius: 5px; padding: 2px; color: <?php echo $connected ? ($limited ? '#59f' : '#0d0') : '#777'; ?>;"
+              title="<?php echo $connected ? __('Disconnect website', 'ad-inserter') : __('Connect website', 'ad-inserter'); ?>"></span>
+              <h2 style="margin: 5px 10px; float: right;" title="<?php echo $connected ? ($limited ? __('Image upload not available', 'ad-inserter') : '') : ''; ?>">
+                <?php echo $connected ? ($limited ? __('LIMITED CONNECTION', 'ad-inserter') :__('CONNECTED', 'ad-inserter')) : __('NOT CONNECTED', 'ad-inserter'); ?></h2>
+              <img id="ai-loading" src="<?php echo AD_INSERTER_PLUGIN_IMAGES_URL; ?>loading.gif" style="float: right; width: 24px; height: 24px; vertical-align: middle; margin: 3px 10px 0 0; display: none;" />
+              <div style="clear: both;"></div>
+            </div>
+<?php
+          } else {
+?>
+            <img id="ai-loading" src="<?php echo AD_INSERTER_PLUGIN_IMAGES_URL; ?>loading.gif" style="float: right; width: 24px; height: 24px; vertical-align: middle; margin: 3px 10px 0 0; display: none;" />
             <h1><?php echo $ai_global_fileds_settings ['pages'][$current_global_page_index]['menu_name']; ?></h1>
-            <br />
+            <div style="clear: both;"></div>
+<?php
+            }
 
+          if ($write_fields) {
+?>
             <form id="ai-global-fields-form" method="post" action="<?php echo esc_attr ($save_url); ?>">
                 <?php
 
+                $fields = 0;
                 foreach ($ai_global_fileds_settings ['fields'] as $field_index => $field_data) {
-                  if ($field_data ['enabled'] && $field_data ['page'] == $current_global_page_index && $field_index < AI_MAX_GLOBAL_FIELDS) {
+                  switch ($remote_page) {
+                    case false:
+                      $field_enabled_on_page = $field_data ['enabled'] && $field_data ['page'] == $current_global_page_index && $field_index < AI_MAX_GLOBAL_FIELDS;
+                      break;
+                    case true:
+                      $field_enabled_on_page = false;
+                      $field_page = $field_data ['page'];
+
+                      if (isset ($ai_global_fileds_settings ['pages'][$field_page])) {
+                        if ($ai_global_fileds_settings ['pages'][$field_page]['enabled']) {
+                          if ($this->can_access_global_fields_page ($field_page)) {
+                            $field_enabled_on_page = $field_data ['enabled'] && $field_index < AI_MAX_GLOBAL_FIELDS;
+                          }
+                        }
+                      }
+
+                      break;
+                  }
+                  if ($field_enabled_on_page) {
+                    $fields ++;
                     $field_name = 'ai-global-field-' . $field_index;
                     $field_value = isset ($ai_global_fields [$field_index]) ? $ai_global_fields [$field_index] : '';
 
@@ -11438,7 +11674,14 @@ class ai_global_fileds {
                       $css = 'visibility: hidden;';
                     }
 
-                    $rows = is_string ($field_value) ? count (explode ("\n", $field_value)) : 0;
+                    $field_value_array = explode ("\n", $field_value);
+                    $rows = 0;
+                    foreach ($field_value_array as $field_value_line) {
+                      $full_lines = intdiv (strlen ($field_value_line), 101);
+                      $partial_lines = strlen ($field_value_line) % 101;
+
+                      $rows += $full_lines + 1;
+                    }
 
                     switch ($field_data ['type']) {
                       case AI_GLOBAL_FIELD_CODE_EDITOR:
@@ -11446,24 +11689,27 @@ class ai_global_fileds {
                           $obj = $block_object [$field_data ['block']];
                           $field_value = $obj->get_ad_data ();
 
-                          $rows = is_string ($field_value) ? count (explode ("\n", $field_value)) : 0;
+                          $field_value_array = explode ("\n", $field_value);
+                          $rows = 0;
+                          foreach ($field_value_array as $field_value_line) {
+                            $full_lines = intdiv (strlen ($field_value_line), 101);
+                            $partial_lines = strlen ($field_value_line) % 101;
+
+//                            $rows += $full_lines + ($partial_lines != 0 ? 1 : 0);
+                            $rows += $full_lines + 1;
+                          }
                         }
                         break;
 
                       case AI_GLOBAL_FIELD_IMAGE:
-                        $id        = '0';
-                        $image_url = '';
-                        $link_url  = '';
-                        $new_tab   = '0';
+                        $images_data = json_decode ($field_value, true);
 
-                        $image_data = json_decode ($field_value);
-                        if ($field_value !== null) {
-                          $image_data = (array) $image_data;
-                          $id        = isset ($image_data ['id']) ? $image_data ['id'] : '0';
-                          $image_url = isset ($image_data ['id']) ? esc_url (wp_get_attachment_image_url ($image_data ['id'], 'full')) : '';
-                          $link_url  = isset ($image_data ['link'])  ? esc_url ($image_data ['link'])  : '';
-                          $new_tab   = isset ($image_data ['new-tab'])  ? (int) $image_data ['new-tab']  : '0';
+                        if ($images_data !== null) {
+                          if (isset ($images_data ['id'])) {
+                            $images_data = array ($images_data);
+                          }
                         }
+
                         break;
 
                       case AI_GLOBAL_FIELD_SELECTION:
@@ -11530,7 +11776,7 @@ class ai_global_fileds {
                       <h2 class="ai-global-field-name"><?php echo esc_html ($field_data ['name']); ?></h2>
 
                       <div class="ai-field-editor">
-                        <textarea id="ai-global-field-<?php echo $field_index; ?>"class="ai-field-textarea" rows="<?php echo $rows; ?>" style="<?php echo $css; ?>" name="<?php echo $field_name; ?>" index="<?php echo $field_index; ?>"><?php echo esc_textarea ($field_value); ?></textarea>
+                        <textarea id="ai-global-field-<?php echo $field_index; ?>" class="ai-field-textarea" rows="<?php echo $rows; ?>" style="<?php echo $css; ?>padding: 2px;" name="<?php echo $field_name; ?>" index="<?php echo $field_index; ?>"><?php echo esc_textarea ($field_value); ?></textarea>
                       </div>
 
                       <?php
@@ -11540,12 +11786,88 @@ class ai_global_fileds {
 
                       <h2 class="ai-global-field-name"><?php echo esc_html ($field_data ['name']); ?></h2>
 
-                      <div class="ai-field-image ai-field-image-<?php echo $field_index; ?>" style="background: url(<?php echo $image_url; ?>) 0% 0% / cover;" title="<?php _e ('Select image', 'ad-inserter'); ?>">
-                        <?php echo $image_url == '' ? AI_TEXT_MEDIA_IMAGE : '' ?>
+                      <?php
+
+                      $one_image = false;
+
+                      foreach ($viewport_data as $viewport_index => $viewport) {
+                        $id        = '0';
+                        $remote_id = '0';
+                        $image_url = '';
+                        $image_html = '';
+                        $link_url  = '';
+                        $new_tab   = '0';
+                        $viewports = $all_viewports_json;
+
+                        if ($images_data !== null) {
+                          if (isset ($images_data [$viewport_index])) {
+                            $image_data = $images_data [$viewport_index];
+
+                            $image_data = (array) $image_data;
+                            switch ($remote_page) {
+                              case false:
+                                $id = isset ($image_data ['id']) ? $image_data ['id'] : '0';
+                                if ($id != 0) {
+                                  $image_url = esc_url (wp_get_attachment_image_url ($id, 'full'));
+                                } else $image_url = isset ($image_data ['url']) ? esc_url ($image_data ['url']) : '';
+                                break;
+                              case true:
+                                $remote_id = $image_data ['id'];
+                                $id        = '0';
+                                $image_url = isset ($image_data ['url']) ? esc_url ($image_data ['url']) : '';
+                                break;
+                            }
+
+                            $image_blocked = false;
+                            if ($image_url != '') {
+                              $image_url_data = wp_parse_url ($image_url);
+                              if ($current_url ['scheme'] == 'https' && $image_url_data ['scheme'] != 'https') {
+                                $image_blocked = true;
+                              }
+                            }
+
+
+                            $image_html = isset ($image_data ['html']) && $image_data ['html'] != '' ? $image_data ['html']  : '';
+                            $link_url  = isset ($image_data ['link'])  ? esc_url ($image_data ['link'])  : '';
+                            $new_tab   = isset ($image_data ['new-tab'])  ? (int) $image_data ['new-tab']  : '0';
+                            $viewports = isset ($image_data ['viewports']) && is_array ($image_data ['viewports']) ? json_encode (array_replace ($all_viewports, $image_data ['viewports'])) : $all_viewports_json;
+                          }
+                        }
+
+                        if ($viewport_index == 0) {
+                          if ($viewports == $all_viewports_json) {
+                            $one_image = true;
+                          }
+                        }
+
+
+                        $viewport_names = array ();
+                        if ($viewports != $all_viewports_json || !$one_image) {
+                          foreach ($viewport_data as $vp_index => $viewport) {
+                            if ($image_data ['viewports'][$vp_index]) {
+                              $viewport_names [] = $viewport ['name'];
+                            }
+                          }
+                        }
+                      ?>
+
+                      <div class="ai-field-viewport-image" style="display: <?php echo $viewport_index == 0 || !$one_image ? 'inline-block' : 'none'; ?>;">
+                        <span class="ai-close-button" index="<?php echo $field_index; ?>" viewport-index="<?php echo $viewport_index; ?>" <?php echo $image_url != '' ? 'style="display: block;"' : '' ?>></span>
+                        <div class="ai-field-image ai-field-image-<?php echo $field_index; ?> ai-field-image-viewport-<?php echo $viewport_index; ?>" style="<?php echo $image_url != '' ? 'background: url(' . $image_url . ') 0% 0% / cover;' : '' ?>"
+                          title="<?php _e ('Select image', 'ad-inserter'); ?>" image-id="<?php echo $id; ?>" remote-image-id="<?php echo $remote_id; ?>" image-url="<?php echo $image_url; ?>"
+                          image-html="<?php echo $image_html; ?>" link-url="<?php echo $link_url; ?>" new-tab="<?php echo $new_tab; ?>"
+                          viewports="<?php echo $viewports; ?>" <?php echo $image_url != '' ? 'image-ok="1"' : '' ?> index="<?php echo $field_index; ?>" viewport-index="<?php echo $viewport_index; ?>">
+                          <?php echo $image_url == '' ? AI_TEXT_MEDIA_IMAGE : ($image_blocked ? __('HTTP IMAGE BLOCKED', 'ad-inserter') : ' ') ?>
+                        </div>
+                        <div class="ai-field-image-viewports"><?php echo $image_url != '' ? implode (', ', $viewport_names) : "&nbsp; &nbsp;"; ?></div>
                       </div>
 
+                      <?php
+                      }
+                      ?>
+
                       <div class="ai-field-editor">
-                        <textarea id="ai-global-field-<?php echo $field_index; ?>"class="ai-field-textarea field-image" rows="<?php echo $rows; ?>" style="<?php echo $css; ?>" name="<?php echo $field_name; ?>" image-id="<?php echo $id; ?>" link-url="<?php echo $link_url; ?>" new-tab="<?php echo $new_tab; ?>" <?php echo $image_url != '' ? 'image-ok="1"' : '' ?> index="<?php echo $field_index; ?>"><?php echo esc_textarea ($field_value); ?></textarea>
+                        <textarea id="ai-global-field-<?php echo $field_index; ?>" class="ai-field-textarea field-image" rows="<?php echo $rows; ?>" style="<?php echo $css; ?>" name="<?php echo $field_name; ?>" index="<?php echo $field_index; ?>"><?php echo esc_textarea ($field_value); ?></textarea>
                       </div>
 
                       <?php
@@ -11619,17 +11941,42 @@ class ai_global_fileds {
                 }
                 ?>
 
+<?php
+      if ((!isset ($connected) || $connected) && $fields == 0) {
+        $error_messages .= __('No global custom fields configured.');
+      }
+
+      if ($fields != 0 && (!function_exists ('ai_settings_write') || ai_settings_write ())): ?>
               <br />
-
               <input name="<?php echo AI_FORM_SAVE; ?>" value="<?php echo __('Save Changes', 'ad-inserter'); ?>" type="submit" />
+<?php endif; ?>
 
-              <div class="clear">
+              <div class="clear"></div>
 
               <?php wp_nonce_field ('save_ai_global_fields'); ?>
 
             </form>
-
+<?php
+          } else {
+              if ($remote_page && !$connected) {
+?>
+                <div style="display: none;">
+<?php
+                foreach ($ai_global_fileds_settings ['fields'] as $field_index => $field_data) {
+                  switch ($field_data ['type']) {
+                    case AI_GLOBAL_FIELD_CODE_EDITOR:
+                      echo '<textarea id="ai-global-field-', $field_index, '" style="display: none;" ></textarea>', "\n";
+                      break;
+                  }
+                }
+?>
+                </div>
+<?php
+              }
+            }
+?>
           </div>
+          <div id="error-container" style=""><?php echo $error_messages; ?></div>
 <script>
 
 const global_fileds_settings = JSON.parse ('<?php echo wp_json_encode ($ai_global_fileds_settings ['fields']); ?>');
@@ -11639,6 +11986,22 @@ const AI_GLOBAL_FIELD_IMAGE       = 1;
 const AI_GLOBAL_FIELD_CHECKBOX    = 2;
 const AI_GLOBAL_FIELD_SELECTION   = 3;
 const AI_GLOBAL_FIELD_CHECKBOXES  = 4;
+
+const aiViewports = <?php echo json_encode ($viewport_data); ?>;
+const allViewports = <?php echo json_encode ($all_viewports); ?>;
+const remotePage = <?php echo $remote_page ? 1 : 0; ?>;
+const ai_nonce = b64d (jQuery ("#ai-wrap").attr ('ai-value'));
+const ai_page = b64d (jQuery ("#ai-wrap").attr ('ai-page'));
+
+<?php if (isset ($connected_website)): ?>
+const connected = <?php echo $connected_website !== false && $connected ? 1 : 0; ?>;
+const disconnect = <?php echo $connected_website !== false && !$connected ? 1 : 0; ?>;
+const auto_disconnect_time = <?php echo defined ('AI_CONNECTED_TIME') ? AI_CONNECTED_TIME : 1800; ?>;
+<?php else: ?>
+const connected = 0;
+const disconnect = 0;
+const auto_disconnect_time = 1800;
+<?php endif; ?>
 
 function b64e (str) {
   // first we use encodeURIComponent to get percent-encoded UTF-8,
@@ -11699,52 +12062,36 @@ async function isValidImage (str) {
   return await checkImageURL (str);
 }
 
-async function check_image (field_index, image_url, textarea) {
+async function check_image (field_index, image_url, image_button) {
 
-  var image_button = jQuery ('.ai-field-image-' + field_index);
+  var close_button = image_button.prev ('.ai-close-button');
 
   const valid = await isValidImage (image_url);
-  jQuery (textarea).removeAttr ('image-ok');
+  image_button.removeAttr ('image-ok');
 
   if (valid) {
     image_button.css ('background', 'url('+image_url+') 0% 0% / cover');
-    image_button.text ('');
-    jQuery (textarea).attr ('image-ok', '1');
+    image_button.text (" ");
+    image_button.attr ('image-ok', '1');
+    close_button.css ('display', 'block');
+
   } else {
       image_button.css ('background', 'unset');
       image_button.text (media_i18n.image);
+      close_button.hide ();
   }
-}
-
-function check_image_editor (editor) {
-
-  if (jQuery (editor).hasClass ('ai-field-textarea')) {
-    var textarea = jQuery (editor);
-  } else {
-      var textarea = jQuery (editor).prev ();
-    }
-  var field_index = textarea.attr ('index');
-  var editor_name = 'ai_editor_' + field_index;
-
-  if (typeof window [editor_name] != typeof undefined) {
-    var field = window [editor_name].getValue ();
-  } else {
-      var field = textarea.val();
-    }
-
-  const attachment = wp.media.attachment (field);
-
-  attachment.fetch ().then(function () {
-    check_image (field_index, attachment.get ('url'), textarea);
-  });
-
 }
 
 let imageOptions = {
   id: 0,
   linkUrl: '',
-  openInNewTab: true
+  openInNewTab: true,
+  viewportEnabled: []
 };
+
+aiViewports.forEach ((element, index) => {
+  imageOptions.viewportEnabled.push (true);
+});
 
 jQuery (document).on('change', '.link-url', function () {
   imageOptions.linkUrl = this.value;
@@ -11754,6 +12101,89 @@ jQuery (document).on('change', '.new-tab', function () {
   imageOptions.openInNewTab = this.checked;
 });
 
+jQuery (document).on('change', '.viewport', function () {
+  const index = jQuery (this).attr ('index');
+  imageOptions.viewportEnabled [index] = this.checked;
+});
+
+jQuery ('.ai-close-button').on ('click', function (e) {
+  field_index = jQuery (this).attr ('index');
+
+  imageButton = jQuery (this).next ();
+  imageButton.removeAttr ('image-ok');
+  imageButton.attr ('image-id', 0);
+  imageButton.removeAttr ('remote-image-id');
+  imageButton.attr ('image-url', '');
+  imageButton.attr ('image-html', '');
+  imageButton.attr ('link-url', '');
+  imageButton.attr ('new-tab', 0);
+  imageButton.attr ('viewports', JSON.stringify (allViewports));
+  jQuery (this).hide ();
+
+  check_image (field_index, '', imageButton);
+
+  const wrapper = jQuery (this).closest ('.ai-field-wrapper');
+  updateImageTextareaValue (wrapper);
+});
+
+function updateImageTextareaValue (wrapper) {
+  let images = [];
+  var oneImage = false;
+  allViewportsText = JSON.stringify (allViewports);
+  wrapper.find ('.ai-field-viewport-image .ai-field-image').each (function (index) {
+    var image = jQuery (this);
+
+    imageOptions.id = parseInt (image.attr ('image-id'));
+    imageOptions.linkUrl = image.attr ('link-url');
+    if (!imageOptions.linkUrl) image.linkUrl = '';
+    imageOptions.openInNewTab = image.attr ('new-tab') == '1' ? true : false;
+    var viewports = JSON.parse (image.attr ('viewports'))
+
+    var viewportNames = [];
+
+    if (typeof image.attr ('image-ok') != typeof undefined) {
+      aiViewports.forEach ((element, index) => {
+        if (viewports [index] == 1) {
+          viewportNames.push (element.name);
+        }
+      });
+    }
+
+    image.attr ('viewport-names', viewportNames.join (', '));
+
+    var image_data = {'id': imageOptions.id, 'remote_id': parseInt (image.attr ('remote-image-id')), 'url': image.attr ('image-url'), 'html': image.attr ('image-html'), 'link': imageOptions.linkUrl, 'new-tab': imageOptions.openInNewTab ? 1 : 0, 'viewports': viewports};
+    images.push (image_data);
+
+    if (index == 0 && image.attr ('viewports') == allViewportsText) {
+      oneImage = true;
+    }
+  });
+
+  textarea = wrapper.find ('.ai-field-textarea');
+  textarea.val (JSON.stringify (images));
+
+  if (oneImage) {
+    wrapper.find ('.ai-field-viewport-image').each (function (index) {
+      if (index != 0) {
+        jQuery (this).hide ();
+      }
+      wrapper.find ('.ai-field-image-viewports').html ('&nbsp; &nbsp;');
+    });
+  } else {
+      wrapper.find ('.ai-field-viewport-image').each (function (index) {
+        if (index != 0) {
+          jQuery (this).css ('display', 'inline-block');
+        }
+        const viewportImage = jQuery (this).find ('.ai-field-image');
+        const viewportNames = viewportImage.attr ('viewport-names');
+        if (viewportNames != '') {
+          viewportImage.next ('.ai-field-image-viewports').text (viewportNames);
+        } else {
+            viewportImage.next ('.ai-field-image-viewports').html ('&nbsp; &nbsp;');
+          }
+      });
+    }
+}
 
 let mediaUploader;
 var field_index = 0;
@@ -11764,23 +12194,20 @@ jQuery ('.ai-field-image').on ('click', function (e) {
 
   e.preventDefault ();
 
-  textarea = jQuery (this).closest ('.ai-field-wrapper').find ('.ai-field-textarea');
-  field_index = textarea.attr ('index');
-  editor_name = 'ai_editor_' + field_index;
+  imageButton = jQuery (this);
+  field_index = imageButton.attr ('index');
 
-  if (event.ctrlKey || event.metaKey) {
-    textarea.attr ('image-id', 0);
-    textarea.attr ('link-url', '');
-    textarea.attr ('new-tab', 0);
+  wrapper = jQuery (this).closest ('.ai-field-wrapper');
 
-    check_image (field_index, '', textarea);
-    return;
-  }
-
-  imageOptions.id = textarea.attr ('image-id');
-  imageOptions.linkUrl = textarea.attr ('link-url');
+  imageOptions.id = imageButton.attr ('image-id');
+  imageOptions.linkUrl = imageButton.attr ('link-url');
   if (!imageOptions.linkUrl) imageOptions.linkUrl = '';
-  imageOptions.openInNewTab = textarea.attr ('new-tab') == '1' ? true : false;
+  imageOptions.openInNewTab = imageButton.attr ('new-tab') == '1' ? true : false;
+  const viewports = JSON.parse (imageButton.attr ('viewports'))
+
+  aiViewports.forEach ((element, index) => {
+    imageOptions.viewportEnabled [index] = viewports [index] == 1;
+  });
 
   // If already created, reopen
   if (mediaUploader) {
@@ -11803,13 +12230,16 @@ jQuery ('.ai-field-image').on ('click', function (e) {
   });
 
   mediaUploader.on ('open', function () {
-
     const attachment = wp.media.attachment (imageOptions.id);
     attachment.fetch ();
 
-    mediaUploader.state()
-      .get ('selection')
-      .reset ([attachment]);
+    mediaUploader.state ().get ('selection').reset ([attachment]);
+
+    if (imageOptions.id == 0) {
+      const input = jQuery ('#attachment-details-copy-link');
+      input.val (imageButton.attr ('image-url'));
+      jQuery ('.attachment-info .thumbnail img').attr ('src', imageButton.attr ('image-url'));
+    }
   });
 
   mediaUploader.on ('select insert', function () {
@@ -11817,22 +12247,28 @@ jQuery ('.ai-field-image').on ('click', function (e) {
     const selection = state.get ('selection').first();
     const attachment = selection.toJSON ();
 
-    textarea.attr ('image-id', attachment.id);
-    textarea.attr ('link-url', imageOptions.linkUrl);
-    textarea.attr ('new-tab', imageOptions.openInNewTab ? '1' : '0');
+    if (!remotePage || attachment.id != 0) {
+      imageButton.attr ('image-id', remotePage ? 0 : attachment.id);
+      imageButton.attr ('image-url', attachment.url);
+      imageButton.attr ('image-html', remotePage ? attachment.id : '');
+      imageButton.attr ('image-ok', '1');
+      imageButton.attr ('remote-image-id', '0');
 
-    const image_data = {'id': attachment.id, 'link': imageOptions.linkUrl, 'new-tab': imageOptions.openInNewTab ? '1' : '0'};
+      check_image (field_index, attachment.url, imageButton);
+    }
+    else console.log ('attachment NOT SELECTED');
 
-    const value = JSON.stringify (image_data);
+    imageButton.attr ('link-url', imageOptions.linkUrl);
+    imageButton.attr ('new-tab', imageOptions.openInNewTab ? '1' : '0');
 
-    if (typeof window [editor_name] != typeof undefined) {
-      window [editor_name].setValue (value);
-      window [editor_name].save ();
-    } else {
-        textarea.val (value);
-      }
+    let viewports = [];
+    aiViewports.forEach ((element, index) => {
+      viewports.push (imageOptions.viewportEnabled [index] ? 1 : 0);
+    });
 
-    check_image (field_index, attachment.url, textarea);
+    imageButton.attr ('viewports', JSON.stringify (viewports));
+
+    updateImageTextareaValue (wrapper);
   });
 
   mediaUploader.open ();
@@ -11841,14 +12277,16 @@ jQuery ('.ai-field-image').on ('click', function (e) {
 setTimeout (function () {
   jQuery(function ($) {
 
-  const Base = wp.media.view.Settings.AttachmentDisplay;
+  const baseAttachmentDisplay = wp.media.view.Settings.AttachmentDisplay;
 
-  wp.media.view.Settings.AttachmentDisplay = Base.extend({
+  wp.media.view.Settings.AttachmentDisplay = baseAttachmentDisplay.extend({
     render: function () {
-      Base.prototype.render.apply(this, arguments);
+      baseAttachmentDisplay.prototype.render.apply(this, arguments);
 
-      const url     = imageOptions.linkUrl || '';
-      const checked = imageOptions.openInNewTab ? 'checked' : '';
+      const url    = imageOptions.linkUrl || '';
+      const newTab = imageOptions.openInNewTab ? 'checked' : '';
+
+      const viewports = imageOptions.viewports;
 
       this.$el.find(".setting").remove ();
 
@@ -11864,16 +12302,49 @@ setTimeout (function () {
               <span>${media_i18n.new_tab}</span>
               <input type="checkbox"
                      class="new-tab"
-                     ${checked} />
+                     ${newTab} />
+          </label>
+
+          <h2>${media_i18n.viewports}</h2>
+      `);
+
+      aiViewports.forEach ((element, index) => {
+
+        let viewportChecked = imageOptions.viewportEnabled [index] ? 'checked' : '';
+
+        this.$el.append (`
+          <label class="setting">
+              <span>${element.name}</span>
+              <input type="checkbox"
+                     class="viewport"
+                     index="${index}"
+                     ${viewportChecked} />
           </label>
       `);
+      });
 
       return this;
     }
   });
+
+  const baseDetails = wp.media.view.Attachment.Details;
+
+    wp.media.view.Attachment.Details = baseDetails.extend ({
+      render: function () {
+        baseDetails.prototype.render.apply(this, arguments);
+
+        this.$('.setting[data-setting="title"]').hide ();
+        this.$('.setting[data-setting="caption"]').hide ();
+        this.$('.setting[data-setting="description"]').hide ();
+        this.$('#alt-text-description').hide ();
+
+        return this;
+      }
+    });
 });
 
-}, 1500);
+}, 250);
+
 
 String.prototype.stripSlashes = function(){
   return this.replace(/\\(.)/mg, "$1");
@@ -11896,6 +12367,8 @@ function restoreComments (html, comments) {
 }
 
 jQuery("#ai-global-fields-form").on ("submit", function (event) {
+  jQuery ('#ai-loading').show ();
+
   jQuery(".ai-field-textarea").each (function() {
 
     var textarea = jQuery (this);
@@ -11978,11 +12451,12 @@ jQuery("#ai-global-fields-form").on ("submit", function (event) {
             field_text = DOMPurify.sanitize (field_text, options);
           }
       }
-    } else
+    }
+
     if (field_type == AI_GLOBAL_FIELD_IMAGE) {
-      if (typeof textarea.attr ('image-ok') == typeof undefined) {
-        field_text = '';
-      }
+      const wrapper = jQuery (textarea).closest ('.ai-field-wrapper');
+      updateImageTextareaValue (wrapper);
+      console.log (jQuery (textarea).val ());
     }
 
     textarea_copy.val (':AI:' + b64e (field_text));
@@ -12002,35 +12476,490 @@ jQuery("#ai-global-fields-form").on ("submit", function (event) {
   });
 });
 
+if (disconnect) {
+  setTimeout (function () {
+    connectWebsite ('', false);
+  }, 1000);
+}
+
+if (connected) {
+  setTimeout (function () {
+    connectWebsite ('', true);
+  }, (auto_disconnect_time + 10) * 1000);
+}
+
+function connectWebsite (website, reload = true) {
+  const error_container = jQuery ("#error-container");
+
+  jQuery.get (ajaxurl+'?action=ai_ajax_backend&websites=&connect=' + website + '&connect-only=1&ai_check=' + ai_nonce, function (response, status, xhr) {
+    jQuery ('#ai-loading').hide ();
+    if (status == "error") {
+      var message = "Error downloading website data: " + xhr.status + " " + xhr.statusText;
+      error_container.append (message);
+    } else {
+        error_container.append (response);
+        if (response == '' && reload) {
+          window.location.href = ai_page;
+        }
+      }
+  });
+}
+
+jQuery ("#ai-connection").on ("click", function () {
+  const connected = jQuery(this).hasClass ('connected');
+  const website = connected ? '' : jQuery(this).data ("website");
+
+  jQuery ('#ai-loading').show ();
+
+  connectWebsite (website);
+});
+
+
+/*
+ * jQuery Tooltip plugin 1.3
+ *
+ * http://bassistance.de/jquery-plugins/jquery-plugin-tooltip/
+ * http://docs.jquery.com/Plugins/Tooltip
+ *
+ * Copyright (c) 2006 - 2008 Jörn Zaefferer
+ *
+ * $Id: jquery.tooltip.js 5741 2008-06-21 15:22:16Z joern.zaefferer $
+ *
+ * Dual licensed under the MIT and GPL licenses:
+ *   http://www.opensource.org/licenses/mit-license.php
+ *   http://www.gnu.org/licenses/gpl.html
+ */
+(function($) {
+  // the tooltip element
+  var helper = {},
+    // the current tooltipped element
+    current,
+    // the title of the current element, used for restoring
+    title,
+    // timeout id for delayed tooltips
+    tID,
+    // IE 5.5 or 6
+    //    IE = $.browser.msie && /MSIE\s(5\.5|6\.)/.test(navigator.userAgent),
+    IE = false,
+    // flag for mouse tracking
+    track = false;
+  $.tooltip = {
+    blocked: false,
+    defaults: {
+      delay: 200,
+      fade: false,
+      showURL: true,
+      extraClass: "",
+      top: 15,
+      left: 15,
+      id: "ai-tooltip"
+    },
+    block: function() {
+      $.tooltip.blocked = !$.tooltip.blocked;
+    }
+  };
+  $.fn.extend({
+    tooltip: function(settings) {
+      settings = $.extend({}, $.tooltip.defaults, settings);
+      createHelper(settings);
+      return this.each(function() {
+          $.data(this, "tooltip", settings);
+          this.tOpacity = helper.parent.css("opacity");
+          // copy tooltip into its own expando and remove the title
+          this.tooltipText = this.title;
+          $(this).removeAttr("title");
+          // also remove alt attribute to prevent default tooltip in IE
+          this.alt = "";
+        })
+//        .mouseover(save)
+        .on ("mouseover", save)
+//        .mouseout(hide)
+        .on ("mouseout", hide)
+//        .click(hide);
+        .on ("click", hide);
+    },
+    fixPNG: IE ? function() {
+      return this.each(function() {
+        var image = $(this).css('backgroundImage');
+        if (image.match(/^url\(["']?(.*\.png)["']?\)$/i)) {
+          image = RegExp.$1;
+          $(this).css({
+            'backgroundImage': 'none',
+            'filter': "progid:DXImageTransform.Microsoft.AlphaImageLoader(enabled=true, sizingMethod=crop, src='" + image + "')"
+          }).each(function() {
+            var position = $(this).css('position');
+            if (position != 'absolute' && position != 'relative')
+              $(this).css('position', 'relative');
+          });
+        }
+      });
+    } : function() {
+      return this;
+    },
+    unfixPNG: IE ? function() {
+      return this.each(function() {
+        $(this).css({
+          'filter': '',
+          backgroundImage: ''
+        });
+      });
+    } : function() {
+      return this;
+    },
+    hideWhenEmpty: function() {
+      return this.each(function() {
+        $(this)[$(this).html() ? "show" : "hide"]();
+      });
+    },
+    url: function() {
+      return this.attr('href') || this.attr('src');
+    }
+  });
+  function createHelper(settings) {
+    // there can be only one tooltip helper
+    if (helper.parent)
+      return;
+    // create the helper, h3 for title, div for url
+    helper.parent = $('<div id="' + settings.id + '"><h3></h3><div class="body"></div><div class="url"></div></div>')
+      // add to document
+      .appendTo(document.body)
+      // hide it at first
+      .hide();
+    // apply bgiframe if available
+    if ($.fn.bgiframe)
+      helper.parent.bgiframe();
+    // save references to title and url elements
+    helper.title = $('h3', helper.parent);
+    helper.body = $('div.body', helper.parent);
+    helper.url = $('div.url', helper.parent);
+  }
+  function settings(element) {
+    return $.data(element, "tooltip");
+  }
+  // main event handler to start showing tooltips
+  function handle(event) {
+    // show helper, either with timeout or on instant
+    if (settings(this).delay)
+      tID = setTimeout(show, settings(this).delay);
+    else
+      show();
+    // if selected, update the helper position when the mouse moves
+    track = !!settings(this).track;
+//    $(document.body).bind('mousemove', update);
+    $(document.body).on ('mousemove', update);
+    // update at least once
+    update(event);
+  }
+  // save elements title before the tooltip is displayed
+  function save() {
+    // if this is the current source, or it has no title (occurs with click event), stop
+    if ($.tooltip.blocked || this == current || (!this.tooltipText && !settings(this).bodyHandler))
+      return;
+    // save current
+    current = this;
+    title = this.tooltipText;
+
+    title = title.replace (/\[\[(.+?)\]\]/g, '<span class="tooltip-code">$1</span>');
+    title = title.replace (/\[BR\]/g, '<br />');
+    title = title.replace (/\[HR\]/g, '<hr />');
+    title = title.replace (/(\[ADINSERTER.+\])/g, '<span class="tooltip-code">$1</span>');
+    title = title.replace (/(\%N)/g, '<span class="tooltip-code">$1</span>');
+    title = title.replace (/(\[\*\])/g, '<span class="tooltip-icon"><span class="dashicons dashicons-admin-generic" style="width: 11px; height: 11px; font-size: 12px; line-height: unset;"></span></span>');
+    title = title.replace (/(http[^ ]+)/g, '<span class="tooltip-code">$1</span>');
+    title = title.replace (/(pub-[0-9]+)/g, '<span class="tooltip-code">$1</span>');
+
+    if (settings(this).bodyHandler) {
+      helper.title.hide();
+      var bodyContent = settings(this).bodyHandler.call(this);
+      if (bodyContent.nodeType || bodyContent.jquery) {
+        helper.body.empty().append(bodyContent)
+      } else {
+        helper.body.html(bodyContent);
+      }
+      helper.body.show();
+    } else if (settings(this).showBody) {
+      var parts = title.split(settings(this).showBody);
+      if (parts.length == 2) {
+        helper.title.html(parts.shift()).show();
+      } else {
+          helper.title.hide();
+        }
+      helper.body.empty();
+      for (var i = 0, part;
+        (part = parts[i]); i++) {
+        if (i > 0)
+          helper.body.append("<br/>");
+        helper.body.append(part);
+      }
+      helper.body.hideWhenEmpty();
+    } else {
+      helper.title.html(title).show();
+      helper.body.hide();
+    }
+    // if element has href or src, add and show it, otherwise hide it
+    if (settings(this).showURL && $(this).url())
+      helper.url.html($(this).url().replace('http://', '')).show();
+    else
+      helper.url.hide();
+    // add an optional class for this tip
+    helper.parent.addClass(settings(this).extraClass);
+    // fix PNG background for IE
+    if (settings(this).fixPNG)
+      helper.parent.fixPNG();
+    handle.apply(this, arguments);
+  }
+  // delete timeout and show helper
+  function show() {
+    tID = null;
+    if ((!IE || !$.fn.bgiframe) && settings(current).fade) {
+      if (helper.parent.is(":animated"))
+        helper.parent.stop().show().fadeTo(settings(current).fade, current.tOpacity);
+      else
+        helper.parent.is(':visible') ? helper.parent.fadeTo(settings(current).fade, current.tOpacity) : helper.parent.fadeIn(settings(current).fade);
+    } else {
+      helper.parent.show();
+    }
+    update();
+  }
+  /**
+   * callback for mousemove
+   * updates the helper position
+   * removes itself when no current element
+   */
+  function update(event) {
+    if ($.tooltip.blocked)
+      return;
+    if (event && event.target.tagName == "OPTION") {
+      return;
+    }
+    // stop updating when tracking is disabled and the tooltip is visible
+    if (!track && helper.parent.is(":visible")) {
+//      $(document.body).unbind('mousemove', update)
+      $(document.body).off ('mousemove', update)
+    }
+    // if no current element is available, remove this listener
+    if (current == null) {
+//      $(document.body).unbind('mousemove', update);
+      $(document.body).off ('mousemove', update);
+      return;
+    }
+    // remove position helper classes
+    helper.parent.removeClass("viewport-right").removeClass("viewport-bottom");
+    var left = helper.parent[0].offsetLeft;
+    var top = helper.parent[0].offsetTop;
+    if (event) {
+      // position the helper 15 pixel to bottom right, starting from mouse position
+      left = event.pageX + settings(current).left;
+      top = event.pageY + settings(current).top;
+      var right = 'auto';
+      if (settings(current).positionLeft) {
+        right = $(window).width() - left;
+        left = 'auto';
+      }
+      helper.parent.css({
+        left: left,
+        right: right,
+        top: top
+      });
+    }
+    var v = viewport(),
+      h = helper.parent[0];
+    // check horizontal position
+    if (v.x + v.cx < h.offsetLeft + h.offsetWidth) {
+      left -= h.offsetWidth + 20 + settings(current).left;
+      helper.parent.css({
+        left: left + 'px'
+      }).addClass("viewport-right");
+    }
+    // check vertical position
+    if (v.y + v.cy < h.offsetTop + h.offsetHeight) {
+      top -= h.offsetHeight + 20 + settings(current).top;
+      helper.parent.css({
+        top: top + 'px'
+      }).addClass("viewport-bottom");
+    }
+  }
+  function viewport() {
+    return {
+      x: $(window).scrollLeft(),
+      y: $(window).scrollTop(),
+      cx: $(window).width(),
+      cy: $(window).height()
+    };
+  }
+  // hide helper and restore added classes and the title
+  function hide(event) {
+    if ($.tooltip.blocked)
+      return;
+    // clear timeout if possible
+    if (tID)
+      clearTimeout(tID);
+    // no more current element
+    current = null;
+    var tsettings = settings(this);
+    function complete() {
+      helper.parent.removeClass(tsettings.extraClass).hide().css("opacity", "");
+    }
+    if ((!IE || !$.fn.bgiframe) && tsettings.fade) {
+      if (helper.parent.is(':animated'))
+        helper.parent.stop().fadeTo(tsettings.fade, 0, complete);
+      else
+        helper.parent.stop().fadeOut(tsettings.fade, complete);
+    } else
+      complete();
+    if (settings(this).fixPNG)
+      helper.parent.unfixPNG();
+  }
+})(jQuery);
+
+//jQuery (document).find ('[title]').each (function() {
+//  console.log (this);
+//});
+
+jQuery (document).find ('[title]')
+  .tooltip ({
+    track: true,
+    delay: 700,
+    showURL: false,
+    showBody: " | ",
+    fade: 250
+  });
+
 </script>
 <?php
     }
 
-    public function save_global_fields () {
+    public function save_global_fields ($remote_page) {
       global $ai_db_options, $ai_global_fileds_settings;
 
       if (isset ($_REQUEST ['_wpnonce']) && wp_verify_nonce ($_REQUEST ['_wpnonce'], 'save_ai_global_fields')) {
 
-        $ai_global_fields = get_option (AI_GLOBAL_FIELDS_NAME, array ());
+        $ai_global_fields = get_global_fields ($remote_page);
 
         $fields = array ();
         $valid_fields = 0;
+        $invalid_fields = 0;
+
         foreach ($_POST as $name => $post_field) {
           if (strpos ($name, 'ai-global-field-') === 0) {
             $field_index = (int) str_replace ('ai-global-field-', '', $name);
-            if ($field_index < AI_MAX_GLOBAL_FIELDS) {
+
+            $valid_field = false;
+            if ($field_index < AI_MAX_GLOBAL_FIELDS && isset ($ai_global_fileds_settings ['fields'][$field_index]) && $ai_global_fileds_settings ['fields'][$field_index]['enabled']) {
+              $page = $ai_global_fileds_settings ['fields'][$field_index]['page'];
+
+              if (isset ($ai_global_fileds_settings ['pages'][$page])) {
+                if ($ai_global_fileds_settings ['pages'][$page]['enabled']) {
+                  if ($this->can_access_global_fields_page ($page)) {
+                    $valid_field = true;
+                  }
+                }
+              }
+            }
+            if (!$valid_field) {
+              $invalid_fields ++;
+            }
+
+            if ($valid_field) {
               $fields []= $field_index + 1;
 
               $block = isset ($ai_global_fileds_settings ['fields'][$field_index]['block']) ? $ai_global_fileds_settings ['fields'][$field_index]['block'] : 0;
               if ($ai_global_fileds_settings ['fields'][$field_index]['type'] == AI_GLOBAL_FIELD_CODE_EDITOR && $block != 0) {
+                // Save block code
                 if (is_string ($post_field) && substr ($post_field, 0, 4) === ':AI:') {
                   $post_field = base64_decode (substr ($post_field, 4), true);
                 }
 
                 $ai_db_options [$block][AI_OPTION_CODE] = $post_field;
-                ai_save_options ($ai_db_options);
+                ai_save_options ($ai_db_options, null, null, null, $remote_page);
                 unset ($ai_global_fields [$field_index]);
               } else {
+                  // Save global custom fields
+                  if ($ai_global_fileds_settings ['fields'][$field_index]['type'] == AI_GLOBAL_FIELD_IMAGE) {
+                    if (is_string ($post_field) && substr ($post_field, 0, 4) === ':AI:') {
+                      $post_field = json_decode (base64_decode (substr ($post_field, 4), true), true);
+                    }
+
+                    foreach ($post_field as $index => $image_data) {
+
+                      if ($image_data ['id'] == 0) {
+
+                        if (isset ($image_data ['remote_id']) && $image_data ['remote_id'] != 0) {
+                          $post_field [$index]['id'] = $image_data ['remote_id'];
+                        }
+
+                        elseif (defined ('AD_INSERTER_WEBSITES') && isset ($image_data ['html']) && $image_data ['html'] != '' && is_numeric ($image_data ['html'])) {
+                          $local_image_id = $image_data ['html'];
+
+                          $current_screen = get_current_screen ();
+                          $ai_remote_global_fields_pos = strpos ($current_screen->base, 'ai-remote-global-fields-');
+                          if ($ai_remote_global_fields_pos !== false) {
+
+                            $connected_website = get_transient (AI_CONNECTED_WEBSITE);
+                            if ($connected_website !== false) {
+                              $websites = get_option (AI_WEBSITES, array ());
+
+                              $rest_api_username = $connected_website ['rest_username'];
+                              $rest_api_password = $connected_website ['rest_password'];
+
+                              $connected_url = wp_parse_url ($connected_website ['url']);
+
+                              if ($rest_api_username != '' && $rest_api_password != '' && $connected_url ['scheme'] == 'https') {
+                                $image_path = wp_get_original_image_path ($local_image_id, true);
+
+                                if ($image_path !== false) {
+                                  $image_filename = basename ($image_path);
+                                  $media_data = check_image_exists ($connected_website ['url'], $rest_api_username, $rest_api_password, $image_filename);
+
+                                  if ($media_data !== false) {
+                                    // Image already exists
+                                    $post_field [$index]['id'] = $media_data ['id'];
+                                    $post_field [$index]['url'] = $media_data ['guid']['rendered'];
+                                    $post_field [$index]['html'] = '';
+                                  } else {
+                                      // Image not found. Uploading...
+                                      $result = upload_image ($connected_website ['url'], $rest_api_username, $rest_api_password, $image_path, $image_filename);
+
+                                      if (isset ($result ['error']) || !isset ($result ['id'])) {
+
+                                        if (!isset ($result ['error'])) {
+                                          $result ['error'] = '';
+                                        }
+                                        if (isset ($result ['message'])) {
+                                          $result ['error'] .= ' ' . $result ['message'];
+                                        }
+
+                                        $result ['error'] = trim ($result ['error']);
+
+                                        echo '<div class="notice notice-error is-dismissible" style="margin: 5px 15px 2px 0px;"><p>' . sprintf (__('Error uploading image %s', 'ad-inserter'), $image_filename) . ' (' . $result ['error'] . ')' . '</p></div>';
+
+                                        apply_filters ('simple_history_log', AD_INSERTER_NAME . ' ' . sprintf (__('Error uploading image %s to %s', 'ad-inserter'), $image_filename, $connected_website ['name']) . ' (' . $result ['error'] . ')');
+                                      } else {
+                                          $post_field [$index]['id'] = $result ['id'];
+                                          $post_field [$index]['html'] = '';
+                                          $post_field [$index]['url'] = $result ['guid']['raw'];
+                                          echo '<div class="notice notice-info is-dismissible" style="margin: 5px 15px 2px 0px;"><p>' . sprintf (__('Image %s uploaded successfully with ID %d', 'ad-inserter'), $image_filename, $result ['id']) . '</p></div>';
+
+                                          apply_filters ('simple_history_log', AD_INSERTER_NAME . ' ' . sprintf (__('Image %s uploaded successfully to %s with ID %d', 'ad-inserter'), $image_filename, $connected_website ['name'], $result ['id']));
+                                      }
+                                  }
+                                }
+                              }
+                            }
+                          }
+                        }
+                        unset ($post_field [$index]['remote_id']);
+
+                        // Generate image HTML code for local images on remote websites
+                        if (isset ($image_data ['html']) && $image_data ['html'] != '' && is_numeric ($image_data ['html'])) {
+                          $post_field [$index]['html'] = base64_encode (wp_get_attachment_image ($image_data ['html'], 'full', false));
+                        }
+                      }
+                    }
+
+                    $post_field = ':AI:' . base64_encode (json_encode ($post_field));
+                  }
+
                   $ai_global_fields [$field_index] = $post_field;
                 }
 
@@ -12039,24 +12968,45 @@ jQuery("#ai-global-fields-form").on ("submit", function (event) {
           }
         }
 
-        if ($valid_fields != 0) {
-          update_option (AI_GLOBAL_FIELDS_NAME, $ai_global_fields);
+        if ($valid_fields != 0 && $invalid_fields == 0) {
+
+          if ($remote_page && function_exists ('ai_save_global_fields_2')) {
+            $fields_saved = ai_save_global_fields_2 ($ai_global_fields);
+          } else $fields_saved = false;
+
+          if (!$fields_saved) {
+            update_option (AI_GLOBAL_FIELDS_NAME, $ai_global_fields);
+          }
 
           $page_name = '';
 
           $current_screen = get_current_screen ();
-          $ai_global_fields_pos = strpos ($current_screen->base, 'ai-global-fields-');
+          $ai_global_fields_pos        = strpos ($current_screen->base, 'ai-global-fields-');
+          $ai_remote_global_fields_pos = strpos ($current_screen->base, 'ai-remote-global-fields-');
 
           if ($ai_global_fields_pos !== false) {
             $current_global_page_index = str_replace ('ai-global-fields-', '', substr ($current_screen->base, $ai_global_fields_pos)) - 1;
             $page_name = ' ('.__('page', 'ad-inserter').' ' . $ai_global_fileds_settings ['pages'][$current_global_page_index]['menu_name']. ', '.__('fields', 'ad-inserter').': ' . implode (', ', $fields) . ')';
+
+
+            echo '<div class="notice notice-success is-dismissible" style="margin: 5px 15px 2px 0px;"><p>' . __('Global custom fields saved.', 'ad-inserter') . '</p></div>';
+
+            apply_filters ('simple_history_log', AD_INSERTER_NAME . ' ' . __('global custom fields saved', 'ad-inserter') . $page_name);
+          }
+          elseif (defined ('AD_INSERTER_WEBSITES') && $ai_remote_global_fields_pos !== false) {
+            $connected_website = get_transient (AI_CONNECTED_WEBSITE);
+
+            if ($connected_website !== false) {
+              $current_global_page_index = str_replace ('ai-remote-global-fields-', '', substr ($current_screen->base, $ai_remote_global_fields_pos)) - 1;
+              $page_name = ' ('.__('website', 'ad-inserter').' ' . $connected_website ['name']. ', '.__('fields', 'ad-inserter').': ' . implode (', ', $fields) . ')';
+
+              echo '<div class="notice notice-success is-dismissible" style="margin: 5px 15px 2px 0px;"><p>' . sprintf (__('Global custom fields on %s saved.', 'ad-inserter'), $connected_website ['name']) . '</p></div>';
+
+              apply_filters ('simple_history_log', AD_INSERTER_NAME . ' ' . sprintf (__('Global custom fields on %s saved.', 'ad-inserter'), $connected_website ['name']) . $page_name);
+            }
           }
 
-          echo '<div class="notice notice-success is-dismissible" style="margin: 5px 15px 2px 0px;"><p>' . __('Global custom fields saved.', 'ad-inserter') . '</p></div>';
-
-          apply_filters ('simple_history_log', AD_INSERTER_NAME . ' ' . __('global custom fields saved', 'ad-inserter') . $page_name);
-        }
+        } else echo '<div class="notice notice-error is-dismissible" style="margin: 5px 15px 2px 0px;"><p>' . __('Invalid data received. Global custom fields not saved.', 'ad-inserter') . '</p></div>';
       }
     }
-
 }

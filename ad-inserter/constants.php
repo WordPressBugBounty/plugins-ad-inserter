@@ -1,6 +1,7 @@
 <?php
 
 define ('AI_OPTION_NAME',                'ad_inserter');
+define ('AI_OPTION_GCF_NAME',            'ad_inserter_gcf');
 define ('AI_GLOBAL_FIELDS_NAME',         'ad_inserter_global_fields');
 define ('AI_EXTRACT_NAME',               'ad_inserter_extract');
 define ('AI_FLAGS_NAME',                 'ad_inserter_flags');
@@ -33,7 +34,7 @@ if (!defined( 'AD_INSERTER_NAME'))
   define ('AD_INSERTER_NAME', 'Ad Inserter');
 
 if (!defined( 'AD_INSERTER_VERSION'))
-  define ('AD_INSERTER_VERSION', '2.8.11');
+  define ('AD_INSERTER_VERSION', '2.8.12');
 
 if (!defined ('AD_INSERTER_PLUGIN_BASENAME'))
   define ('AD_INSERTER_PLUGIN_BASENAME', plugin_basename (__FILE__));
@@ -264,6 +265,7 @@ define('AI_FORM_SAVE',              'ai_save');
 define('AI_FORM_CLEAR',             'ai_clear');
 define('AI_FORM_CLEAR_EXCEPTIONS',  'ai-clear-exceptions');
 define('AI_FORM_CLEAR_STATISTICS',  'ai-clear-statistics');
+define('AI_FORM_GLOBAL_FIELDS',     'ai-global-fields');
 
 define('AD_AUTHOR_SITE', '<!-- Powered by Ad Inserter Plugin -->');
 define('AD_FALLBACK_SEPARATOR', '|fallback|');

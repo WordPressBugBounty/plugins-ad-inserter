@@ -5,7 +5,7 @@ msgstr ""
 "Project-Id-Version: Ad Inserter 2.5.2\n"
 "Report-Msgid-Bugs-To: https://wordpress.org/support/plugin/ad-inserter\n"
 "POT-Creation-Date: 2026-02-08 12:59:01+00:00\n"
-"PO-Revision-Date: 2026-02-08 14:26+0100\n"
+"PO-Revision-Date: 2026-02-09 20:22+0100\n"
 "Last-Translator: Igor Funa <info@adinserter.pro>\n"
 "Language-Team: \n"
 "Language: sl_SI\n"
@@ -7754,7 +7754,7 @@ msgstr "Dovoljeni atributi"
 
 #: strings.php:63
 msgid "Forbidden attributes"
-msgstr "Prepovedani natributi"
+msgstr "Prepovedani atributi"
 
 #: strings.php:65
 msgid "Do not count"

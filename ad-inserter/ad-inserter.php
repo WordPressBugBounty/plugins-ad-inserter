@@ -5,7 +5,7 @@
 
 /*
 Plugin Name: Ad Inserter
-Version: 2.8.11
+Version: 2.8.12
 Description: Ad management with many advanced advertising features to insert ads at optimal positions
 Author: Igor Funa
 Author URI: http://igorfuna.com/
@@ -20,6 +20,10 @@ License: GPLv3
 /*
 
 Change Log
+
+Ad Inserter 2.8.12 - 2026-02-28
+- Added viewports to image custom fields (Pro only)
+- Few minor bug fixes, cosmetic changes and code improvements
 
 Ad Inserter 2.8.11 - 2026-02-08
 - Added global custom field types (Pro only)
@@ -1686,6 +1690,7 @@ function ai_wp_hook () {
 //    ai_setcookie ('AI_WP_DEBUGGING', null, - 1, '/');
 //  }
 
+  // ajax and url query request
   if (isset ($_GET ["ai-get-settings"])) {
     if (get_remote_debugging ()) {
       ai_disable_caching ();
@@ -1696,7 +1701,7 @@ function ai_wp_hook () {
 
       ai_write_settings_string ();
       exit;
-    }
+    } else wp_die ('Sorry, you are not allowed to do that.', 423);
   }
 
   if (defined ('AI_WP_HOOK')) return;
@@ -1990,6 +1995,16 @@ function ai_wp_hook () {
     }
   }
 
+  add_action ('rest_api_init', function () {
+    register_rest_route( 'ad-inserter/v1', '/settings', array(
+        'methods'             => 'GET, POST',
+        'callback'            => 'ai_endpoint_callback',
+        'permission_callback' => function () {
+          return get_remote_debugging () ? true : false; // Restrict access
+        },
+    ) );
+  });
+
   if (($ai_wp_data [AI_WP_DEBUGGING] & AI_DEBUG_PROCESSING) != 0) {
     if (!$ai_processing_time_active) {
       $ai_total_plugin_time += microtime (true) - $start_time;
@@ -1998,6 +2013,18 @@ function ai_wp_hook () {
     ai_log ("WP HOOK END: ". number_format (1000 * (microtime (true) - $start_time), 2)." ms\n");
   }
 };
+
+function ai_endpoint_callback (WP_REST_Request $request) {
+  ai_disable_caching ();
+
+  if (!function_exists ('get_editable_roles')) {
+    include_once (ABSPATH . 'wp-admin/includes/user.php');
+  }
+
+  $data = ai_settings_data ();
+
+  return new WP_REST_Response ($data, 200);
+}
 
 function ai_load_plugin_textdomain_hook () {
   unload_textdomain ('ad-inserter');
@@ -2227,13 +2254,15 @@ function ai_admin_menu_hook () {
     } else $menu_position = DEFAULT_MENU_FOR_LINK;
   }
 
-  if ($menu_position == AI_SETTINGS_SUBMENU) {
-                                                                              // translators: %s: Ad Inserter
-    $ai_settings_page = add_submenu_page ('options-general.php', sprintf (__('%s Settings', 'ad-inserter'), AD_INSERTER_NAME), AD_INSERTER_NAME, 'manage_options', basename (__FILE__), 'ai_settings', defined ('AI_SETTINGS_MENU_PRIORITY') ? AI_SETTINGS_MENU_PRIORITY : DEFAULT_SETTINGS_SUBMENU_PRIORITY);
-  } else {
-                                                      // translators: %s: Ad Inserter
-      $ai_settings_page = add_menu_page (sprintf (__('%s Settings', 'ad-inserter'), AD_INSERTER_NAME), AD_INSERTER_NAME, 'manage_options', basename (__FILE__), 'ai_settings', 'dashicons-layout', defined ('AI_SETTINGS_MENU_PRIORITY') ? AI_SETTINGS_MENU_PRIORITY : DEFAULT_SETTINGS_MENU_PRIORITY);
-    }
+  if (current_user_can ('manage_options')) {
+    if ($menu_position == AI_SETTINGS_SUBMENU) {
+                                                                                // translators: %s: Ad Inserter
+      $ai_settings_page = add_submenu_page ('options-general.php', sprintf (__('%s Settings', 'ad-inserter'), AD_INSERTER_NAME), AD_INSERTER_NAME, 'manage_options', AD_INSERTER_BASE, 'ai_settings', defined ('AI_SETTINGS_MENU_PRIORITY') ? AI_SETTINGS_MENU_PRIORITY : DEFAULT_SETTINGS_SUBMENU_PRIORITY);
+    } else {
+                                                        // translators: %s: Ad Inserter
+        $ai_settings_page = add_menu_page (sprintf (__('%s Settings', 'ad-inserter'), AD_INSERTER_NAME), AD_INSERTER_NAME, 'manage_options', AD_INSERTER_BASE, 'ai_settings', 'dashicons-layout', defined ('AI_SETTINGS_MENU_PRIORITY') ? AI_SETTINGS_MENU_PRIORITY : DEFAULT_SETTINGS_MENU_PRIORITY);
+      }
+  }
 
   add_action ('admin_enqueue_scripts',  'ai_admin_enqueue_scripts');
   add_action ('admin_enqueue_scripts',  'ai_admin_enqueue_scripts_late', 99999);
@@ -5386,6 +5415,15 @@ function ai_shutdown_hook () {
       echo "\n-->\n";
     }
   }
+
+  if (isset ($_GET ['ai-debug-log']) && $_GET ['ai-debug-log'])  {
+    $log = get_transient ('ai_event_log');
+    if ($log != '') {
+      echo "\n<!--\n\n";
+      echo $log;
+      echo "\n-->\n";
+    } else echo "\n\n";
+  }
 }
 
 function ai_activation_hook () {
@@ -5603,8 +5641,7 @@ function ai_check_plugin_options ($plugin_options = array ()) {
     $field_attributes_settings_name      = 'GLOBAL_FIELD_ATTRIBUTES_' . $field;
     $field_block_for_sel_settings_name   = 'GLOBAL_FIELD_BLOCK_FOR_SEL_' . $field;
 
-    if (!isset ($plugin_options [$field_type_settings_name]))       $plugin_options [$field_type_settings_name] = DEFAULT_GLOBAL_FIELD_TYPE;
-    if (!isset ($plugin_options [$field_iamge_sel_settings_name]))  $plugin_options [$field_iamge_sel_settings_name] = AI_DISABLED;
+    if (!isset ($plugin_options [$field_type_settings_name]))     $plugin_options [$field_type_settings_name] = DEFAULT_GLOBAL_FIELD_TYPE;
 
     if (!isset ($plugin_options [$field_enabled_settings_name]))  $plugin_options [$field_enabled_settings_name] = AI_DISABLED;
     if (!isset ($plugin_options [$field_name_settings_name]))     $plugin_options [$field_name_settings_name] = '';
@@ -5651,9 +5688,10 @@ function ai_update_option ($option_name, $value) {
   update_option ($option_name, ':AI:'. base64_encode (serialize ($value)));
 }
 
-function ai_save_options ($options, $multisite_options = null, $blocks_org = null, $blocks_new = null) {
+function ai_save_options ($options, $multisite_options = null, $blocks_org = null, $blocks_new = null, $remote = true) {
+  global $ai_global_fileds_settings;
 
-  if (function_exists ('ai_save_remote_settings')) {
+  if ($remote && function_exists ('ai_save_remote_settings')) {
     if (ai_save_remote_settings ($options, $multisite_options, $blocks_org, $blocks_new)) return;
   }
 
@@ -5692,6 +5730,8 @@ function ai_save_options ($options, $multisite_options = null, $blocks_org = nul
   }
 
   ai_load_settings ();
+
+  update_option (AI_OPTION_GCF_NAME, $ai_global_fileds_settings);
 
   if (is_array ($blocks_org) && is_array ($blocks_new)) {
     ai_update_block_numbers ($blocks_org, $blocks_new);
@@ -6340,6 +6380,7 @@ function get_global_page_access ($page_number) {
 }
 
 
+
 // Global fields
 
 function get_global_field_enabled ($field_number) {
@@ -6423,6 +6464,15 @@ function get_global_field_block_for_selection ($field_number) {
   return ($ai_db_options [AI_OPTION_GLOBAL][$global_field_settings_name]);
 }
 
+
+function get_remote_pages_menu_name () {
+  global $ai_db_options;
+
+  $remote_pages_menu_name = 'REMOTE_MANAGEMENT_MENU_NAME';
+  if (!isset ($ai_db_options [AI_OPTION_GLOBAL][$remote_pages_menu_name])) $ai_db_options [AI_OPTION_GLOBAL][$remote_pages_menu_name] = DEFAULT_REMOTE_MANAGEMENT_MENU_NAME;
+
+  return ($ai_db_options [AI_OPTION_GLOBAL][$remote_pages_menu_name]);
+}
 
 
 
@@ -6887,7 +6937,9 @@ function filter_option_hf ($option, $value){
 }
 
 
-function ai_write_settings_string () {
+function ai_settings_data () {
+  $plugin_data_array = array ();
+
   if (get_remote_debugging ()) {
     global $ai_wp_data, $ai_db_options, $ai_db_options_multisite;
 
@@ -6919,6 +6971,7 @@ function ai_write_settings_string () {
       'review' => get_option ('ai-notice-review', ''),
       'pro' => false,
       'write' => false,
+      'rest' => false,
       'sidebar-widgets' => get_sidebar_widgets (),
       'exceptions' => ai_get_exceptions (/*ai_current_user_role_ok () && */(!is_multisite() || is_main_site () || multisite_exceptions_enabled ())),
       'current-theme' => array ('name' => $current_theme->get ('Name'), 'version' => $current_theme->get ('Version')),
@@ -6939,28 +6992,33 @@ function ai_write_settings_string () {
       ai_plugin_data ($plugin_data);
     } else $plugin_data ['taxonomies'] = ai_get_taxonomy_list (true);
 
-    echo '#', base64_encode (serialize ($plugin_data)), '#';
-
-    if (is_multisite()) {
-      echo base64_encode (serialize ($ai_db_options_multisite));
-    }
-
-    echo "#";
-
-    if (is_multisite() && multisite_main_for_all_blogs () && defined ('BLOG_ID_CURRENT_SITE')) {
-      echo BLOG_ID_CURRENT_SITE;
-    }
-
-    echo "#";
+    $plugin_data_array ['plugin_data'] = base64_encode (serialize ($plugin_data));
 
     if (function_exists ('ai_filter_remote_settings')) {
       ai_filter_remote_settings ($ai_db_options);
     }
 
-    echo base64_encode (serialize ($ai_db_options));
+    $plugin_data_array ['plugin_settings'] = base64_encode (serialize ($ai_db_options));
+    $plugin_data_array ['multisite-settings'] = is_multisite () ? base64_encode (serialize ($ai_db_options_multisite)) : '';
+    $plugin_data_array ['multisite-blog-id'] = is_multisite() && multisite_main_for_all_blogs () && defined ('BLOG_ID_CURRENT_SITE') ? BLOG_ID_CURRENT_SITE : '';
+    $plugin_data_array ['global_custom_fields'] = base64_encode (serialize (get_option (AI_GLOBAL_FIELDS_NAME, array ())));
   }
+
+  return ($plugin_data_array);
 }
 
+function ai_write_settings_string () {
+  $settings_data = ai_settings_data ();
+
+  if (!empty ($settings_data)) {
+    echo json_encode ($settings_data);
+//    echo '#', $settings_data ['plugin_data'];
+//    echo '#', $settings_data ['multisite-settings'];
+//    echo '#', $settings_data ['multisite-blog-id'];
+//    echo '#', $settings_data ['plugin_settings'];
+//    echo '#', $settings_data ['global_custom_fields'];
+  }
+}
 
 function ai_ajax () {
   global $ai_wp_data;
@@ -7017,8 +7075,11 @@ function ai_ajax () {
     }
   }
 
+  // only for ajax request - overriden by ai_wp_hook check
   elseif (isset ($_GET ["ai-get-settings"])) {
-    ai_write_settings_string ();
+    if (get_remote_debugging ()) {
+      ai_write_settings_string ();
+    } else wp_die ('Sorry, you are not allowed to do that.', 423);
   }
 
   elseif (isset ($_GET ["check-page"])) {
@@ -7617,6 +7678,40 @@ function ai_generate_extract (&$settings) {
   return ($extract);
 }
 
+
+function ai_load_global_fileds_settings () {
+  global $ai_global_fileds_settings;
+
+  $ai_global_fileds_settings = array ('pages' => array (), 'fields' => array ());
+  for ($page = 1; $page <= AI_MAX_GLOBAL_FIELD_PAGES; $page ++) {
+    $page_settings = array (
+      'enabled' => get_global_page_enabled ($page),
+      'menu_name' => get_global_page_name ($page),
+      'priority' => get_global_page_priority ($page),
+      'menu_position' => get_global_page_menu_position ($page),
+      'access' => get_global_page_access ($page));
+
+    $ai_global_fileds_settings ['pages'] []= $page_settings;
+  }
+
+  for ($field = 1; $field <= AI_MAX_GLOBAL_FIELDS; $field ++) {
+    $field_settings = array (
+      'type' => (int) get_global_field_type ($field),
+
+      'enabled' => boolval (get_global_field_enabled ($field)),
+      'page' => get_global_field_page ($field) - 1,
+      'name' => get_global_field_name ($field),
+
+      'tags_type' => (int) get_global_field_tags_type ($field),
+      'tags' => str_replace (' ', '', get_global_field_tags ($field)),
+      'attributes_type' => (int) get_global_field_attributes_type ($field),
+      'attributes' => str_replace (' ', '', get_global_field_attributes ($field)),
+      'block' => (int) get_global_field_block_for_selection ($field));
+
+    $ai_global_fileds_settings ['fields'] []= $field_settings;
+  }
+}
+
 function ai_load_settings () {
   global $ai_db_options, $block_object, $ai_wp_data, $version_string, $ai_custom_hooks, $ai_global_fileds_settings;
 
@@ -7723,34 +7818,7 @@ function ai_load_settings () {
   }
 
   // Load global fields settings
-  $ai_global_fileds_settings = array ('pages' => array (), 'fields' => array ());
-  for ($page = 1; $page <= AI_MAX_GLOBAL_FIELD_PAGES; $page ++) {
-    $page_settings = array (
-      'enabled' => get_global_page_enabled ($page),
-      'menu_name' => get_global_page_name ($page),
-      'priority' => get_global_page_priority ($page),
-      'menu_position' => get_global_page_menu_position ($page),
-      'access' => get_global_page_access ($page));
-
-    $ai_global_fileds_settings ['pages'] []= $page_settings;
-  }
-
-  for ($field = 1; $field <= AI_MAX_GLOBAL_FIELDS; $field ++) {
-    $field_settings = array (
-      'type' => (int) get_global_field_type ($field),
-
-      'enabled' => boolval (get_global_field_enabled ($field)),
-      'page' => get_global_field_page ($field) - 1,
-      'name' => get_global_field_name ($field),
-
-      'tags_type' => (int) get_global_field_tags_type ($field),
-      'tags' => str_replace (' ', '', get_global_field_tags ($field)),
-      'attributes_type' => (int) get_global_field_attributes_type ($field),
-      'attributes' => str_replace (' ', '', get_global_field_attributes ($field)),
-      'block' => (int) get_global_field_block_for_selection ($field));
-
-    $ai_global_fileds_settings ['fields'] []= $field_settings;
-  }
+  ai_load_global_fileds_settings ();
 
   if (($ai_wp_data [AI_WP_DEBUGGING] & AI_DEBUG_PROCESSING) != 0) ai_log ("LOAD SETTINGS END");
 }
@@ -8462,7 +8530,7 @@ function ai_settings () {
         for ($field = 1; $field <= AI_MAX_GLOBAL_FIELDS; $field ++) {
           if (isset ($_POST ['global-field-type-'.$field]))             $options ['GLOBAL_FIELD_TYPE_'.$field]      = filter_option ('GLOBAL_FIELD_TYPE', $_POST ['global-field-type-'.$field]);
 
-          if (isset ($_POST ['global-field-enabled-'.$field]))          $options ['GLOBAL_FIELD_ENABLED_'.$field]  = filter_option ('GLOBAL_PAGE_ENABLED', $_POST ['global-field-enabled-'.$field]);
+          if (isset ($_POST ['global-field-enabled-'.$field]))          $options ['GLOBAL_FIELD_ENABLED_'.$field]  = filter_option ('GLOBAL_FIELD_ENABLED', $_POST ['global-field-enabled-'.$field]);
           if (isset ($_POST ['global-field-name-'.$field]))             $options ['GLOBAL_FIELD_NAME_'.$field]     = filter_string_tags ($_POST ['global-field-name-'.$field]);
           if (isset ($_POST ['global-field-page-'.$field]))             $options ['GLOBAL_FIELD_PAGE_'.$field]     = filter_option ('GLOBAL_FIELD_PAGE', $_POST ['global-field-page-'.$field]);
 
@@ -8737,10 +8805,22 @@ function generate_rotation_code ($option_data, $rotate_options = '') {
   return '[ADINSERTER ROTATE' . $rotate_options . $attributes . ']' ."\n" . $option_data ['code'] . "\n\n";
 }
 
+function get_global_fields ($remote_page = false) {
+  if ($remote_page && function_exists ('get_global_fields_2')) {
+    $global_fields = get_global_fields_2 ();
+    if (is_array ($global_fields)) {
+      return $global_fields;
+    }
+  }
+
+  return get_option (AI_GLOBAL_FIELDS_NAME, array ());
+}
+
 function adinserter_global_custom_field_value ($field_index, $field_data, $data_as_array = false) {
   global $block_object, $ai_wp_data, $ai_global_fileds_settings;
 
-  $ai_global_fields = get_option (AI_GLOBAL_FIELDS_NAME, array ());
+//  $ai_global_fields = get_option (AI_GLOBAL_FIELDS_NAME, array ());
+  $ai_global_fields = get_global_fields ();
 
   switch ($field_data ['type']) {
     case AI_GLOBAL_FIELD_SELECTION:
@@ -8839,27 +8919,88 @@ function adinserter_global_custom_field_value ($field_index, $field_data, $data_
         $field_value = base64_decode (substr ($field_value, 4), true);
       }
 
-      $image_data = json_decode ($field_value);
+      $images_data = json_decode ($field_value, true);
       $field_value = '';
+      $one_image = false;
 
-      if ($image_data !== null) {
-        $image_data = (array) $image_data;
+      $viewport_data = array ();
+      for ($viewport = 1; $viewport <= 6; $viewport ++) {
+        $viewport_name  = get_viewport_name ($viewport);
+        $viewport_width = get_viewport_width ($viewport);
+        if ($viewport_name != '') {
+          $viewport_data []= array ('index' => $viewport, 'name' => sanitize_text_field ($viewport_name), 'width' => $viewport_width);
+        }
+      }
+      $all_viewports = array_fill (0, count ($viewport_data), 1);
+      $all_viewports_json = json_encode ($all_viewports);
+
+      if ($images_data !== null) {
+
+        if (isset ($images_data ['id'])) {
+          $images_data = array ($images_data);
+        }
+
+//        $image_data = (array) $image_data;
 
         if ($data_as_array) {
-          return $image_data;
+          return $images_data;
         }
 
-        if (isset ($image_data ['id']) && is_int ($image_data ['id'])) {
-          $field_value = wp_get_attachment_image ($image_data ['id'], 'full', false);
+        if (isset ($images_data [0]) && json_encode ($images_data [0]['viewports']) == $all_viewports_json) {
+          $image_data = $images_data [0];
 
-          if (isset ($image_data ['link']) && $image_data ['link'] != '') {
-            $target = '';
-            if (isset ($image_data ['new-tab']) && $image_data ['new-tab'] == '1') {
-              $target = ' target="_blank"';
+          if (isset ($image_data ['id']) && is_int ($image_data ['id'])) {
+            if ($image_data ['id'] != 0) {
+              $field_value = wp_get_attachment_image ($image_data ['id'], 'full', false);
+            } else {
+                if (isset ($image_data ['html']) && $image_data ['html'] != '') {
+                  $field_value = base64_decode ($image_data ['html']);
+                } else
+                $field_value = '<img src="'. $image_data ['url'] . '" class="attachment-full size-full">';
+              }
+
+            if (isset ($image_data ['link']) && $image_data ['link'] != '') {
+              $target = '';
+              if (isset ($image_data ['new-tab']) && $image_data ['new-tab'] == '1') {
+                $target = ' target="_blank"';
+              }
+              $field_value = '<a href="' . esc_url ($image_data ['link']) . '"' . $target .'>' . $field_value . '</a>';
             }
-            $field_value = '<a href="' . esc_url ($image_data ['link']) . '"' . $target .'>' . $field_value . '</a>';
           }
-        }
+        } else {
+            $viewport_html = array ();
+            foreach ($images_data as $image_data) {
+              if (isset ($image_data ['id']) && is_int ($image_data ['id'])) {
+                $viewport_names = array ();
+                foreach ($viewport_data as $viewport_index => $viewport) {
+                  if (isset ($image_data ['viewports'][$viewport_index]) && $image_data ['viewports'][$viewport_index]) {
+                    $viewport_names []= $viewport ['name'];
+                  }
+                }
+
+                if ($image_data ['id'] != 0) {
+                  $image_html = wp_get_attachment_image ($image_data ['id'], 'full', false);
+                } else {
+                    if (isset ($image_data ['html']) && $image_data ['html'] != '') {
+                      $image_html = base64_decode ($image_data ['html']);
+                    } else
+                    $image_html = '<img src="'. $image_data ['url'] . '" class="attachment-full size-full">';
+                  }
+
+                if (isset ($image_data ['link']) && $image_data ['link'] != '') {
+                  $target = '';
+                  if (isset ($image_data ['new-tab']) && $image_data ['new-tab'] == '1') {
+                    $target = ' target="_blank"';
+                  }
+                  $image_html = '<a href="' . esc_url ($image_data ['link']) . '"' . $target .'>' . $image_html . '</a>';
+                }
+
+                $viewport_html []= '[ADINSERTER VIEWPORT="' . implode (", ", $viewport_names) . '" code="show"]' . "\n" . $image_html;
+              }
+            }
+
+            $field_value = implode ("\n\n", $viewport_html);
+          }
       }
 
       break;
@@ -12669,6 +12810,7 @@ function replace_ai_tags ($content, $general_tag = '') {
 //    $ai_wp_data [AI_TAGS]['AUTHOR']               = $author;
 //    $ai_wp_data [AI_TAGS]['AUTHOR_NAME']          = $author_name;
     $ai_wp_data [AI_TAGS]['POST_ID']              = $post_id;
+    $ai_wp_data [AI_TAGS]['POST_DATE']            = get_the_date ();
     $ai_wp_data [AI_TAGS]['URL']                  = $url;
   }
 
@@ -12699,6 +12841,7 @@ function replace_ai_tags ($content, $general_tag = '') {
   $ad_data = preg_replace ("/{author-name}/i",        $ai_wp_data [AI_TAGS]['AUTHOR_NAME'],       $ad_data);
   $ad_data = preg_replace ("/{author-login}/i",       $ai_wp_data [AI_TAGS]['AUTHOR_LOGIN'],      $ad_data);
   $ad_data = preg_replace ("/{post-id}/i",            $ai_wp_data [AI_TAGS]['POST_ID'],           $ad_data);
+  $ad_data = preg_replace ("/{post-date}/i",          $ai_wp_data [AI_TAGS]['POST_DATE'],         $ad_data);
 
   $ad_data = preg_replace ("/{short_title}/i",        $ai_wp_data [AI_TAGS]['SHORT_TITLE'],       $ad_data);
   $ad_data = preg_replace ("/{short_category}/i",     $ai_wp_data [AI_TAGS]['SHORT_CATEGORY'],    $ad_data);
@@ -12785,6 +12928,23 @@ function ai_ad_label_code () {
   }
 
   return $ad_label .= "\n";
+}
+
+function ai_top_menu_items () {
+  global $menu;
+
+  $position = array (0 => array (0 => 'Top menu', 1 => 'read', 2 => '', 3 => 'Top menu', 4 => '', 5 => 'top-menu', 6 => ''));
+  foreach ($menu as $menu_priority => $menu_item) {
+    if ($menu_item [0] != ''  && strpos ($menu_item [2], '.php') !== false && strpos ($menu_item [2], 'data:') !== 0) {
+      $position [$menu_priority] = $menu_item;
+
+      $title = preg_replace ('#<span[^>]*>.*?</span>#si', '', $menu_item [0]);
+      $title = html_entity_decode (wp_strip_all_tags ($title), ENT_QUOTES, get_bloginfo ('charset'));
+      $position [$menu_priority][0] = esc_html (trim ($title));
+    }
+  }
+
+  return ($position);
 }
 
 
@@ -12902,6 +13062,9 @@ $filter_hooks = array ();
 if (isset ($_GET ['ai-safe-mode'])) {
   define ('AI_SAFE_MODE', 1);
 }
+
+if (!defined( 'AD_INSERTER_BASE'))
+  define ('AD_INSERTER_BASE', basename (__FILE__));
 
 //include required files
 require_once AD_INSERTER_PLUGIN_DIR.'class.php';
@@ -13100,7 +13263,7 @@ if (function_exists ('ai_system_output_check')) $ai_system_output = ai_system_ou
 //  add_action ('get_header',       'ai_buffering_start_hook', 99999);
 //}
 
-if (($ai_wp_data [AI_WP_DEBUGGING] & AI_DEBUG_PROCESSING) != 0 || $ai_system_output) {
+if (($ai_wp_data [AI_WP_DEBUGGING] & AI_DEBUG_PROCESSING) != 0 || $ai_system_output || isset ($_GET ['ai-debug-log'])) {
   add_action ('shutdown',         'ai_shutdown_hook', 0);
 }
 
@@ -13132,7 +13295,6 @@ if (is_admin () === true) {
 if (!get_option (AI_INSTALL_NAME)) {
   update_option (AI_INSTALL_NAME, time ());
 }
-
 
 if (defined ('AI_PLUGIN_TRACKING') && AI_PLUGIN_TRACKING) {
 

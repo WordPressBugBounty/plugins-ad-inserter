@@ -225,12 +225,15 @@ define ('AI_TEXT_MEDIA_SELECT_IMAGE',     __('Select image', 'ad-inserter'));
 define ('AI_TEXT_MEDIA_USE_THIS_IMAGE',   __('Use this image', 'ad-inserter'));
 define ('AI_TEXT_MEDIA_IMAGE',            __('IMAGE', 'ad-inserter'));
 define ('AI_TEXT_MEDIA_LINK',             __('Link', 'ad-inserter'));
-define ('AI_TEXT_MEDIA_OPEN_LINK_NEW_TAB',__('Open link in a new tab', 'ad-inserter'));
+define ('AI_TEXT_MEDIA_OPEN_LINK_NEW_TAB',__('New tab', 'ad-inserter'));
+define ('AI_TEXT_MEDIA_VIEWPORTS',        __('Viewports', 'ad-inserter'));
 
                                                 // Translators: %s: Ad Inserter Pro
 define ('DEFAULT_REPORT_HEADER_TITLE',          sprintf (__('%s Report', 'ad-inserter'), 'Ad Inserter Pro'));
 define ('DEFAULT_REPORT_HEADER_DESCRIPTION',    __('Impressions and clicks', 'ad-inserter'));
 define ('DEFAULT_REPORT_FOOTER',                AD_INSERTER_NAME . '        '. __('Advanced WordPress Ad Management Plugin', 'ad-inserter') . '        https://adinserter.pro/');
+
+define ('DEFAULT_REMOTE_MANAGEMENT_MENU_NAME', __('Remote Websites', 'ad-inserter'));
 
 
 global $ai_admin_translations, $ai_front_translations, $wp_version;

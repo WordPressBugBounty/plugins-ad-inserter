@@ -703,7 +703,9 @@ if (typeof ai_rotation_triggers != 'undefined') {
           // ***
 //          adb_show_wrapping_div.addClass ('ai-track');
           adb_show_wrapping_div.classList.add ('ai-track');
-          if (timed_rotation && ai_tracking_finished) {
+//          if (timed_rotation && ai_tracking_finished) {
+            // Prevent pageview tracking for timed rotations but only if ai-impression class has been set - block impression tracked
+          if (timed_rotation && ai_tracking_finished && adb_show_wrapping_div.getAttribute ("class").includes ('ai-impression')) {
             // Prevent pageview trackign for timed rotations
             adb_show_wrapping_div.classList.add ('ai-no-pageview');
           }
@@ -727,6 +729,7 @@ if (typeof ai_rotation_triggers != 'undefined') {
 //          data [1] = random_index + 1;
           data [1] = option_index;
           data [3] = option_name;
+
           // ***
 //          wrapping_div.attr ("data-ai", b64e (JSON.stringify (data)))
           wrapping_div.setAttribute ("data-ai", b64e (JSON.stringify (data)))
@@ -735,8 +738,9 @@ if (typeof ai_rotation_triggers != 'undefined') {
           // ***
 //          wrapping_div.addClass ('ai-track');
           wrapping_div.classList.add ('ai-track');
-          if (timed_rotation && ai_tracking_finished) {
-            // Prevent pageview trackign for timed rotations
+//          if (timed_rotation && ai_tracking_finished) {
+          if (timed_rotation && ai_tracking_finished && wrapping_div.getAttribute ("class").includes ('ai-impression')) {
+            // Prevent pageview tracking for timed rotations but only if ai-impression class has been set - block impression tracked
             wrapping_div.classList.add ('ai-no-pageview');
           }
 
