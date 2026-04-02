@@ -30,11 +30,15 @@ if (file_exists (AD_INSERTER_PLUGIN_DIR.'includes/functions.php')) {
   include_once AD_INSERTER_PLUGIN_DIR.'includes/functions.php';
 }
 
+if (file_exists (AD_INSERTER_PLUGIN_DIR.'includes/extras.php')) {
+  include_once AD_INSERTER_PLUGIN_DIR.'includes/extras.php';
+}
+
 if (!defined( 'AD_INSERTER_NAME'))
   define ('AD_INSERTER_NAME', 'Ad Inserter');
 
 if (!defined( 'AD_INSERTER_VERSION'))
-  define ('AD_INSERTER_VERSION', '2.8.12');
+  define ('AD_INSERTER_VERSION', '2.8.13');
 
 if (!defined ('AD_INSERTER_PLUGIN_BASENAME'))
   define ('AD_INSERTER_PLUGIN_BASENAME', plugin_basename (__FILE__));

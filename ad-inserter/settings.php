@@ -3031,9 +3031,9 @@ function generate_settings_form (){
           </table>
         </div>
 <?php
-//        if (function_exists ('ai_remote_custom_pages')) {
-//          ai_remote_custom_pages ();
-//        }
+        if (function_exists ('ai_remote_custom_pages')) {
+          ai_remote_custom_pages ();
+        }
 ?>
       </div>
 

@@ -6,7 +6,7 @@ Tags: ads, adsense, amp, ad rotation, ad manager
 Requires at least: 5.0
 Tested up to: 6.9
 Requires PHP: 7.4
-Stable tag: 2.8.12
+Stable tag: 2.8.13
 License: GPLv3
 
 Manage Google AdSense ads, banners, ad rotation, sticky widgets, AMP ads, ads.txt, tracking, header and footer code, PHP code, global custom fields
@@ -365,6 +365,10 @@ If you are not happy to reveal this information and you have opted in, simply di
 
 == Changelog ==
 
+= 2.8.13 =
+- Added remote management support for global custom fields (Pro only)
+- Few minor bug fixes, cosmetic changes and code improvements
+
 = 2.8.12 =
 - Added viewports to image custom fields (Pro only)
 - Few minor bug fixes, cosmetic changes and code improvements
@@ -419,63 +423,15 @@ If you are not happy to reveal this information and you have opted in, simply di
 - Added support for custom reports for clients (Pro only)
 - Few minor bug fixes, cosmetic changes and code improvements
 
-= 2.7.39 =
-- Improved frontend code
-- Fix for warning "Function _load_textdomain_just_in_time was called incorrectly"
-- Updated Maxmind library (Pro only)
-- Few minor bug fixes, cosmetic changes and code improvements
-
-= 2.7.38 =
-- Security fix for potential cross site scripting
-
-= 2.7.37 =
-- Removed deprecated setting Wait for jQuery
-- Few minor bug fixes, cosmetic changes and code improvements
-
-= 2.7.36 =
-- Added support for WPML languages in the taxonomy list
-- Added support to disable caching for LiteSpeed Cache and WP Fastest Cache plugins
-- Added support to define the minimal block height for the close button to appear (Pro only)
-- Few minor bug fixes, cosmetic changes and code improvements
-
-= 2.7.35 =
-- Added support for Simple History plugin
-- Added support for external tracking for Google Tag Manager code (Pro only)
-- Few minor bug fixes, cosmetic changes and code improvements
-
-= 2.7.34 =
-- Added support for ^ character to invert viewports in the VIEWPORT separator
-- Added support for index parameter for counter shortcodes
-- Changed text for content marker
-- Few minor bug fixes, cosmetic changes and code improvements
-
-= 2.7.33 =
-- Changed widget class name
-- Added option to define maximum number of list selection items
-- Fix for Amazon external script causing false ad blocking detection
-- Few minor bug fixes, cosmetic changes and code improvements
-
-= 2.7.32 =
-- Added experimental support for REST requests
-- Added support for data shortcode for url parameters
-- Added option for shortcodes to ignore category, tag, taxonomy and post ID lists
-- Added support for background parallax ads (Pro only)
-- Few minor bug fixes, cosmetic changes and code improvements
-
-= 2.7.31 =
-- Security fix for some data revealed via remote debugging data
-- Added support to remove ad label when no code is inserted
-- Few minor bug fixes, cosmetic changes and code improvements
-
-= 2.7.30 =
-- Improved debugging
-- Few minor bug fixes, cosmetic changes and code improvements
-
 = Earlier versions =
 
 For the changelog of earlier versions, please refer to the separate changelog.txt file.
 
 == Upgrade Notice ==
+
+= 2.8.13 =
+Added remote management support for global custom fields (Pro only);
+Few minor bug fixes, cosmetic changes and code improvements
 
 = 2.8.12 =
 Added viewports to image custom fields (Pro only);
@@ -529,55 +485,3 @@ Fix for false ad blocking detection when using external scripts;
 Security fix for potential cross site scripting (Pro only);
 Added support to show rotation options;
 Added support for custom reports(Pro only)
-
-= 2.7.39 =
-Improved frontend code;
-Fix for warning "Function _load_textdomain_just_in_time was called incorrectly";
-Updated Maxmind library (Pro only);
-Few minor bug fixes, cosmetic changes and code improvements;
-
-= 2.7.38 =
-Security fix for potential cross site scripting
-
-= 2.7.37 =
-Removed deprecated setting Wait for jQuery;
-Few minor bug fixes, cosmetic changes and code improvements
-
-= 2.7.36 =
-Added support for WPML languages in the taxonomy list;
-Added support to disable caching for LiteSpeed Cache and WP Fastest Cache plugins;
-Added support to define the minimal block height for the close button to appear (Pro only);
-Few minor bug fixes, cosmetic changes and code improvements
-
-= 2.7.35 =
-Added support for Simple History plugin;
-Added support for external tracking for Google Tag Manager code (Pro only);
-Few minor bug fixes, cosmetic changes and code improvements;
-
-= 2.7.34 =
-Added support for ^ character to invert viewports in the VIEWPORT separator;
-Added support for index parameter for counter shortcodes;
-Changed text for content marker;
-Few minor bug fixes, cosmetic changes and code improvements
-
-= 2.7.33 =
-Changed widget class name;
-Added option to define maximum number of list selection items;
-Fix for Amazon external script causing false ad blocking detection;
-Few minor bug fixes, cosmetic changes and code improvements
-
-= 2.7.32 =
-Added experimental support for REST requests;
-Added support for data shortcode for url parameters;
-Added option for shortcodes to ignore category, tag, taxonomy and post ID lists;
-Added support for background parallax ads (Pro only);
-Few minor bug fixes, cosmetic changes and code improvements
-
-= 2.7.31 =
-Security fix for some data revealed via remote debugging data;
-Added support to remove ad label when no code is inserted;
-Few minor bug fixes, cosmetic changes and code improvements
-
-= 2.7.30 =
-Improved debugging;
-Few minor bug fixes, cosmetic changes and code improvements

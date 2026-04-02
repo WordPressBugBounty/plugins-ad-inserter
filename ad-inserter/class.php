@@ -11366,11 +11366,11 @@ class ai_global_fileds {
       }
 
       // For menus always use local global fileds settings
-      $global_fileds_settings = get_option (AI_OPTION_GCF_NAME, array ('pages' => array (), 'fields' => array ()));
+      $global_fields_settings = get_option (AI_OPTION_GCF_NAME, array ('pages' => array (), 'fields' => array ()));
 
-      foreach ($global_fileds_settings ['pages'] as $global_fileds_menu_index => $ai_global_fileds_menu) {
+      foreach ($global_fields_settings ['pages'] as $global_fileds_menu_index => $ai_global_fileds_menu) {
 
-        if (!$this->can_access_global_fields_page ($global_fileds_menu_index)) continue;
+        if (!$this->can_access_global_fields_page ($global_fileds_menu_index, true)) continue;
 
         $menu_found = false;
         if ($ai_global_fileds_menu ['menu_position'] != '') {
@@ -11449,12 +11449,16 @@ class ai_global_fileds {
       }
     }
 
-    public function can_access_global_fields_page ($page_index) {
+    public function can_access_global_fields_page ($page_index, $local = false) {
       global $ai_global_fileds_settings;
 
       if (current_user_can ('manage_options')) return true;
 
-      $access = $ai_global_fileds_settings ['pages'][$page_index]['access'];
+      if ($local) {
+        $global_fields_settings = get_option (AI_OPTION_GCF_NAME, array ('pages' => array (), 'fields' => array ()));
+      } else $global_fields_settings = $ai_global_fileds_settings;
+
+      $access = $global_fields_settings ['pages'][$page_index]['access'];
 
       if (strpos ($access, 'capability:') === 0) {
         return current_user_can (str_replace ('capability:', '', $access));
@@ -11526,8 +11530,8 @@ class ai_global_fileds {
                 $connected_website = get_transient (AI_CONNECTED_WEBSITE);
                 if ($connected_website !== false) {
 
-                  $rest_api_username = $connected_website ['rest_username'];
-                  $rest_api_password = $connected_website ['rest_password'];
+                  $rest_api_username = isset ($connected_website ['rest_username']) ? $connected_website ['rest_username'] : '';
+                  $rest_api_password = isset ($connected_website ['rest_password']) ? $connected_website ['rest_password'] : '';
 
                   $connected_url = wp_parse_url ($connected_website ['url']);
                   $page_url = wp_parse_url ($websites [$current_remote_website_index]['url']);
@@ -11542,7 +11546,7 @@ class ai_global_fileds {
                       }
 
                     } else {
-                        $error_messages = __('Remote managing not enabled.');
+                        $error_messages = __('Remote management not enabled.');
                       }
                   } else {
                       // Website not connected to this website
@@ -11589,6 +11593,7 @@ class ai_global_fileds {
           if ($remote_page) {
 
             foreach ($ai_global_fileds_settings ['fields'] as $field_index => $field_data) {
+
               switch ($field_data ['type']) {
                 case AI_GLOBAL_FIELD_IMAGE:
                   $field_enabled_on_page = false;
@@ -11979,7 +11984,7 @@ class ai_global_fileds {
           <div id="error-container" style=""><?php echo $error_messages; ?></div>
 <script>
 
-const global_fileds_settings = JSON.parse ('<?php echo wp_json_encode ($ai_global_fileds_settings ['fields']); ?>');
+const global_fields_settings = JSON.parse ('<?php echo wp_json_encode ($ai_global_fileds_settings ['fields']); ?>');
 
 const AI_GLOBAL_FIELD_CODE_EDITOR = 0;
 const AI_GLOBAL_FIELD_IMAGE       = 1;
@@ -12387,25 +12392,25 @@ jQuery("#ai-global-fields-form").on ("submit", function (event) {
 
     var field_text = textarea.val ();
 
-    const field_type = global_fileds_settings [field_index]['type'];
+    const field_type = global_fields_settings [field_index]['type'];
 
 
     if (field_type == AI_GLOBAL_FIELD_CODE_EDITOR) {
 
-      const tags = global_fileds_settings [field_index]['tags']
+      const tags = global_fields_settings [field_index]['tags']
         .toLowerCase ()
         .split (',')
         .map (t => t.trim ())
         .filter (Boolean);
 
-      const attributes = global_fileds_settings [field_index]['attributes']
+      const attributes = global_fields_settings [field_index]['attributes']
         .toLowerCase ()
         .split (',')
         .map (t => t.trim ())
         .filter (Boolean);
 
-      var allow_tags        = !!global_fileds_settings [field_index]['tags_type']       == <?php echo AI_ALLOWED_TAGS; ?>;
-      var allow_attributes  = !!global_fileds_settings [field_index]['attributes_type'] == <?php echo AI_ALLOWED_ATTRIBUTES; ?>;
+      var allow_tags        = !!global_fields_settings [field_index]['tags_type']       == <?php echo AI_ALLOWED_TAGS; ?>;
+      var allow_attributes  = !!global_fields_settings [field_index]['attributes_type'] == <?php echo AI_ALLOWED_ATTRIBUTES; ?>;
 
       if (tags.length || allow_tags || attributes.length || allow_attributes) {
 
@@ -12847,7 +12852,6 @@ jQuery (document).find ('[title]')
             $valid_field = false;
             if ($field_index < AI_MAX_GLOBAL_FIELDS && isset ($ai_global_fileds_settings ['fields'][$field_index]) && $ai_global_fileds_settings ['fields'][$field_index]['enabled']) {
               $page = $ai_global_fileds_settings ['fields'][$field_index]['page'];
-
               if (isset ($ai_global_fileds_settings ['pages'][$page])) {
                 if ($ai_global_fileds_settings ['pages'][$page]['enabled']) {
                   if ($this->can_access_global_fields_page ($page)) {
@@ -12856,6 +12860,7 @@ jQuery (document).find ('[title]')
                 }
               }
             }
+
             if (!$valid_field) {
               $invalid_fields ++;
             }
@@ -12899,8 +12904,8 @@ jQuery (document).find ('[title]')
                             if ($connected_website !== false) {
                               $websites = get_option (AI_WEBSITES, array ());
 
-                              $rest_api_username = $connected_website ['rest_username'];
-                              $rest_api_password = $connected_website ['rest_password'];
+                              $rest_api_username = isset ($connected_website ['rest_username']) ? $connected_website ['rest_username'] : '';
+                              $rest_api_password = isset ($connected_website ['rest_password']) ? $connected_website ['rest_password'] : '';
 
                               $connected_url = wp_parse_url ($connected_website ['url']);
 
@@ -13002,7 +13007,7 @@ jQuery (document).find ('[title]')
 
               echo '<div class="notice notice-success is-dismissible" style="margin: 5px 15px 2px 0px;"><p>' . sprintf (__('Global custom fields on %s saved.', 'ad-inserter'), $connected_website ['name']) . '</p></div>';
 
-              apply_filters ('simple_history_log', AD_INSERTER_NAME . ' ' . sprintf (__('Global custom fields on %s saved.', 'ad-inserter'), $connected_website ['name']) . $page_name);
+              apply_filters ('simple_history_log', AD_INSERTER_NAME . ' ' . __('Global custom fields saved.', 'ad-inserter') . $page_name);
             }
           }
 

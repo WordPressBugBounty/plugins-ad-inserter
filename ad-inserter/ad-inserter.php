@@ -5,7 +5,7 @@
 
 /*
 Plugin Name: Ad Inserter
-Version: 2.8.12
+Version: 2.8.13
 Description: Ad management with many advanced advertising features to insert ads at optimal positions
 Author: Igor Funa
 Author URI: http://igorfuna.com/
@@ -20,6 +20,10 @@ License: GPLv3
 /*
 
 Change Log
+
+Ad Inserter 2.8.13 - 2026-03-28
+- Added remote management support for global custom fields (Pro only)
+- Few minor bug fixes, cosmetic changes and code improvements
 
 Ad Inserter 2.8.12 - 2026-02-28
 - Added viewports to image custom fields (Pro only)
@@ -7106,7 +7110,13 @@ function ai_ajax_backend () {
     wp_die ();
   }
 
-  if (!current_user_can ('manage_options')) {
+  if (defined ('AD_INSERTER_WEBSITES') && function_exists ('ai_ajax_backend_3') && isset ($_GET ['connect']) && isset ($_GET ['connect-only']) && !isset ($_GET ['save']) && !isset ($_GET ['delete'])) {
+    ai_ajax_backend_3 ();
+
+    wp_die ();
+  }
+
+  if (!current_user_can ('manage_options') && !$connection) {
     wp_die ();
   }
 
@@ -9088,6 +9098,15 @@ function adinserter_global_custom_field_value ($field_index, $field_data, $data_
 
       $field_value = (int) isset ($ai_global_fields [$field_index]) ? $ai_global_fields [$field_index] : 0;
       break;
+  }
+
+  $unfiltered_html = $ai_wp_data [AI_UNFILTERED_HTML];
+  if (defined ('DISALLOW_UNFILTERED_HTML') && DISALLOW_UNFILTERED_HTML) {
+    $unfiltered_html = false;
+  }
+
+  if (!$unfiltered_html) {
+    $field_value = wp_kses ($field_value, 'post');
   }
 
   return $field_value;
