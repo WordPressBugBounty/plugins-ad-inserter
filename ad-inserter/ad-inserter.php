@@ -5,7 +5,7 @@
 
 /*
 Plugin Name: Ad Inserter
-Version: 2.8.13
+Version: 2.8.15
 Description: Ad management with many advanced advertising features to insert ads at optimal positions
 Author: Igor Funa
 Author URI: http://igorfuna.com/
@@ -20,6 +20,13 @@ License: GPLv3
 /*
 
 Change Log
+
+Ad Inserter 2.8.15 - 2026-04-12
+- Optimized AdSense API code
+- Few minor bug fixes, cosmetic changes and code improvements
+
+Ad Inserter 2.8.14 - 2026-04-06
+- Fix for potential false positive security warning
 
 Ad Inserter 2.8.13 - 2026-03-28
 - Added remote management support for global custom fields (Pro only)
@@ -7187,11 +7194,9 @@ function ai_ajax_backend () {
         require_once AD_INSERTER_PLUGIN_DIR.'includes/adsense-api.php';
 
         if (defined ('AI_ADSENSE_AUTHORIZATION_CODE')) {
-
-          $adsense = new adsense_api();
-
-          $adsense_code   = $adsense->getAdCode (base64_decode ($_POST ["slot_id"]));
-          $adsense_error  = $adsense->getError ();
+          $adsense = new AI_AdSense_API ();
+          $adsense_code = $adsense->ai_get_ad_code (base64_decode ($_POST ["slot_id"]));
+          $adsense_error = $adsense->get_error ();
 
           $preview_parameters = array (
             "name"          => isset ($_POST ["name"]) ? base64_decode ($_POST ["name"]) : 'ADSENSE CODE',
@@ -7347,6 +7352,10 @@ function ai_ajax_backend () {
         delete_option (AI_ADSENSE_AUTH_CODE);
         delete_option (AI_ADSENSE_OWN_IDS);
 
+        delete_option (AI_ADSENSE_ACCESS_TOKEN);
+        delete_option (AI_ADSENSE_REFRESH_TOKEN);
+        delete_option (AI_ADSENSE_TOKEN_EXPIRES);
+
         delete_transient (AI_TRANSIENT_ADSENSE_TOKEN_1);
         delete_transient (AI_TRANSIENT_ADSENSE_TOKEN);
         delete_transient (AI_TRANSIENT_ADSENSE_ADS);
@@ -7357,11 +7366,14 @@ function ai_ajax_backend () {
         delete_option (AI_ADSENSE_CLIENT_IDS);
         delete_option (AI_ADSENSE_AUTH_CODE);
 
+        delete_option (AI_ADSENSE_ACCESS_TOKEN);
+        delete_option (AI_ADSENSE_REFRESH_TOKEN);
+        delete_option (AI_ADSENSE_TOKEN_EXPIRES);
+
         delete_transient (AI_TRANSIENT_ADSENSE_TOKEN_1);
         delete_transient (AI_TRANSIENT_ADSENSE_TOKEN);
         delete_transient (AI_TRANSIENT_ADSENSE_ADS);
       }
-//      else update_option (AI_ADSENSE_AUTH_CODE, base64_decode ($_GET ['adsense-authorization-code']));
     }
   }
 
@@ -7370,6 +7382,10 @@ function ai_ajax_backend () {
       if ($_GET ['adsense-client-id'] == '') {
         delete_option (AI_ADSENSE_CLIENT_IDS);
         delete_option (AI_ADSENSE_AUTH_CODE);
+
+        delete_option (AI_ADSENSE_ACCESS_TOKEN);
+        delete_option (AI_ADSENSE_REFRESH_TOKEN);
+        delete_option (AI_ADSENSE_TOKEN_EXPIRES);
 
         delete_transient (AI_TRANSIENT_ADSENSE_TOKEN_1);
         delete_transient (AI_TRANSIENT_ADSENSE_TOKEN);

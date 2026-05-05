@@ -4,9 +4,9 @@ Contributors: adinserter, spacetime
 Donate link: https://www.paypal.com/cgi-bin/webscr?cmd=_s-xclick&hosted_button_id=LHGZEMRTR7WB4
 Tags: ads, adsense, amp, ad rotation, ad manager
 Requires at least: 5.0
-Tested up to: 6.9
+Tested up to: 7.0
 Requires PHP: 7.4
-Stable tag: 2.8.13
+Stable tag: 2.8.15
 License: GPLv3
 
 Manage Google AdSense ads, banners, ad rotation, sticky widgets, AMP ads, ads.txt, tracking, header and footer code, PHP code, global custom fields
@@ -365,6 +365,13 @@ If you are not happy to reveal this information and you have opted in, simply di
 
 == Changelog ==
 
+= 2.8.15 =
+- Optimized AdSense API code
+- Few minor bug fixes, cosmetic changes and code improvements
+
+= 2.8.14 =
+- Fix for potential false positive security warning (Pro only)
+
 = 2.8.13 =
 - Added remote management support for global custom fields (Pro only)
 - Few minor bug fixes, cosmetic changes and code improvements
@@ -428,6 +435,13 @@ If you are not happy to reveal this information and you have opted in, simply di
 For the changelog of earlier versions, please refer to the separate changelog.txt file.
 
 == Upgrade Notice ==
+
+= 2.8.15 =
+Optimized AdSense API code;
+Few minor bug fixes, cosmetic changes and code improvements
+
+= 2.8.14 =
+Fix for potential false positive security warning
 
 = 2.8.13 =
 Added remote management support for global custom fields (Pro only);
