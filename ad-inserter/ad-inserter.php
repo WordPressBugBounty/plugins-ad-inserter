@@ -5,7 +5,7 @@
 
 /*
 Plugin Name: Ad Inserter
-Version: 2.8.15
+Version: 2.8.16
 Description: Ad management with many advanced advertising features to insert ads at optimal positions
 Author: Igor Funa
 Author URI: http://igorfuna.com/
@@ -20,6 +20,11 @@ License: GPLv3
 /*
 
 Change Log
+
+Ad Inserter 2.8.16 - 2026-05-26
+- Fix for reflected cross-site scripting (credits to darkmode)
+- Added support for Gutenberg blocks
+- Few minor bug fixes, cosmetic changes and code improvements
 
 Ad Inserter 2.8.15 - 2026-04-12
 - Optimized AdSense API code
@@ -3231,6 +3236,7 @@ function add_footer_inline_scripts () {
   global $ai_wp_data, $wp_version;
 
   if (get_disable_js_code ()) return;
+  if (is_rest ()) return;
 
   $adb_code = defined ('AI_ADBLOCKING_DETECTION') && AI_ADBLOCKING_DETECTION && $ai_wp_data [AI_ADB_DETECTION] && !isset ($ai_wp_data [AI_ADB_SHORTCODE_DISABLED]) && !$ai_wp_data [AI_WP_AMP_PAGE];
 
@@ -3509,29 +3515,6 @@ function add_footer_inline_scripts () {
 function ai_admin_notice_hook () {
   global $current_screen, $ai_db_options, $ai_wp_data, $ai_db_options_extract;
   global $ai_settings_page, $hook_suffix;
-
-//  $sidebar_widgets = wp_get_sidebars_widgets();
-//  $sidebars_with_deprecated_widgets = array ();
-
-//  foreach ($sidebar_widgets as $sidebar_widget_index => $sidebar_widget) {
-//    if (is_array ($sidebar_widget))
-//      foreach ($sidebar_widget as $widget) {
-//        if (preg_match ("/ai_widget([\d]+)/", $widget, $widget_number)) {
-//          if (isset ($widget_number [1]) && is_numeric ($widget_number [1])) {
-//            $is_widget = $ai_db_options [$widget_number [1]][AI_OPTION_AUTOMATIC_INSERTION] == AD_SELECT_WIDGET;
-//          } else $is_widget = false;
-//          $sidebar_name = $GLOBALS ['wp_registered_sidebars'][$sidebar_widget_index]['name'];
-//          if ($is_widget && $sidebar_name != "")
-//            $sidebars_with_deprecated_widgets [$sidebar_widget_index] = $sidebar_name;
-//        }
-//      }
-//  }
-
-//  if (!empty ($sidebars_with_deprecated_widgets)) {
-//    echo "<div class='notice notice-warning'><p><strong>Warning</strong>: You are using deprecated Ad Inserter widgets in the following sidebars: ",
-//    implode (", ", $sidebars_with_deprecated_widgets),
-//    ". Please replace them with the new 'Ad Inserter' code block widget. See <a href='https://wordpress.org/plugins/ad-inserter/faq/' target='_blank'>FAQ</a> for details.</p></div>";
-//  }
 
   if (function_exists ('ai_admin_notices')) ai_admin_notices (); else {
     if (/*$hook_suffix == $ai_settings_page &&*/ is_super_admin () && !wp_is_mobile () && isset ($ai_wp_data [AI_DAYS_SINCE_INSTAL])) {
@@ -3915,15 +3898,20 @@ function ai_meta_box_callback ($post) {
    '<a href="https://adinserter.pro/documentation/individual-post-and-page-exceptions" style="text-decoration: none; box-shadow: 0 0 0;" target="_blank">Ad Inserter ' . __('Individual Exceptions', 'ad-inserter') . '</a>.</p>');
 }
 
-function ai_save_meta_box_data_hook ($post_id) {
+function ai_save_post_hook ($post_id, $post, $update) {
+  // If this is an autosave, our form has not been submitted, so we don't want to do anything.
+  if (defined ('DOING_AUTOSAVE') && DOING_AUTOSAVE) return;
+
+  if ($post->post_type === 'post' || $post->post_type === 'page') {
+    // Update post ids with gutenberg blocks
+    ai_get_post_ids_with_blocks ();
+  }
+
   // Check if our nonce is set.
   if (!isset ($_POST ['adinserter_meta_box_nonce'])) return;
 
   // Verify that the nonce is valid.
   if (!wp_verify_nonce ($_POST ['adinserter_meta_box_nonce'], 'adinserter_meta_box')) return;
-
-  // If this is an autosave, our form has not been submitted, so we don't want to do anything.
-  if (defined ('DOING_AUTOSAVE') && DOING_AUTOSAVE) return;
 
   // Check the user's permissions.
   if (isset ($_POST ['post_type'])) {
@@ -3951,6 +3939,154 @@ function ai_save_meta_box_data_hook ($post_id) {
 function ai_widgets_init_hook () {
   if (is_multisite() && !is_main_site () && !multisite_widgets_enabled ()) return;
   register_widget ('ai_widget'); // AI widget PHP class name
+}
+
+function ai_register_php_only_gutenberg_blocks () {
+  global $block_object;
+
+  $ai_block_data = array ();
+  for ($ai_block = 1; $ai_block <= 96; $ai_block ++) {
+    $name_attributes = $block_object [$ai_block]->get_disable_insertion () ? _x('PAUSED', 'block', 'ad-inserter') . ' ' : '';
+
+    $ai_block_data [] = array (
+      'value'         => $ai_block,
+      'name'          => $block_object [$ai_block]->get_ad_name (),
+      'attributes'    => $name_attributes,
+      'label'         => $ai_block . ' - ' . $block_object [$ai_block]->get_ad_name () . ($name_attributes != '' ? ' - ' . $name_attributes : ''),
+      'paused'        => $block_object [$ai_block]->get_disable_insertion (),
+      'widget'        => $block_object [$ai_block]->get_enable_widget (),
+      'sticky'        => $block_object [$ai_block]->get_sticky (),
+      'sticky-height' => trim ($block_object [$ai_block]->get_sticky_height ()),
+    );
+  }
+  $ai_block_data [] = array (
+    'value'         => 97,
+    'name'          => __('Processing log', 'ad-inserter'),
+    'attributes'    => '',
+    'label'         => __('Processing log', 'ad-inserter'),
+    'paused'        => false,
+    'widget'        => true,
+    'sticky'        => false,
+    'sticky-height' => 0,
+  );
+  $ai_block_data [] = array (
+    'value'         => 98,
+    'name'          => __('Debugging tools', 'ad-inserter'),
+    'attributes'    => '',
+    'label'         => __('Debugging tools', 'ad-inserter'),
+    'paused'        => false,
+    'widget'        => true,
+    'sticky'        => false,
+    'sticky-height' => 0,
+  );
+
+  wp_register_style (
+    'ai-block-editor-style',
+    plugins_url ('css/ai-block-editor.css', __FILE__ ),
+    ['wp-edit-blocks'],  // depends on core block editor styles
+    AD_INSERTER_VERSION
+  );
+
+  wp_register_script (
+    'ai-block-editor-script',
+    plugins_url ('js/ai-block-editor.js', __FILE__),
+    ['wp-blocks', 'wp-element', 'wp-block-editor', 'wp-components'],
+    AD_INSERTER_VERSION,
+    true
+  );
+
+  if (defined ('AI_SAFE_MODE')) {
+    $url_parameters = '&ai-safe-mode';
+  } else $url_parameters = '';
+
+  wp_localize_script ('ai-block-editor-script', 'aiData', [
+    'blockData'       => $ai_block_data,
+    'adInserterName'  => AD_INSERTER_NAME,
+    'aiPage'          => admin_url (get_menu_position () == AI_SETTINGS_SUBMENU ? 'options-general.php?page=ad-inserter.php' : 'admin.php?page=ad-inserter.php'),
+    'urlParameters'   => $url_parameters,
+    'block'           => __('Block', 'ad-inserter'),
+    'blockNum'        => __('block', 'ad-inserter'),
+    'enabled'         => __('Enabled', 'ad-inserter'),
+    'sticky'          => __('Sticky', 'ad-inserter'),
+    'stickyHeight'    => __('Sticky height', 'ad-inserter'),
+    'settings'        => __('Settings', 'ad-inserter'),
+    'blockSettings'   => __('Click to open block settings in a new tab', 'ad-inserter'),
+  ]);
+
+  register_block_type (
+    AI_GUTENBERG_BLOCK,
+    array (
+      'title'         => AD_INSERTER_NAME,
+      'icon'          => 'layout',
+      'description'   => __('Insert code block', 'ad-inserter'),
+      'category'      => 'text',
+//      "supports" => array (
+//        "position" => array (
+//          "sticky"=> true
+//        )
+//      ),
+      'editor_script' => 'ai-block-editor-script',
+      'editor_style'  => 'ai-block-editor-style',
+      'attributes'    => array (
+        'blockNumber'    => array (
+            'type'    => 'integer',
+            'enum'    => array_column ($ai_block_data, 'value'),
+            'default' => 1,
+        ),
+        'enabled' => array (
+            'type'    => 'boolean',
+            'default' => true,
+        ),
+        'sticky' => array (
+            'type'    => 'boolean',
+            'default' => false,
+        ),
+        'stickyHeight'    => array (
+            'type'    => 'integer',
+            'default' => 0,
+        ),
+      ),
+      'render_callback' => function ($attributes) {
+        global $block_object, $ai_wp_data;
+
+        $block = (int) $attributes ['blockNumber'];
+        if ($block >= 1 && $block <= 96) {
+          if ($attributes ['enabled'] && $block_object [(int) $attributes ['blockNumber']]->get_enable_widget ()) {
+            if ($attributes ['sticky']) {
+              $ai_wp_data ['AI_GUTENBERG_BLOCK_STICKY'] = $attributes ['stickyHeight'];
+            }
+            $code = adinserter_gutenberg ((int) $attributes ['blockNumber']);
+            unset ($ai_wp_data ['AI_GUTENBERG_BLOCK_STICKY']);
+          } else $code = '';
+
+          return $code;
+        }
+        else {
+          switch ($block) {
+            case 97:
+              ob_start ();
+              echo "<pre>\n";
+              ai_write_debug_info ();
+              echo "</pre>\n";
+              $code = ob_get_clean ();
+              break;
+            case 98:
+              ob_start ();
+              ai_write_debugging_tools ();
+              $code = ob_get_clean ();
+              break;
+          }
+
+          if ($attributes ['sticky']) {
+            $code = '<div style="position: sticky; top: calc(' . ((int) get_sticky_widget_margin ()) .'px + var(--wp-admin--admin-bar--height, 0px)); align-self: flex-start;">'."\n" . $code . '</div>'."\n" . '<div style="height: ' . $attributes ['stickyHeight'] . 'px;"></div>'."\n";
+          }
+
+          return $code;
+        }
+      }
+    )
+  );
+
 }
 
 function get_page_type_debug_info ($text = '') {
@@ -4087,6 +4223,8 @@ function ai_http_header () {
 function ai_wp_head_hook () {
   global $block_object, $ai_wp_data, $ai_total_plugin_time/*, $ai_front_translations*/;
 
+  if (is_rest ()) return;
+
   if (($ai_wp_data [AI_WP_DEBUGGING] & AI_DEBUG_PROCESSING) != 0) {
     ai_log ("HEAD HOOK START");
     $ai_processing_time_active = $ai_wp_data [AI_PROCESSING_TIME];
@@ -4171,7 +4309,7 @@ function ai_wp_head_hook () {
     }
   }
 
-  if (!$ai_wp_data [AI_CODE_FOR_IFRAME]) {
+  if (!$ai_wp_data [AI_CODE_FOR_IFRAME] && !is_rest ()) {
     if ($ai_wp_data [AI_WP_DEBUGGING] != 0 && isset ($_GET ['ai-debug-code']) && !defined ('AI_DEBUGGING_DEMO')) {
       if (is_numeric ($_GET ['ai-debug-code']) && $_GET ['ai-debug-code'] >= 1 && $_GET ['ai-debug-code'] <= 96) {
         $obj = $block_object [(int) $_GET ['ai-debug-code']];
@@ -4254,6 +4392,8 @@ function ai_wp_head_hook () {
 
 function ai_amp_head_hook () {
   global $block_object, $ai_wp_data, $ai_total_plugin_time;
+
+  if (is_rest ()) return;
 
   if (($ai_wp_data [AI_WP_DEBUGGING] & AI_DEBUG_PROCESSING) != 0) {
     ai_log ("AMP HEAD HOOK START");
@@ -4418,6 +4558,8 @@ function ai_wp_footer_hook_end_buffering () {
 function ai_wp_footer_hook () {
   global $block_object, $ai_wp_data, $ad_inserter_globals, $ai_total_plugin_time;
 
+  if (is_rest ()) return;
+
   if (($ai_wp_data [AI_WP_DEBUGGING] & AI_DEBUG_PROCESSING) != 0) {
     ai_log ("FOOTER HOOK START");
     $ai_processing_time_active = $ai_wp_data [AI_PROCESSING_TIME];
@@ -4474,7 +4616,7 @@ function ai_wp_footer_hook () {
       }
   }
 
-  if (!$ai_wp_data [AI_CODE_FOR_IFRAME]) {
+  if (!$ai_wp_data [AI_CODE_FOR_IFRAME] && !is_rest ()) {
     if (!get_disable_footer_code () && isset ($_GET ['ai-debug-code']) && !defined ('AI_DEBUGGING_DEMO')) {
       echo get_code_debug_block (' ' . __('Footer code', 'ad-inserter') . ' ' . ($footer->get_enable_manual () ? '' : ' ' . _x('DISABLED', 'Footer code', 'ad-inserter')), '...&lt;/body&gt;', strlen ($footer_code).' ' . _n('character inserted', 'characters inserted', strlen ($footer_code), 'ad-inserter'), $footer->ai_getCode (), $footer_code);
     }
@@ -7466,30 +7608,33 @@ function ai_generate_extract (&$settings) {
   }
 
   // Get blocks used in sidebar widgets
-  $sidebar_widgets = wp_get_sidebars_widgets();
-  // 'widget_' + registered AI widget name
-  $widget_options = get_option ('widget_ai_widget');
 
-  $widget_blocks = array ();
-  foreach ($sidebar_widgets as $sidebar_index => $sidebar_widget) {
-    if (is_array ($sidebar_widget) && isset ($GLOBALS ['wp_registered_sidebars'][$sidebar_index]['name'])) {
-      $sidebar_name = $GLOBALS ['wp_registered_sidebars'][$sidebar_index]['name'];
-      if ($sidebar_name != "") {
-        foreach ($sidebar_widget as $widget) {
-          if (preg_match ("/ai_widget-([\d]+)/", $widget, $widget_id)) {
-            if (isset ($widget_id [1]) && is_numeric ($widget_id [1])) {
-              $widget_option = $widget_options [$widget_id [1]];
-              $widget_block = $widget_option ['block'];
-              if ($widget_block >= 1 && $widget_block <= 96) {
-                $widget_blocks [] = $widget_block;
-              }
-            }
-          }
-        }
-      }
-    }
-  }
-  $widget_blocks = array_unique ($widget_blocks);
+//  $sidebar_widgets = wp_get_sidebars_widgets();
+//  // 'widget_' + registered AI widget name
+//  $widget_options = get_option ('widget_ai_widget');
+
+//  $widget_blocks = array ();
+//  foreach ($sidebar_widgets as $sidebar_index => $sidebar_widget) {
+//    if (is_array ($sidebar_widget) && isset ($GLOBALS ['wp_registered_sidebars'][$sidebar_index]['name'])) {
+//      $sidebar_name = $GLOBALS ['wp_registered_sidebars'][$sidebar_index]['name'];
+//      if ($sidebar_name != "") {
+//        foreach ($sidebar_widget as $widget) {
+//          if (preg_match ("/ai_widget-([\d]+)/", $widget, $widget_id)) {
+//            if (isset ($widget_id [1]) && is_numeric ($widget_id [1])) {
+//              $widget_option = $widget_options [$widget_id [1]];
+//              $widget_block = $widget_option ['block'];
+//              if ($widget_block >= 1 && $widget_block <= 96) {
+//                $widget_blocks [] = $widget_block;
+//              }
+//            }
+//          }
+//        }
+//      }
+//    }
+//  }
+//  $widget_blocks = array_unique ($widget_blocks);
+
+  $widget_blocks = array_keys (array_filter (get_sidebar_widgets ()));
 
   // Generate extracted data
   $active_blocks = array ();
@@ -8659,7 +8804,7 @@ function ai_settings () {
 }
 
 
-function ai_adinserter ($block_parameter, $options, &$block) {
+function ai_adinserter ($block_parameter, $options, &$block, $gutenberg_block = false) {
   global $block_object, $ad_inserter_globals, $ai_wp_data, $ai_last_check;
 
   $debug_processing = ($ai_wp_data [AI_WP_DEBUGGING] & AI_DEBUG_PROCESSING) != 0;
@@ -8685,14 +8830,24 @@ function ai_adinserter ($block_parameter, $options, &$block) {
 
   if ($block < 1 || $block > 96) return "";
 
+  if ($gutenberg_block) {
+    $globals_name = AI_GUTENBERG_BLOCK_COUNTER_NAME . $block;
+  } else
   $globals_name = AI_PHP_FUNCTION_CALL_COUNTER_NAME . $block;
 
   if (!isset ($ad_inserter_globals [$globals_name])) {
     $ad_inserter_globals [$globals_name] = 1;
   } else $ad_inserter_globals [$globals_name] ++;
 
-  if ($debug_processing) ai_log ("PHP FUNCTION CALL adinserter ($block_parameter".($options == '' ? '' : (', \''.$options.'\''))."), block $block [" . $ad_inserter_globals [$globals_name] . ']');
+  if ($gutenberg_block) {
+    $log_string = 'GUTENBERG BLOCK';
+  } else $log_string = 'PHP FUNCTION CALL';
 
+  if ($debug_processing) ai_log ($log_string . " adinserter ($block_parameter".($options == '' ? '' : (', \''.$options.'\''))."), block $block [" . $ad_inserter_globals [$globals_name] . ']');
+
+  if ($gutenberg_block) {
+    $ai_wp_data [AI_CONTEXT] = AI_CONTEXT_GUTENBERG_BLOCK;
+  } else
   $ai_wp_data [AI_CONTEXT] = AI_CONTEXT_PHP_FUNCTION;
 
   $options_array = array ();
@@ -8716,8 +8871,13 @@ function ai_adinserter ($block_parameter, $options, &$block) {
   $obj = $block_object [$block];
   $obj->clear_code_cache ();
 
-  $ai_last_check = AI_CHECK_ENABLED_PHP;
-  if (!$obj->get_enable_php_call ()) return "";
+  if ($gutenberg_block) {
+    // Always enabled
+  } else {
+      $ai_last_check = AI_CHECK_ENABLED_PHP;
+      if (!$obj->get_enable_php_call ()) return "";
+    }
+
   if (!$obj->check_server_side_detection ()) return "";
                                                    /* Deprecated */
   if (!$obj->check_page_types_lists_users (in_array ("page-type", $options_array) || in_array ("ignore-page-type", $options_array))) return "";
@@ -8725,7 +8885,6 @@ function ai_adinserter ($block_parameter, $options, &$block) {
   if (!$obj->check_number_of_words ()) return "";
 
   if ($ai_wp_data [AI_WP_PAGE_TYPE] == AI_PT_POST || $ai_wp_data [AI_WP_PAGE_TYPE] == AI_PT_STATIC) {
-//    $meta_value = get_post_meta (get_the_ID (), '_adinserter_block_exceptions', true);
     $meta_value = ai_get_post_meta ();
 
     $selected_blocks = explode (",", $meta_value);
@@ -8740,8 +8899,6 @@ function ai_adinserter ($block_parameter, $options, &$block) {
   if ($obj->get_disable_insertion () || get_disable_block_insertions ()) return "";
 
   // Last check before counter check before insertion
-//  $ai_last_check = AI_CHECK_CODE;
-//  if ($obj->ai_getCode () == '') return "";
   if ($obj->empty_code ()) return "";
 
   $max_page_blocks_enabled = $obj->get_max_page_blocks_enabled ();
@@ -8794,6 +8951,34 @@ function adinserter ($block = '', $options = '') {
     if ($ai_last_check != AI_CHECK_NONE) ai_log (ai_log_block_status ($block_number, $ai_last_check));
 
     ai_log ("PHP FUNCTION CALL END: ". number_format (1000 * (microtime (true) - $start_time), 2)." ms\n");
+  }
+
+  return $code;
+}
+
+function adinserter_gutenberg ($block = '', $options = '') {
+  global $ai_last_check, $ai_wp_data, $ai_total_plugin_time;
+
+  $debug_processing = ($ai_wp_data [AI_WP_DEBUGGING] & AI_DEBUG_PROCESSING) != 0;
+  if ($debug_processing) {
+    $ai_processing_time_active = $ai_wp_data [AI_PROCESSING_TIME];
+    $ai_wp_data [AI_PROCESSING_TIME] = true;
+    $start_time = microtime (true);
+  }
+
+
+  $ai_last_check = AI_CHECK_NONE;
+  $block_number = 0;
+  $code = ai_adinserter ($block, $options, $block_number, true);
+
+  if ($debug_processing) {
+    if (!$ai_processing_time_active) {
+      $ai_total_plugin_time += microtime (true) - $start_time;
+      $ai_wp_data [AI_PROCESSING_TIME] = false;
+    }
+    if ($ai_last_check != AI_CHECK_NONE) ai_log (ai_log_block_status ($block_number, $ai_last_check));
+
+    ai_log ("GUTENBERG BLOCK CALL END: ". number_format (1000 * (microtime (true) - $start_time), 2)." ms\n");
   }
 
   return $code;
@@ -13291,6 +13476,7 @@ add_action ('admin_notices',              'ai_admin_notice_hook');
 add_action ('wp',                         'ai_wp_hook');
 add_action ('wp_enqueue_scripts',         'ai_wp_enqueue_scripts_hook' );
 //add_action ('upgrader_process_complete',  'ai_upgrader_process_complete_hook', 10, 2);
+add_action ('init',                       'ai_register_php_only_gutenberg_blocks');
 
 if (function_exists ('ai_system_output_check')) $ai_system_output = ai_system_output_check (); else $ai_system_output = false;
 
@@ -13307,7 +13493,7 @@ register_deactivation_hook  (AD_INSERTER_PLUGIN_DIR.'ad-inserter.php', 'ai_deact
 
 add_action ('widgets_init',       'ai_widgets_init_hook');
 add_action ('add_meta_boxes',     'ai_add_meta_box_hook');
-add_action ('save_post',          'ai_save_meta_box_data_hook');
+add_action ('save_post',          'ai_save_post_hook', 10, 3);
 
 if (function_exists ('ai_hooks')) ai_hooks ();
 

@@ -3459,7 +3459,7 @@ abstract class ai_CodeBlock extends ai_BaseCodeBlock {
 
       foreach ($_GET as $url_parameter => $url_parameter_value) {
         if (in_array ($url_parameter, array ('action', 'block', 'referrer', 'cookie_check', 'hide-debug-labels', 'rnd'))) continue;
-        $iframe_parameters .= '&'. $url_parameter . '=' . $url_parameter_value;
+        $iframe_parameters .= '&'. rawurlencode ($url_parameter) . '=' . rawurlencode ($url_parameter_value);
       }
 
       $attributes = '';
@@ -3467,7 +3467,7 @@ abstract class ai_CodeBlock extends ai_BaseCodeBlock {
         $attributes = ' onload="ai_resize_iframe (this);"';
       }
 
-      $code = '<iframe style="' . $iframe_style. '" src="' . get_home_url (null, 'wp-admin/admin-ajax.php?action=ai_ajax&block=') . $this->number . $iframe_parameters .'" marginheight="0" marginwidth="0" frameborder="0" scrolling="no"' . $attributes . '></iframe>' . "\n";
+      $code = '<iframe style="' . esc_attr ($iframe_style). '" src="' . get_home_url (null, 'wp-admin/admin-ajax.php?action=ai_ajax&block=') . $this->number . $iframe_parameters .'" marginheight="0" marginwidth="0" frameborder="0" scrolling="no"' . $attributes . '></iframe>' . "\n";
     } else {
         if (is_array ($this->check_codes) && isset ($this->check_codes [$this->check_codes_index])) {
           $this->check_codes_index ++;
@@ -5427,8 +5427,9 @@ abstract class ai_CodeBlock extends ai_BaseCodeBlock {
       if ($parallax_options) break;
     }
 
-    if ($this->get_sticky ()) {
-      $height = trim ($this->get_sticky_height ());
+    $block_is_sticky = $this->get_sticky () || isset ($ai_wp_data ['AI_GUTENBERG_BLOCK_STICKY']);
+    if ($block_is_sticky) {
+      $height = isset ($ai_wp_data ['AI_GUTENBERG_BLOCK_STICKY']) ? (int) $ai_wp_data ['AI_GUTENBERG_BLOCK_STICKY'] : trim ($this->get_sticky_height ());
       $style = '';
 
       if ($height != '' && !$parallax_options) {
@@ -5436,7 +5437,7 @@ abstract class ai_CodeBlock extends ai_BaseCodeBlock {
           $height .= 'px';
         }
         $style = ' height: ' . $height . ';';
-        $code = '<div style="position: sticky; top: ' . ((int) get_sticky_widget_margin ()) .'px;">'."\n" . $code . '</div>'."\n" . '<div style="' . $style . '"></div>'."\n";
+        $code = '<div style="position: sticky; top: calc(' . ((int) get_sticky_widget_margin ()) .'px + var(--wp-admin--admin-bar--height, 0px)); align-self: flex-start;">'."\n" . $code . '</div>'."\n" . '<div style="' . $style . '"></div>'."\n";
       }
     }
 

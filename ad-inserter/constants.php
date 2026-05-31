@@ -15,6 +15,7 @@ define ('AI_ADSENSE_ACCESS_TOKEN',       'ai_adsense_access_token');
 define ('AI_ADSENSE_REFRESH_TOKEN',      'ai_adsense_refresh_token');
 define ('AI_ADSENSE_TOKEN_EXPIRES',      'ai_adsense_token_expires');
 define ('AI_ADSENSE_OWN_IDS',            'ai-adsense-own-ids');
+define ('AI_GUTENBERG_BLOCK',            'ad-inserter/block');
 define ('AI_ADSENSE_API_IDS',            true);
 
 if (!defined ('AD_INSERTER_PLUGIN_DIR'))
@@ -37,7 +38,7 @@ if (!defined( 'AD_INSERTER_NAME'))
   define ('AD_INSERTER_NAME', 'Ad Inserter');
 
 if (!defined( 'AD_INSERTER_VERSION'))
-  define ('AD_INSERTER_VERSION', '2.8.15');
+  define ('AD_INSERTER_VERSION', '2.8.16');
 
 if (!defined ('AD_INSERTER_PLUGIN_BASENAME'))
   define ('AD_INSERTER_PLUGIN_BASENAME', plugin_basename (__FILE__));
@@ -853,6 +854,7 @@ define('AI_TEXT_ENG_REPLACE_ELEMENT',               'Replace element');
 // Counter names
 define ('AI_BLOCK_COUNTER_NAME',                    'AI_BLOCK_COUNTER_');
 define ('AI_PHP_FUNCTION_CALL_COUNTER_NAME',        'AI_PHP_FUNCTION_CALL_COUNTER_');
+define ('AI_GUTENBERG_BLOCK_COUNTER_NAME',          'AI_GUTENBERG_BLOCK_COUNTER_');
 define ('AI_CONTENT_COUNTER_NAME',                  'AI_CONTENT_COUNTER');
 define ('AI_EXCERPT_COUNTER_NAME',                  'AI_EXCERPT_COUNTER');
 define ('AI_LOOP_BEFORE_COUNTER_NAME',              'AI_LOOP_START_COUNTER');
@@ -875,6 +877,9 @@ define ('AI_TRANSIENT_RATING_EXPIRATION',       48 * 3600);
 
 define ('AI_TRANSIENT_STATISTICS',              'ai-statistics');
 define ('AI_TRANSIENT_STATISTICS_EXPIRATION',   20 * 60);
+
+define ('AI_TRANSIENT_POST_IDS',                'ai-post-ids');
+define ('AI_TRANSIENT_POST_IDS_EXPIRATION',     96 * 3600);
 
 define ('AI_TRANSIENT_CFP_IP_ADDRESS',          'ai-cfp-');
 
@@ -1266,6 +1271,7 @@ define ('AI_UNFILTERED_HTML',            79);
 define ('AI_ACTIVE_GROUP_NAMES',         80);
 define ('AI_NO_JQUERY_CODE',             81);
 define ('AI_NO_GROUP_ACTIVATION',        82);
+define ('AI_GUTENBERG_BLOCK_STICKY',     83);
 
 
 define ('AI_CONTEXT_NONE',                0);
@@ -1283,6 +1289,7 @@ define ('AI_CONTEXT_BETWEEN_POSTS',      11);
 define ('AI_CONTEXT_BEFORE_COMMENTS',    12);
 define ('AI_CONTEXT_BETWEEN_COMMENTS',   13);
 define ('AI_CONTEXT_AFTER_COMMENTS',     14);
+define ('AI_CONTEXT_GUTENBERG_BLOCK',    15);
 define ('AI_CONTEXT_CUSTOM_HOOK',        100);
 
 define ('AI_URL_DEBUG',                      'ai-debug');               // AI_URL_DEBUG_

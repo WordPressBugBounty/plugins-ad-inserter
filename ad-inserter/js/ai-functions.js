@@ -4256,6 +4256,7 @@ function ai_tracking () {
     var block_names = [];
     var version_names = [];
     var block_counters = [];
+    var version_indexes = [];
 
     if (pageview_data.length != 0) {
       if (ai_debug) console.log ('AI PROCESS IMPRESSIONS - SENDING ALSO PAGEVIEW DATA', pageview_data);
@@ -4341,6 +4342,20 @@ function ai_tracking () {
               if (ai_debug) console.log ("AI TIMED ROTATION DATA:", block_rotation_info);
 
               timed_rotation_count = block_rotation_info [1];
+
+              // Get version indexes
+              version_indexes = [];
+              var ai_rotation_versions = element.querySelectorAll ('div.ai-rotate .ai-rotate-option[data-index]').forEach ((el, index) => {
+                var version_index = parseInt (el.dataset.index);
+                version_indexes.push (version_index);
+
+                // There can be less optiosn than the highest option index
+                if (version_index > timed_rotation_count) {
+                  timed_rotation_count = version_index;
+                }
+              });
+              if (ai_debug) console.log ("AI TIMED ROTATION VERSION INDEXES:", version_indexes);
+              if (ai_debug) console.log ("AI TIMED ROTATION VERSIONS:", timed_rotation_count);
             }
 
             if (Number.isInteger (data [0]) && data [0] != 0) {
@@ -4444,11 +4459,13 @@ function ai_tracking () {
                   } else {
                       // Timed rotation
                       for (var option = 1; option <= timed_rotation_count; option ++) {
-                        blocks.push (data [0]);
-                        versions.push (option | adb_flag);
-                        block_names.push (data [2]);
-                        version_names.push (data [3]);
-                        block_counters.push (data [4]);
+                        if (version_indexes.includes (option)) {
+                          blocks.push (data [0]);
+                          versions.push (option | adb_flag);
+                          block_names.push (data [2]);
+                          version_names.push (data [3]);
+                          block_counters.push (data [4]);
+                        }
                       }
 
                       element.classList.add ("ai-impression");
