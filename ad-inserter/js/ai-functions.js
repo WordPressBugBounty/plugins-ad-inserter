@@ -3034,11 +3034,7 @@ function ai_addEventListener (el, eventName, eventHandler, selector) {
   }
 }
 
-// ***
-//(function($) {
   // Tracking handler manager
-  // ***
-//  $.fn.iframeTracker = function(handler) {
   installIframeTracker = function (handler, target) {
     // Building handler object from handler function
     if (typeof handler == "function") {
@@ -3047,13 +3043,9 @@ function ai_addEventListener (el, eventName, eventHandler, selector) {
       };
     }
 
-    // ***
-//    var target = this.get();
     if (handler === null || handler === false) {
-//      $.iframeTracker.untrack(target);
       ai_iframeTracker.untrack (target);
     } else if (typeof handler == "object") {
-//      $.iframeTracker.track(target, handler);
       ai_iframeTracker.track (target, handler);
     } else {
       throw new Error ("Wrong handler type (must be an object, or null|false to untrack)");
@@ -3061,7 +3053,6 @@ function ai_addEventListener (el, eventName, eventHandler, selector) {
     return this;
   };
 
-  // ***
   var ai_mouseoverHander = function (handler, event){
     event.data = {'handler': handler};
     ai_iframeTracker.mouseoverListener (event);
@@ -3072,8 +3063,6 @@ function ai_addEventListener (el, eventName, eventHandler, selector) {
   }
 
   // Iframe tracker common object
-  // ***
-//  $.iframeTracker = {
   ai_iframeTracker = {
     // State
     focusRetriever: null,  // Element used for restoring focus on window (element)
@@ -3083,7 +3072,6 @@ function ai_addEventListener (el, eventName, eventHandler, selector) {
 
     // Init (called once on document ready)
     init: function () {
-    // ***
       // Determine browser version (IE8-)
         try {
           // ### AI
@@ -3100,15 +3088,9 @@ function ai_addEventListener (el, eventName, eventHandler, selector) {
         } catch (ex2) {}
 
       // Listening window blur
-      // ***
-//      $(window).focus();
       window.focus ();
 
-      // ***
-//      $(window).blur(function(e) {
       window.addEventListener ('blur', (event) => {
-        // ***
-//        $.iframeTracker.windowLoseFocus (e);
         ai_iframeTracker.windowLoseFocus (event);
       });
 
@@ -3116,17 +3098,13 @@ function ai_addEventListener (el, eventName, eventHandler, selector) {
       // ### AI
       // ### added label for tools like https://web.dev/measure/
       // ***
-//      $("body").append('<div style="position:fixed; top:0; left:0; overflow:hidden;"><input style="position:absolute; left:-300px;" type="text" value="" id="focus_retriever" readonly="true" /><label for="focus_retriever">&nbsp;</label></div>');
-//      document.querySelector ('body').innerHTML += '<div style="position:fixed; top:0; left:0; overflow:hidden;"><input style="position:absolute; left:-300px;" type="text" value="" id=" focus_retriever" readonly="true" /><label for="focus_retriever">&nbsp;</label></div>';
 
       var focus_retriever_holder = document.createElement ('div');
       focus_retriever_holder.style = 'position:fixed; top:0; left:0; overflow:hidden;';
-      focus_retriever_holder.innerHTML = '<input style="position:absolute; left:-300px;" type="text" value="" id="focus_retriever" readonly="true" /><label for="focus_retriever">&nbsp;</label>';
+      focus_retriever_holder.innerHTML = '<input style="position:absolute; left:-300px;" type="text" value="" id="focus_retriever" readonly="true" aria-hidden="true" /><label for="focus_retriever">&nbsp;</label>';
       document.querySelector ('body').append (focus_retriever_holder);
 
       // ### /AI
-      // ***
-//      this.focusRetriever = $("#focus_retriever");
       this.focusRetriever = document.querySelector ("#focus_retriever");
       this.focusRetrieved = false;
 
@@ -3137,34 +3115,22 @@ function ai_addEventListener (el, eventName, eventHandler, selector) {
         this.focusRetriever.blur (function (e) {
           e.stopPropagation ();
           e.preventDefault ();
-          // ***
-//          $.iframeTracker.windowLoseFocus(e);
           ai_iframeTracker.windowLoseFocus (e);
 
         });
 
         // Keep focus on window (fix bug IE8-, focusable elements)
-        // ***
-//        $("body").click(function(e) {
         document.querySelector ('body').addEventListener ('click', (e) => {
-          // ***
-//          $(window).focus();
           window.focus ();
         });
-        // ***
-//        $("form").click(function(e) {
         document.querySelector ('form').addEventListener ('click', (e) => {
           e.stopPropagation ();
         });
 
         // Same thing for "post-DOMready" created forms (issue #6)
         try {
-          // ***
-//          $("body").on("click", "form", function(e) {
           ai_addEventListener (document.querySelector ('body'), 'click', (e) => {e.stopPropagation();}, 'form');
         } catch (ex) {
-          // ***
-//          console.log("[iframeTracker] Please update jQuery to 1.7 or newer. (exception: " + ex.message + ")");
           console.log ("[iframeTracker] error (exception: " + ex.message + ")");
         }
       }
@@ -3178,16 +3144,9 @@ function ai_addEventListener (el, eventName, eventHandler, selector) {
       handler.target = target;
 
       // Storing the new handler into handler list
-      // ***
-//      $.iframeTracker.handlersList.push(handler);
       ai_iframeTracker.handlersList.push (handler);
 
       // Binding boundary listener
-      // ***
-//      $(target)
-//        .bind("mouseover", { handler: handler }, $.iframeTracker.mouseoverListener)
-//        .bind("mouseout",  { handler: handler }, $.iframeTracker.mouseoutListener);
-
       target.addEventListener ('mouseover', ai_mouseoverHander.bind (event, handler), false);
       target.addEventListener ('mouseout', ai_mouseoutHander.bind (event, handler), false);
     },
@@ -3201,13 +3160,7 @@ function ai_addEventListener (el, eventName, eventHandler, selector) {
       }
 
       // Unbinding boundary listener
-      // ***
-//      $(target).each(function(index) {
       target.forEach ((el, i) => {
-//        $(this)
-//          .unbind("mouseover", $.iframeTracker.mouseoverListener)
-//          .unbind("mouseout", $.iframeTracker.mouseoutListener);
-
         el.removeEventListener ('mouseover', ai_mouseoverHander, false);
         el.removeEventListener ('mouseout',  ai_mouseoutHander,  false);
       });
@@ -3236,12 +3189,8 @@ function ai_addEventListener (el, eventName, eventHandler, selector) {
     // Target mouseover event listener
     mouseoverListener: function(e) {
       e.data.handler.over = true;
-      // ***
-//      $.iframeTracker.retrieveFocus();
       ai_iframeTracker.retrieveFocus ();
       try {
-        // ***
-//        e.data.handler.overCallback(this, e);
         e.data.handler.overCallback (e.data.handler.target, e);
       } catch (ex) {}
     },
@@ -3249,12 +3198,8 @@ function ai_addEventListener (el, eventName, eventHandler, selector) {
     // Target mouseout event listener
     mouseoutListener: function(e) {
       e.data.handler.over = false;
-      // ***
-//      $.iframeTracker.retrieveFocus();
       ai_iframeTracker.retrieveFocus ();
       try {
-        // ***
-//        e.data.handler.outCallback(this, e);
         e.data.handler.outCallback (e.data.handler.target, e);
       } catch (ex) {}
     },
@@ -3276,11 +3221,7 @@ function ai_addEventListener (el, eventName, eventHandler, selector) {
         }
 
         if (process_iframe) {
-          // ***
-//          $.iframeTracker.focusRetriever.focus();
           ai_iframeTracker.focusRetriever.focus ();
-          // ***
-//          $.iframeTracker.focusRetrieved = true;
           ai_iframeTracker.focusRetrieved = true;
         }
       }
@@ -3307,45 +3248,16 @@ function ai_ready (fn) {
 }
 
   // Init the iframeTracker on document ready
-    // ***
-//  $(document).ready(function() {
-    // ***
-//    $.iframeTracker.init();
 function ai_init_IframeTracker () {
   ai_iframeTracker.init ();
 }
 
 ai_ready (ai_init_IframeTracker);
 
-// ***
-//})(jQuery);
-
-// ***
-//}));
-
 
 ai_tracking_finished = false;
 
-// ***
-//jQuery(document).ready(function($) {
 function ai_tracking () {
-
-//  var ai_internal_tracking = AI_INTERNAL_TRACKING;
-//  var ai_external_tracking = AI_EXTERNAL_TRACKING;
-
-//  var ai_external_tracking_category  = "AI_EXT_CATEGORY";
-//  var ai_external_tracking_action    = "AI_EXT_ACTION";
-//  var ai_external_tracking_label     = "AI_EXT_LABEL";
-//  var ai_external_tracking_username  = "WP_USERNAME";
-
-//  var ai_track_pageviews = AI_TRACK_PAGEVIEWS;
-//  var ai_advanced_click_detection = AI_ADVANCED_CLICK_DETECTION;
-//  var ai_viewport_widths = AI_VIEWPORT_WIDTHS;
-//  var ai_viewport_indexes = AI_VIEWPORT_INDEXES;
-//  var ai_viewport_names = JSON.parse (b64d ("AI_VIEWPORT_NAMES"));
-//  var ai_data_id = "AI_NONCE";
-//  var ai_ajax_url = "AI_SITE_URL/wp-admin/admin-ajax.php";
-//  var ai_debug_tracking = AI_DEBUG_TRACKING;
 
   if (ai_debug_tracking) {
     ai_ajax_url = ai_ajax_url + '?ai-debug-tracking=1';
@@ -3518,8 +3430,6 @@ function ai_tracking () {
               if (clicks == 1) {
                 if (ai_debug) console.log ('AI CLICKS #1, closing block', block, '- no more clicks');
 
-                // ***
-//                var cfp_time = $('span[data-ai-block=' + block + ']').data ('ai-cfp-time');
                 var cfp_time = document.querySelector ('span[data-ai-block="' + block + '"]').dataset.aiCfpTime;
                 var date = new Date();
                 var timestamp = Math.round (date.getTime() / 1000);
@@ -3527,8 +3437,6 @@ function ai_tracking () {
                 var closed_until = timestamp + 7 * 24 * 3600;
                 ai_set_cookie (cookie_block, 'c', - closed_until);
 
-                // ***
-//                setTimeout (function() {$('span[data-ai-block=' + block + ']').closest ("div[data-ai]").remove ();}, 50);
                 setTimeout (function() {
                   document.querySelectorAll ('span[data-ai-block="' + block + '"]').forEach ((el, index) => {
                     var closest = el.closest ("div[data-ai]");
@@ -3553,8 +3461,6 @@ function ai_tracking () {
               if (clicks == 1) {
                 if (ai_debug) console.log ('AI CLICKS, closing block', block, '- no more clicks per time period');
 
-                // ***
-//                var cfp_time = $('span[data-ai-block=' + block + ']').data ('ai-cfp-time');
                 var cfp_time = document.querySelector ('span[data-ai-block="' + block + '"]').dataset.aiCfpTime;
 
                 var date = new Date();
@@ -3565,11 +3471,6 @@ function ai_tracking () {
 
                 if (ai_debug) console.log ('AI CLICKS, closing block', block, 'for', closed_until - timestamp, 's');
 
-                // ***
-//                var block_to_close = $('span[data-ai-block=' + block + ']').closest ("div[data-ai]");
-//                setTimeout (function() {
-//                  block_to_close.closest ("div[data-ai]").remove ();
-//                }, 75); // Remove after CFP check
                 setTimeout (function() {
                   document.querySelectorAll ('span[data-ai-block="' + block + '"]').forEach ((el, index) => {
                     var closest = el.closest ("div[data-ai]");
@@ -3587,17 +3488,11 @@ function ai_tracking () {
 //                  if (ai_debug) console.log ('AI COOKIE x 3 block', block, 'closed_until', closed_until);
                   ai_set_cookie (block, 'x', closed_until);
 
-                  // ***
-//                  $('span.ai-cfp').each (function (index) {
                   document.querySelectorAll ('span.ai-cfp').forEach ((el, index) => {
-                    // ***
-//                    var cfp_block = $(this).data ('ai-block');
                     var cfp_block = el.dataset.aiBlock;
 
                     if (ai_debug) console.log ('AI CLICKS CFP, closing block', cfp_block, 'for', cfp_time, 'days');
 
-                    // ***
-//                    var block_to_close = $(this);
                     var block_to_close = el;
 
                     setTimeout (function() {
@@ -3656,8 +3551,6 @@ function ai_tracking () {
           if (clicks == 1) {
             if (ai_debug) console.log ('AI CLICKS, closing block', block, '- no more global clicks per time period');
 
-            // ***
-//            var cfp_time = $('span[data-ai-block=' + block + ']').data ('ai-cfp-time');
             var cfp_time = document.querySelector ('span[data-ai-block="' + block + '"]').dataset.aiCfpTime;
             var date = new Date();
             var timestamp = Math.round (date.getTime() / 1000);
@@ -3667,8 +3560,6 @@ function ai_tracking () {
 
             if (ai_debug) console.log ('AI CLICKS, closing block', block, 'for', closed_until - timestamp, 's');
 
-            // ***
-//            var block_to_close = $('span[data-ai-block=' + block + ']').closest ("div[data-ai]");
             setTimeout (function() {
               document.querySelectorAll ('span[data-ai-block="' + block + '"]').forEach ((el, index) => {
                 var closest = el.closest ("div[data-ai]");
@@ -3688,16 +3579,10 @@ function ai_tracking () {
 //                if (ai_debug) console.log ('AI COOKIE x 3 block', block, 'closed_until', closed_until);
               ai_set_cookie (block, 'x', closed_until);
 
-              // ***
-//              $('span.ai-cfp').each (function (index) {
               document.querySelectorAll ('span.ai-cfp').forEach ((el, index) => {
-                // ***
-//                var cfp_block = $(this).data ('ai-block');
                 var cfp_block = el.dataset.aiBlock;
                 if (ai_debug) console.log ('AI CLICKS GLOBAL CFP, closing block', cfp_block, 'for', cfp_time, 'days');
 
-                // ***
-//                var block_to_close = $(this);
                 var block_to_close = el;
                 setTimeout (function() {
                   block_to_close.closest ("div[data-ai]").remove ();
@@ -3742,19 +3627,6 @@ function ai_tracking () {
 
       if (ai_internal_tracking) {
         if (typeof ai_internal_tracking_no_clicks === 'undefined') {
-              // ***
-//          $.ajax ({
-//              url: ai_ajax_url,
-//              type: "post",
-//              data: {
-//                action: "ai_ajax",
-//                ai_check: ai_data_id,
-//                click: block,
-//                version: code_version,
-//                type: click_type,
-//              },
-//              async: true
-//          }).done (function (data) {
 
           var url_data = {
             action: "ai_ajax",
@@ -3811,8 +3683,6 @@ function ai_tracking () {
                     ai_set_cookie (block, 'x', closed_until);
                   }
 
-//                  setTimeout (function() {$('span[data-ai-block=' + block + ']').closest ("div[data-ai]").remove ();}, 50);
-                  // ***
                   setTimeout (function () {
                     document.querySelectorAll ('span[data-ai-block="' + block + '"]').forEach ((el, index) => {
                       var closest = el.closest ("div[data-ai]");
@@ -3866,21 +3736,12 @@ function ai_tracking () {
 //    var ai_debug = false;
 
     if (typeof block_wrapper == 'undefined') {
-      // ***
-//      block_wrapper = $('body');
       block_wrapper = document.querySelector ('body');
     }
 
-//    var elements = $("div.ai-track[data-ai]:visible a", block_wrapper);
-    // ***
-//    var elements = $("div.ai-track[data-ai]:visible", block_wrapper);
     var elements = block_wrapper.querySelectorAll ("div.ai-track[data-ai]");
 
-    // ***
-//    var filtered_elements = $();
     var filtered_elements = [];
-    // ***
-//    elements.each (function () {
     elements.forEach ((element, i) => {
       if (!!(element.offsetWidth || element.offsetHeight || element.getClientRects ().length)) {
       // ### Excludes element also when class is found in rotation option
@@ -3890,9 +3751,6 @@ function ai_tracking () {
 //      var ai_manual_loading_auto = $(this).find ('div.ai-manual-auto');
 //      if (ai_lazy_loading.length == 0 && ai_manual_loading.length == 0 && ai_manual_loading_list.length == 0 && ai_manual_loading_auto.length == 0) filtered_elements = filtered_elements.add ($(this));
 
-      // ***
-//      if ($(this).find ('div.ai-lazy, div.ai-manual, div.ai-list-manual, div.ai-manual-auto, div.ai-delayed').length == 0) filtered_elements = filtered_elements.add ($(this));
-//      if (!element.querySelectorAll ('div.ai-lazy, div.ai-manual, div.ai-list-manual, div.ai-manual-auto, div.ai-delayed').length) filtered_elements.push (element);
       if (!element.querySelectorAll ('div.ai-lazy, div.ai-wait-for-interaction, div.ai-manual, div.ai-list-manual, div.ai-manual-auto, div.ai-delayed').length) filtered_elements.push (element);
       // ***
       }
@@ -3902,70 +3760,41 @@ function ai_tracking () {
 
 
     // Mark as tracked
-    // ***
-//    elements.removeClass ('ai-track');
-//    elements = elements.find ('a');
     var processed_elements = [];
     elements.forEach ((element, i) => {
       element.classList.remove ('ai-track');
       processed_elements.push.apply (processed_elements, element.querySelectorAll ('a'));
     });
 
-    // ***
     elements = processed_elements;
 
     if (elements.length != 0) {
       if (ai_advanced_click_detection) {
-        // ***
-//        elements.click (function () {
         elements.forEach ((element, i) => {
           element.addEventListener ('click', () => {
-            // ***
-  //          var wrapper = $(this).closest ("div[data-ai]");
             var wrapper = element.closest ("div[data-ai]");
-            // ***
-  //          while (typeof wrapper.attr ("data-ai") != "undefined") {
             while (wrapper !== null && wrapper.hasAttribute ("data-ai")) {
-              // ***
-  //            var data = JSON.parse (b64d (wrapper.attr ("data-ai")));
               var data = JSON.parse (b64d (wrapper.getAttribute ("data-ai")));
               if (typeof data !== "undefined" && data.constructor === Array) {
                 if (Number.isInteger (data [1])) {
-                  // ***
-  //                if (!wrapper.hasClass ("clicked")) {
                   if (!wrapper.classList.contains ("clicked")) {
-                    // ***
-  //                  wrapper.addClass ("clicked");
                     wrapper.classList.add ("clicked");
                     ai_click (data, "a.click");
                   }
                 }
               }
-              // ***
-  //            wrapper = wrapper.parent ().closest ("div[data-ai]");
               wrapper = wrapper.parentElement.closest ("div[data-ai]");
             }
           });
-        // ***
         });
 
         if (ai_debug) {
-          // ***
-//          elements.each (function (){
           elements.forEach ((element, i) => {
-            // ***
-//            var wrapper = $(this).closest ("div[data-ai]");
             var wrapper = element.closest ("div[data-ai]");
-            // ***
-//            if (typeof wrapper.attr ("data-ai") != "undefined") {
             if (wrapper !== null && wrapper.hasAttribute ("data-ai")) {
-              // ***
-//              var data = JSON.parse (b64d (wrapper.data ("ai")));
               var data = JSON.parse (b64d (wrapper.dataset.ai));
               if (typeof data !== "undefined" && data.constructor === Array) {
                 if (Number.isInteger (data [1])) {
-                  // ***
-//                  if (!wrapper.hasClass ("clicked")) {
                   if (!wrapper.classList.contains ("clicked")) {
                     console.log ("AI STANDARD CLICK TRACKER for link installed on block", data [0]);
                   } else console.log ("AI STANDARD CLICK TRACKER for link NOT installed on block", data [0], "- has class clicked");
@@ -3976,18 +3805,10 @@ function ai_tracking () {
           });
         }
       } else {
-          // ***
-//          elements.click (function () {
           elements.forEach ((element, i) => {
             element.addEventListener ('click', () => {
-              // ***
-  //            var wrapper = $(this).closest ("div[data-ai]");
               var wrapper = element.closest ("div[data-ai]");
-              // ***
-  //            while (typeof wrapper.attr ("data-ai") != "undefined") {
               while (wrapper !== null && wrapper.hasAttribute ("data-ai")) {
-                // ***
-  //              var data = JSON.parse (b64d (wrapper.attr ("data-ai")));
                 var data = JSON.parse (b64d (wrapper.getAttribute ("data-ai")));
                 if (typeof data !== "undefined" && data.constructor === Array) {
                   if (Number.isInteger (data [1])) {
@@ -3995,26 +3816,15 @@ function ai_tracking () {
                     clicked = true;
                   }
                 }
-                // ***
-  //              wrapper = wrapper.parent ().closest ("div[data-ai]");
                 wrapper = wrapper.parentElement.closest ("div[data-ai]");
               }
             });
-            // ***
           });
 
           if (ai_debug) {
-            // ***
-//            elements.each (function (){
             elements.forEach ((element, i) => {
-              // ***
-//              var wrapper = $(this).closest ("div[data-ai]");
               var wrapper = element.closest ("div[data-ai]");
-              // ***
-//              if (typeof wrapper.attr ("data-ai") != "undefined") {
               if (wrapper !== null && wrapper.hasAttribute ("data-ai")) {
-                // ***
-//                var data = JSON.parse (b64d (wrapper.attr ("data-ai")));
                 var data = JSON.parse (b64d (wrapper.getAttribute ("data-ai")));
 
                 if (typeof data !== "undefined" && data.constructor === Array) {
@@ -4036,19 +3846,13 @@ function ai_tracking () {
 //    var ai_debug = false;
 
     if (typeof block_wrapper == 'undefined') {
-      // ***
-//      block_wrapper = $('body');
       block_wrapper = document.querySelector ('body');
       if (ai_debug) console.log ("AI INSTALL CLICK TRACKERS");
-    // ***
-//    }  else if (ai_debug) console.log ("AI INSTALL CLICK TRACKERS:", block_wrapper.prop ("tagName"), block_wrapper.attr ('class'));
     }  else if (ai_debug) console.log ("AI INSTALL CLICK TRACKERS:", block_wrapper.tagName, block_wrapper.getAttribute ('class'));
 
 
     if (ai_advanced_click_detection) {
                                                        // timed rotation options that may contain blocks for tracking (block shortcodes) - only currently active option is visible
-      // ***
-//      var elements = $("div.ai-track[data-ai]:visible, div.ai-rotate[data-info]:visible div.ai-track[data-ai]", block_wrapper);
       var elements = block_wrapper.querySelectorAll ("div.ai-track[data-ai], div.ai-rotate[data-info] div.ai-track[data-ai]");
 
       var all_elements = [];
@@ -4059,18 +3863,11 @@ function ai_tracking () {
         }
       });
 
-      // ***
-//      if (typeof block_wrapper.attr ("data-ai") != "undefined" && $(block_wrapper).hasClass ('ai-track') && $(block_wrapper).is (':visible')) {
       if (block_wrapper.hasAttribute ("data-ai") && block_wrapper.classList.contains ('ai-track') && !!(block_wrapper.offsetWidth || block_wrapper.offsetHeight || block_wrapper.getClientRects ().length)) {
-        // ***
-//        elements = elements.add (block_wrapper);
         all_elements.push (block_wrapper);
       }
 
-      // ***
-//      var filtered_elements = $();
       var filtered_elements = [];
-//      elements.each (function () {
       all_elements.forEach ((element, i) => {
 
         // ### Excludes element also when class is found in rotation option
@@ -4079,17 +3876,12 @@ function ai_tracking () {
 //        var ai_manual_loading_auto = $(this).find ('div.ai-manual-auto');
 //        if (ai_lazy_loading.length == 0 && ai_manual_loading.length == 0 && ai_manual_loading_auto.length == 0) filtered_elements = filtered_elements.add ($(this));
 
-        // ***
-//        if ($(this).find ('div.ai-lazy, div.ai-manual, div.ai-list-manual, div.ai-manual-auto, div.ai-delayed').length == 0) filtered_elements = filtered_elements.add ($(this));
-//        if (!element.querySelectorAll ('div.ai-lazy, div.ai-manual, div.ai-list-manual, div.ai-manual-auto, div.ai-delayed').length) filtered_elements.push (element);
         if (!element.querySelectorAll ('div.ai-lazy, div.ai-wait-for-interaction, div.ai-manual, div.ai-list-manual, div.ai-manual-auto, div.ai-delayed').length) filtered_elements.push (element);
       });
 
       elements = filtered_elements;
 
     // Mark as tracked - prevents ai_install_standard_click_trackers
-      // ***
-//      elements.removeClass ('ai-track');
 
 //      var processed_elements = [];
 //      elements.forEach ((element, i) => {
@@ -4109,50 +3901,30 @@ function ai_tracking () {
           blurCallback: function(){
             if (this.ai_data != null && wrapper != null) {
               if (ai_debug) console.log ("AI blurCallback for block: " + this.ai_data [0]);
-              // ***
-//              if (!wrapper.hasClass ("clicked")) {
               if (!wrapper.classList.contains ("clicked")) {
-                // ***
-//                wrapper.addClass ("clicked");
                 wrapper.classList.add ("clicked");
                 ai_click (this.ai_data, "blurCallback");
 
-                // ***
-//                var inner_wrapper = wrapper.find ("div[data-ai]:visible");
                 var inner_wrapper = wrapper.querySelector ("div[data-ai]");
-                // ***
-//                while (typeof inner_wrapper.attr ("data-ai") != "undefined") {
                 while (inner_wrapper != null && !!(inner_wrapper.offsetWidth || inner_wrapper.offsetHeight || inner_wrapper.getClientRects ().length) && inner_wrapper.hasAttribute ("data-ai")) {
-                  // ***
-//                  var data = JSON.parse (b64d (inner_wrapper.attr ("data-ai")));
                   var data = JSON.parse (b64d (inner_wrapper.getAttribute ("data-ai")));
                   if (typeof data !== "undefined" && data.constructor === Array && Number.isInteger (data [1])) {
                     ai_click (data, "blurCallback INNER");
                   }
-                  // ***
-//                  inner_wrapper = inner_wrapper.find ("div[data-ai]:visible");
                   inner_wrapper = inner_wrapper.querySelector ("div[data-ai]");
                 }
               }
             }
           },
           overCallback: function(element){
-            // ***
-//            var closest = $(element).closest ("div[data-ai]");
             var closest = element.closest ("div[data-ai]");
-            // ***
-//            if (typeof closest.attr ("data-ai") != "undefined") {
             if (closest.hasAttribute ("data-ai")) {
-              // ***
-//              var data = JSON.parse (b64d (closest.attr ("data-ai")));
               var data = JSON.parse (b64d (closest.getAttribute ("data-ai")));
               if (typeof data !== "undefined" && data.constructor === Array && Number.isInteger (data [1])) {
                 wrapper = closest;
                 this.ai_data = data;
                 if (ai_debug) console.log ("AI overCallback for block: " + this.ai_data [0]);
               } else {
-                  // ***
-//                  if (wrapper != null) wrapper.removeClass ("clicked");
                   if (wrapper != null) wrapper.classList.remove ("clicked");
                   wrapper        = null;
                   this.ai_data  = null;
@@ -4161,8 +3933,6 @@ function ai_tracking () {
           },
           outCallback: function (element){
             if (ai_debug && this.ai_data != null) console.log ("AI outCallback for block: " + this.ai_data [0]);
-            // ***
-//            if (wrapper != null) wrapper.removeClass ("clicked");
             if (wrapper != null) wrapper.classList.remove ("clicked");
             wrapper = null;
             this.ai_data = null;
@@ -4170,28 +3940,17 @@ function ai_tracking () {
           focusCallback: function(element){
             if (this.ai_data != null && wrapper != null) {
               if (ai_debug) console.log ("AI focusCallback for block: " + this.ai_data [0]);
-              // ***
-//              if (!wrapper.hasClass ("clicked")) {
               if (!wrapper.classList.contains ("clicked")) {
-                // ***
-//                wrapper.addClass ("clicked");
                 wrapper.classList.add ("clicked");
                 ai_click (this.ai_data, "focusCallback");
 
-//                var inner_wrapper = wrapper.find ("div[data-ai]:visible");
                 var inner_wrapper = wrapper.querySelector ("div[data-ai]");
 
-                // ***
-//                while (typeof inner_wrapper.attr ("data-ai") != "undefined") {
                 while (inner_wrapper != null && !!(inner_wrapper.offsetWidth || inner_wrapper.offsetHeight || inner_wrapper.getClientRects ().length) && inner_wrapper.hasAttribute ("data-ai")) {
-                  // ***
-//                  var data = JSON.parse (b64d (inner_wrapper.attr ("data-ai")));
                   var data = JSON.parse (b64d (inner_wrapper.getAttribute ("data-ai")));
                   if (typeof data !== "undefined" && data.constructor === Array && Number.isInteger (data [1])) {
                     ai_click (data, "focusCallback INNER");
                   }
-                  // ***
-//                  inner_wrapper = inner_wrapper.find ("div[data-ai]:visible");
                   inner_wrapper = inner_wrapper.querySelector ("div[data-ai]");
                 }
               }
@@ -4201,26 +3960,15 @@ function ai_tracking () {
           ai_data: null,
           block:   null,
           version: null
-        // ***
-//        });
         }
         , element
         );
-        // ***
         });
 
         if (ai_debug) {
-          // ***
-//          elements.each (function (){
           elements.forEach ((element, i) => {
-            // ***
-//            var closest = $(this).closest ("div[data-ai]");
             var closest = element.closest ("div[data-ai]");
-            // ***
-//            if (typeof closest.attr ("data-ai") != "undefined") {
             if (closest.hasAttribute ("data-ai")) {
-            // ***
-//              var data = JSON.parse (b64d (closest.attr ("data-ai")));
               var data = JSON.parse (b64d (closest.getAttribute ("data-ai")));
               if (typeof data !== "undefined" && data.constructor === Array) {
                 console.log ("AI ADVANCED CLICK TRACKER installed on block", data [0]);
@@ -4243,12 +3991,8 @@ function ai_tracking () {
 //    var ai_debug = false;
 
     if (typeof block_wrapper == 'undefined') {
-      // ***
-//      block_wrapper = $('body');
       block_wrapper = document.querySelector ('body');
       if (ai_debug) console.log ("AI PROCESS IMPRESSIONS");
-    // ***
-//    }  else if (ai_debug) console.log ("AI PROCESS IMPRESSIONS:", block_wrapper.prop ("tagName"), block_wrapper.attr ('class'));
     } else if (ai_debug) console.log ("AI PROCESS IMPRESSIONS:", block_wrapper.tagName, block_wrapper.hasAttribute ('class') ? block_wrapper.getAttribute ('class') : '');
 
     var blocks = [];
@@ -4269,8 +4013,6 @@ function ai_tracking () {
     }
 
                                                                 // timed rotation options that may contain blocks for tracking (block shortcodes) - only currently active option is visible
-    // ***
-//    var blocks_for_tracking = $("div.ai-track[data-ai]:visible, div.ai-rotate[data-info]:visible div.ai-track[data-ai]", block_wrapper);
     var blocks_for_tracking = block_wrapper.querySelectorAll ("div.ai-track[data-ai], div.ai-rotate[data-info] div.ai-track[data-ai]");
     var visible_elements = [];
     blocks_for_tracking.forEach ((element, i) => {
@@ -4279,15 +4021,11 @@ function ai_tracking () {
       }
     });
 
-    // ***
-//    if (typeof $(block_wrapper).attr ("data-ai") != "undefined" && $(block_wrapper).hasClass ('ai-track') && $(block_wrapper).is (':visible')) {
     if (block_wrapper !== null && block_wrapper.hasAttribute ("data-ai") && block_wrapper.classList.contains ('ai-track') && !block_wrapper.classList.contains ('ai-no-pageview') && !!(block_wrapper.offsetWidth || block_wrapper.offsetHeight || block_wrapper.getClientRects ().length)) {
       visible_elements.push (block_wrapper);
     }
     blocks_for_tracking = visible_elements;;
 
-    // ***
-//    if (ai_debug) console.log ("AI BLOCKS FOR TRACKING:", blocks_for_tracking.each (function () {return $(this).attr ('class')}).get ());
     if (ai_debug) {
       console.log ("AI BLOCKS FOR TRACKING:");
       blocks_for_tracking.forEach ((element, i) => {console.log ('  ', element.getAttribute ('class'))});
@@ -4296,12 +4034,8 @@ function ai_tracking () {
     if (blocks_for_tracking.length != 0) {
       if (ai_debug) console.log ("");
 
-      // ***
-//      $(blocks_for_tracking).each (function (){
       blocks_for_tracking.forEach ((element, i) => {
 
-        // ***
-//        if (typeof $(this).attr ("data-ai") != "undefined") {
         if (element.hasAttribute ("data-ai")) {
 
 
@@ -4323,20 +4057,14 @@ function ai_tracking () {
             if (ai_debug) console.log ('  TRACKING DATA UPDATED TO', b64d (element.getAttribute ('data-ai')));
           }
 
-          // ***
-//          var data = JSON.parse (b64d ($(this).attr ("data-ai")));
           var data = JSON.parse (b64d (element.getAttribute ("data-ai")));
 
           if (typeof data !== "undefined" && data.constructor === Array) {
             if (ai_debug) console.log ("AI TRACKING DATA:", data);
 
             var timed_rotation_count = 0;
-            // ***
-//            var ai_rotation_info = $(this).find ('div.ai-rotate[data-info]');
             var ai_rotation_info = element.querySelectorAll ('div.ai-rotate[data-info]');
             if (ai_rotation_info.length == 1) {
-              // ***
-//              var block_rotation_info = JSON.parse (b64d (ai_rotation_info.data ('info')));
               var block_rotation_info = JSON.parse (b64d (ai_rotation_info [0].dataset.info));
 
               if (ai_debug) console.log ("AI TIMED ROTATION DATA:", block_rotation_info);
@@ -4363,56 +4091,34 @@ function ai_tracking () {
 
                 var adb_flag = 0;
                 // Deprecated
-                // ***
-//                var no_tracking = $(this).hasClass ('ai-no-tracking');
                 var no_tracking = element.classList.contains ('ai-no-tracking');
 
-                // ***
-//                var ai_masking_data = jQuery(b64d ("Ym9keQ==")).attr (AI_ADB_ATTR_NAME);
                 var ai_masking_data = document.querySelector (b64d ("Ym9keQ==")).getAttribute (b64d (ai_adb_attribute));
                 if (typeof ai_masking_data === "string") {
                   var ai_masking = ai_masking_data == b64d ("bWFzaw==");
                 }
 
                 if (typeof ai_masking_data === "string" && typeof ai_masking === "boolean") {
-                  // ***
-//                  var outer_height = $(this).outerHeight ();
                   var outer_height = element.offsetHeight;
 
-                  // ***
-//                  var ai_attributes = $(this).find ('.ai-attributes');
                   var ai_attributes = element.querySelectorAll ('.ai-attributes');
                   if (ai_attributes.length) {
-//                    ai_attributes.each (function (){
-                    // ***
                     ai_attributes.forEach ((el, i) => {
-                      // ***
-//                      if (outer_height >= $(this).outerHeight ()) {
                       if (outer_height >= element.offsetHeight) {
-                        // ***
-//                        outer_height -= $(this).outerHeight ();
                         outer_height -= element.offsetHeight;
                       }
                     });
                   }
 
-                  // ***
-//                  var ai_code = $(this).find ('.ai-code');
                   var ai_code = element.querySelectorAll ('.ai-code');
                   outer_height = 0;
                   if (ai_code.length) {
-                    // ***
-//                    ai_code.each (function (){
                     ai_code.forEach ((element, i) => {
-                      // ***
-//                      outer_height += $(this).outerHeight ();
                       outer_height += element.offsetHeight;
                     });
                   }
 
   //                no_tracking = $(this).hasClass ('ai-no-tracking');
-                  // ***
-//                  if (ai_debug) console.log ('AI ad blocking:', ai_masking, " outerHeight:", outer_height, 'no tracking:', no_tracking);
                   if (ai_debug) console.log ('AI ad blocking:', ai_masking, " offsetHeight:", outer_height, 'no tracking:', no_tracking);
                   if (ai_masking && outer_height === 0) {
                     adb_flag = 0x80;
@@ -4426,20 +4132,10 @@ function ai_tracking () {
 
 //                if (ai_lazy_loading.length != 0 || ai_manual_loading.length != 0 || ai_manual_loading_list.length != 0 || ai_manual_loading_auto.length != 0) {
 
-                // ***
-//                if ($(this).find ('div.ai-lazy, div.ai-manual, div.ai-list-manual, div.ai-manual-auto, div.ai-delayed').length != 0) {
-//                if (element.querySelectorAll ('div.ai-lazy, div.ai-manual, div.ai-list-manual, div.ai-manual-auto, div.ai-delayed').length != 0) {
                 if (element.querySelectorAll ('div.ai-lazy, div.ai-wait-for-interaction, div.ai-manual, div.ai-list-manual, div.ai-manual-auto, div.ai-delayed').length != 0) {
                   no_tracking = true;
 
                   if (ai_debug) {
-                    // ***
-//                    if ($(this).find ('div.ai-lazy').length   != 0) console.log ("AI TRACKING block", data [0], "is set for lazy loading");
-//                    if ($(this).find ('div.ai-manual').length != 0) console.log ("AI TRACKING block", data [0], "is set for manual loading");
-//                    if ($(this).find ('div.ai-list-manual').length != 0) console.log ("AI TRACKING block", data [0], "is set for manual loading AUTO list");
-//                    if ($(this).find ('div.ai-manual-auto').length != 0) console.log ("AI TRACKING block", data [0], "is set for manual loading AUTO");
-//                    if ($(this).find ('div.ai-delayed').length != 0) console.log ("AI TRACKING block", data [0], "is set for delayed loading");
-
                     if (element.querySelectorAll ('div.ai-lazy').length   != 0) console.log ("AI TRACKING block", data [0], "is set for lazy loading");
                     if (element.querySelectorAll ('div.ai-wait-for-interaction').length   != 0) console.log ("AI TRACKING block", data [0], "is waiting for interaction");
                     if (element.querySelectorAll ('div.ai-manual').length != 0) console.log ("AI TRACKING block", data [0], "is set for manual loading");
@@ -4473,9 +4169,6 @@ function ai_tracking () {
 
                 } else if (ai_debug) console.log ("AI TRACKING block", data [0], "DISABLED");
 
-              // ***
-//              } else if (ai_debug) console.log ("AI TRACKING block", data [0], "- version not set", $(this).find ('div.ai-lazy').length != 0 ? 'LAZY LOADING' : '', ($(this).find ('div.ai-manual').length + $(this).find ('div.ai-list-manual').length + $(this).find ('div.ai-manual-auto').length) != 0 ? 'MANUAL LOADING' : '');
-//              } else if (ai_debug) console.log ("AI TRACKING block", data [0], "- version not set", element.querySelectorAll ('div.ai-lazy').length != 0 ? 'LAZY LOADING' : '', (element.querySelectorAll ('div.ai-manual').length + element.querySelectorAll ('div.ai-list-manual').length + element.querySelectorAll ('div.ai-manual-auto').length) != 0 ? 'MANUAL LOADING' : '');
               } else if (ai_debug) console.log ("AI TRACKING block", data [0], "- version not set", element.querySelectorAll ('div.ai-lazy').length != 0 ? 'LAZY LOADING' : '', element.querySelectorAll ('div.ai-wait-for-interaction').length != 0 ? 'WAITING FOR INTERACTION' : '', (element.querySelectorAll ('div.ai-manual').length + element.querySelectorAll ('div.ai-list-manual').length + element.querySelectorAll ('div.ai-manual-auto').length) != 0 ? 'MANUAL LOADING' : '');
             } else if (ai_debug) console.log ("AI TRACKING DISABLED");
           }
@@ -4561,19 +4254,6 @@ function ai_tracking () {
           // Mark as sent
           pageview_data = [];
 
-          // ***
-//          $.ajax ({
-//              url: ai_ajax_url,
-//              type: "post",
-//              data: {
-//                action: "ai_ajax",
-//                ai_check: ai_data_id,
-//                views: blocks,
-//                versions: versions,
-//              },
-//              async: true
-//          }).done (function (data) {
-
           var url_data = {
             action: "ai_ajax",
             ai_check: ai_data_id,
@@ -4644,8 +4324,6 @@ function ai_tracking () {
 
                   setTimeout (function () {
                     for (index = 0; index < blocks_to_remove.length; ++index) {
-                      // ***
-//                      $('span[data-ai-block=' + blocks_to_remove [index] + ']').closest ("div[data-ai]").remove ();
                       document.querySelectorAll ('span[data-ai-block="' + blocks_to_remove [index] + '"]').forEach ((el, index) => {
                         var closest = el.closest ("div[data-ai]");
                         if (closest) {
@@ -4693,26 +4371,7 @@ function ai_tracking () {
 
     ai_cookie = ai_load_cookie ();
 
-    // ***
-//    $('.ai-check-block').each (function () {
     document.querySelectorAll ('.ai-check-block').forEach ((element, i) => {
-
-      // ***
-//      var block = $(this).data ('ai-block');
-//      var delay_pv = $(this).data ('ai-delay-pv');
-//      var every_pv = $(this).data ('ai-every-pv');
-
-//      var code_hash             = $(this).data ('ai-hash');
-//      var max_imp               = $(this).data ('ai-max-imp');
-//      var limit_imp_per_time    = $(this).data ('ai-limit-imp-per-time');
-//      var limit_imp_time        = $(this).data ('ai-limit-imp-time');
-//      var max_clicks            = $(this).data ('ai-max-clicks');
-//      var limit_clicks_per_time = $(this).data ('ai-limit-clicks-per-time');
-//      var limit_clicks_time     = $(this).data ('ai-limit-clicks-time');
-
-//      var global_limit_clicks_per_time = $(this).data ('ai-global-limit-clicks-per-time');
-//      var global_limit_clicks_time     = $(this).data ('ai-global-limit-clicks-time');
-
 
       var block = element.dataset.aiBlock;
       var delay_pv = element.dataset.aiDelayPv;
@@ -4982,8 +4641,6 @@ function ai_tracking () {
     });
 
     // Remove check class so it's not processed again when tracking is called
-    // ***
-//    $('.ai-check-block'). removeClass ('ai-check-block');
     document.querySelectorAll ('.ai-check-block').forEach ((element, i) => {
       element.classList.remove ('ai-check-block');
     });
@@ -5058,8 +4715,6 @@ function ai_tracking () {
 
       var version = 0;
       var name = '?';
-      // ***
-//      $.each (ai_viewport_widths, function (index, width) {
       ai_viewport_widths.every ((width, index) => {
         if (viewport_width >= width) {
           version = ai_viewport_indexes [index];
@@ -5071,8 +4726,6 @@ function ai_tracking () {
 
       if (ai_debug) console.log ('AI TRACKING PAGEVIEW, viewport width:', viewport_width, '=>', name);
 
-      // ***
-//      var ai_masking_data = jQuery(b64d ("Ym9keQ==")).attr (AI_ADB_ATTR_NAME);
       var ai_masking_data = document.querySelector (b64d ("Ym9keQ==")).getAttribute (b64d (ai_adb_attribute));
       if (typeof ai_masking_data === "string") {
         var ai_masking = ai_masking_data == b64d ("bWFzaw==");
@@ -5097,20 +4750,6 @@ function ai_tracking () {
       if (ai_debug) console.log ('AI PROCESS IMPRESSIONS - SENDING PAGEVIEW DATA', pageview_data);
 
       if (ai_internal_tracking) {
-        // ***
-//        $.ajax ({
-//            url: ai_ajax_url,
-//            type: "post",
-//            data: {
-//              action: "ai_ajax",
-//              ai_check: ai_data_id,
-//              views: [0],
-//              versions: [version],
-//            },
-//            async: true
-//        }).done (function (data) {
-
-
 
         var url_data = {
           action: "ai_ajax",
@@ -5162,8 +4801,6 @@ function ai_tracking () {
     ai_tracking_finished = true;
   }
 
-  // ***
-//  jQuery (window).on ('load', function () {
   window.addEventListener ('load', (event) => {
     if (typeof ai_delay_tracking == 'undefined') {
       ai_delay_tracking = 0;
@@ -5172,8 +4809,6 @@ function ai_tracking () {
     setTimeout (ai_log_impressions, ai_delay_tracking + 1400);
     setTimeout (ai_install_click_trackers, ai_delay_tracking + 1500);
   });
-// ***
-//});
 }
 
 ai_ready (ai_tracking);

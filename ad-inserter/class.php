@@ -5427,9 +5427,9 @@ abstract class ai_CodeBlock extends ai_BaseCodeBlock {
       if ($parallax_options) break;
     }
 
-    $block_is_sticky = $this->get_sticky () || isset ($ai_wp_data ['AI_GUTENBERG_BLOCK_STICKY']);
+    $block_is_sticky = $this->get_sticky () || isset ($ai_wp_data ['AI_BLOCK_OVERRIDE_STICKY']);
     if ($block_is_sticky) {
-      $height = isset ($ai_wp_data ['AI_GUTENBERG_BLOCK_STICKY']) ? (int) $ai_wp_data ['AI_GUTENBERG_BLOCK_STICKY'] : trim ($this->get_sticky_height ());
+      $height = isset ($ai_wp_data ['AI_BLOCK_OVERRIDE_STICKY']) ? (int) $ai_wp_data ['AI_BLOCK_OVERRIDE_STICKY'] : trim ($this->get_sticky_height ());
       $style = '';
 
       if ($height != '' && !$parallax_options) {
@@ -11150,7 +11150,7 @@ function ai_register_global_fields () {
 }
 
 define ('AI_MAX_GLOBAL_FIELD_PAGES',     4);
-define ('AI_MAX_GLOBAL_FIELDS',         20);
+define ('AI_MAX_GLOBAL_FIELDS',         40);
 
 class ai_global_fileds {
 
@@ -11334,7 +11334,16 @@ class ai_global_fileds {
         if (!empty ($websites)) {
           foreach ($websites as $index => $website) {
             if (isset ($website ['enabled']) && $website ['enabled'] && trim ($website ['name']) != '') {
-              $capability = isset ($website ['access']) ? $this->get_role_capability ($website ['access']) : 'administrator';
+
+              if (isset ($website ['access'])) {
+                $access = $website ['access'];
+                if (strpos ($access, 'capability:') === 0) {
+                  $access = str_replace ('capability:', '', $access);
+                }
+
+                $capability = $this->get_role_capability ($access);
+              } else $capability = $this->get_role_capability ('administrator');
+
 
               if (!isset ($first_slug)) {
                 $first_slug = 'ai-remote-global-fields-' . ($index + 1);
@@ -12311,6 +12320,7 @@ setTimeout (function () {
                      ${newTab} />
           </label>
 
+          <div style="clear: both;"></div>
           <h2>${media_i18n.viewports}</h2>
       `);
 

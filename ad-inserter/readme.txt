@@ -6,7 +6,7 @@ Tags: ads, adsense, amp, ad rotation, ad manager
 Requires at least: 5.0
 Tested up to: 7.0
 Requires PHP: 7.4
-Stable tag: 2.8.16
+Stable tag: 2.8.17
 License: GPLv3
 
 Manage Google AdSense ads, banners, ad rotation, sticky widgets, AMP ads, ads.txt, tracking, header and footer code, PHP code, global custom fields
@@ -362,6 +362,16 @@ If you are not happy to reveal this information and you have opted in, simply di
 
 == Changelog ==
 
+= 2.8.17 =
+- Security fix for insecure direct object reference (credits to nightward)
+- Security fix for missing authorization to block visibility (credits to Jack Pas (Dark.))
+- Security fix for missing authorization to unauthenticated header/footer code disclosure (credits to Evan)
+- Added support for sticky blocks
+- Added support for sticky parameter in block shortcodes
+- Added support for encoded url data shortcode
+- Added support to select individual capability for global custom field page access
+- Few minor bug fixes, cosmetic changes and code improvements
+
 = 2.8.16 =
 - Fix for reflected cross-site scripting (credits to darkmode)
 - Added support for Gutenberg blocks
@@ -404,40 +414,21 @@ If you are not happy to reveal this information and you have opted in, simply di
 = 2.8.6 =
 - Few minor bug fixes, cosmetic changes and code improvements
 
-= 2.8.5 =
-- Support for individual virtual ads.txt files on multisite sites
-- Few minor bug fixes, cosmetic changes and code improvements
-
-= 2.8.4 =
-- Few minor bug fixes, cosmetic changes and code improvements
-
-= 2.8.3 =
-- Added support to override dynamic blocks setting for each rotation
-- Few minor bug fixes, cosmetic changes and code improvements
-
-= 2.8.2 =
-- Fix for ad blocking detection with AdBlock
-- Added support for any post tag list check
-- Few minor bug fixes, cosmetic changes and code improvements
-
-= 2.8.1 =
-- Updated depercated backend jQuery code
-- Fix for reflected cross-site scripting (XSS)
-- Few minor bug fixes, cosmetic changes and code improvements
-
-= 2.8.0 =
-- Replaced placeholder image generator service - changed to dummyimage.com
-- Fix for false ad blocking detection when using external scripts
-- Security fix for potential cross site scripting (Pro only)
-- Added support to show rotation options in the list of blocks
-- Added support for custom reports for clients (Pro only)
-- Few minor bug fixes, cosmetic changes and code improvements
-
 = Earlier versions =
 
 For the changelog of earlier versions, please refer to the separate changelog.txt file.
 
 == Upgrade Notice ==
+
+= 2.8.17 =
+Security fix for insecure direct object reference (credits to nightward);
+Security fix for missing authorization to block visibility (credits to Jack Pas (Dark.));
+Security fix for missing authorization to unauthenticated header/footer code disclosure (credits to Evan);
+Added support for sticky blocks;
+Added support for sticky parameter in block shortcodes;
+Added support for encoded url data shortcode;
+Added support to select individual capability for global custom field page access;
+Few minor bug fixes, cosmetic changes and code improvements
 
 = 2.8.16 =
 Fix for reflected cross-site scripting (credits to darkmode);
@@ -480,31 +471,3 @@ Few minor bug fixes, cosmetic changes and code improvements
 
 = 2.8.6 =
 Few minor bug fixes, cosmetic changes and code improvements
-
-= 2.8.5 =
-Support for individual virtual ads.txt files on multisite sites;
-Few minor bug fixes, cosmetic changes and code improvements
-
-= 2.8.4 =
-Few minor bug fixes, cosmetic changes and code improvements
-
-= 2.8.3 =
-Added support to override dynamic blocks setting for each rotation;
-Few minor bug fixes, cosmetic changes and code improvements
-
-= 2.8.2 =
-Fix for ad blocking detection with AdBlock;
-Added support for any post tag list check;
-Few minor bug fixes, cosmetic changes and code improvements;
-
-= 2.8.1 =
-Updated depercated backend jQuery code;
-Fix for reflected cross-site scripting (XSS);
-Few minor bug fixes, cosmetic changes and code improvements
-
-= 2.8.0 =
-Replaced placeholder image generator service - changed to dummyimage.com;
-Fix for false ad blocking detection when using external scripts;
-Security fix for potential cross site scripting (Pro only);
-Added support to show rotation options;
-Added support for custom reports(Pro only)

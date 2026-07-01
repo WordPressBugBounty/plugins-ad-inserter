@@ -2449,7 +2449,28 @@ function generate_settings_form (){
           </table>
         </div>
 
-<?php if (function_exists ('ai_display_loading')) ai_display_loading ($block, $obj, $default); ?>
+<?php if (function_exists ('ai_display_loading')) ai_display_loading ($block, $obj, $default); else { ?>
+
+        <div class="ai-rounded">
+          <table class="ai-responsive-table" style="width: 100%;" cellspacing=0 cellpadding=0 >
+            <tbody>
+              <tr>
+                <td style="width: 30%;">
+                </td>
+                <td style="width: 50%; text-align: right;">
+                  <input type="hidden" name="<?php echo AI_OPTION_STICKY, WP_FORM_FIELD_POSTFIX, $block; ?>" value="0" />
+                  <input id="sticky-<?php echo $block; ?>" type="checkbox" name="<?php echo AI_OPTION_STICKY, WP_FORM_FIELD_POSTFIX, $block; ?>" value="1" title= "<?php _e ('Sticky ad with scrolling space below', 'ad-inserter'); ?>" default="<?php echo $default->get_sticky (); ?>" <?php if ($obj->get_sticky () == AI_ENABLED) echo 'checked '; ?> />
+                  <label for="sticky-<?php echo $block; ?>"><?php /* Translators: Sticky ad */ _e ('Sticky', 'ad-inserter'); ?></label>
+
+                  <input type="text" id="sticky-height-<?php echo $block; ?>" name="<?php echo AI_OPTION_STICKY_HEIGHT, WP_FORM_FIELD_POSTFIX, $block; ?>" default="<?php echo $default->get_sticky_height (); ?>" value="<?php echo $obj->get_sticky_height (); ?>" title= "<?php _e ('Height of the scrolling space below the ad', 'ad-inserter'); ?>" size="3" maxlength="8" />
+                  px
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+
+<?php } ?>
 
 <?php if (function_exists ('ai_close_button')) ai_close_button ($block, $obj, $default); ?>
 
@@ -2951,20 +2972,29 @@ function generate_settings_form (){
             </thead>
             <tbody>
 <?php
+              $capabilities = ai_all_capabilities ();
 
-//              if (function_exists ('ai_general_settings_4')) {
-//                $users = get_users ();
-////                $capabilities = ai_all_capabilities ();
-//              }
               for ($page = 1; $page <= AI_MAX_GLOBAL_FIELD_PAGES; $page ++) {
 
                 $page_access = get_global_page_access ($page);
-                $user_capability_options = '';
 
-//                if (function_exists ('ai_general_settings_4')) {
-////                  $user_capability_options = ai_general_settings_4 ($page, $users, $capabilities);
-//                  $user_capability_options = ai_general_settings_4 ($page, $users);
-//                }
+                $is_page_access_capability = strpos ($page_access, 'capability:') === 0;
+                $page_access_capability = str_replace ('capability:', '', $page_access);
+
+                $capability_options = "<optgroup label='" . __('Capabilities', 'ad-inserter') . "'>\n";
+
+                foreach ($capabilities as $capability) {
+                  $selected = '';
+                  if ($is_page_access_capability) {
+                    if ($page_access_capability == $capability) {
+                      $selected = ' selected="'.AD_SELECT_SELECTED.'"';
+                    }
+                  }
+                  $capability_options .= '<option value="capability:'.$capability.'"'.$selected.'>'.$capability.'</option>'."\n";
+                }
+
+                $capability_options .= "</optgroup>\n";
+
 ?>
               <tr>
                 <td style="padding: 0 0 2px 0;">
@@ -2997,6 +3027,8 @@ function generate_settings_form (){
                     wp_dropdown_roles ($page_access);
 
 //                    echo $user_capability_options;
+
+                    echo $capability_options;
 ?>
                   </select>
                 </td>
@@ -3009,7 +3041,7 @@ function generate_settings_form (){
         </div>
 <?php
         if (function_exists ('ai_remote_custom_pages')) {
-          ai_remote_custom_pages ();
+          ai_remote_custom_pages ($capability_options);
         }
 ?>
       </div>
@@ -4029,29 +4061,33 @@ function ai_find_blocks_by_name (string $content): array {
   return $found;
 }
 
-function ai_get_post_ids_with_blocks (): array {
+function ai_update_post_ids_with_blocks () {
   global $wpdb;
 
+  $post_types   = ['post', 'page'];
+  $placeholders = implode (',', array_fill (0, count ($post_types), '%s'));
+  $like         = '%' . $wpdb->esc_like ('wp:' . AI_GUTENBERG_BLOCK) . '%';
+
+  $args = array_merge ([ $like], $post_types);
+
+  $post_ids = $wpdb->get_col (
+    $wpdb->prepare(
+      "SELECT ID FROM {$wpdb->posts}
+       WHERE post_status IN ('publish', 'pending', 'draft', 'auto-draft', 'future', 'private')
+       AND post_content LIKE %s
+       AND post_type IN ($placeholders)",
+      ...$args
+    )
+  );
+
+  set_transient (AI_TRANSIENT_POST_IDS, $post_ids, AI_TRANSIENT_POST_IDS_EXPIRATION);
+}
+
+function ai_get_post_ids_with_blocks (): array {
   $post_ids = get_transient (AI_TRANSIENT_POST_IDS);
 
   if ($post_ids === false) {
-    $post_types   = ['post', 'page'];
-    $placeholders = implode (',', array_fill (0, count ($post_types), '%s'));
-    $like         = '%' . $wpdb->esc_like ('wp:' . AI_GUTENBERG_BLOCK) . '%';
-
-    $args = array_merge ([ $like], $post_types);
-
-    $post_ids = $wpdb->get_col (
-      $wpdb->prepare(
-        "SELECT ID FROM {$wpdb->posts}
-         WHERE post_status IN ('publish', 'pending', 'draft', 'auto-draft', 'future', 'private')
-         AND post_content LIKE %s
-         AND post_type IN ($placeholders)",
-        ...$args
-      )
-    );
-
-    set_transient (AI_TRANSIENT_POST_IDS, $post_ids, AI_TRANSIENT_POST_IDS_EXPIRATION);
+    return [];
   }
 
   return $post_ids;
@@ -4101,25 +4137,27 @@ function get_sidebar_widgets () {
       continue;
     }
 
-    $sidebar_name = $wp_registered_sidebars [$sidebar_id]['name'];
+    if (isset ($wp_registered_sidebars [$sidebar_id]['name'])) {
+      $sidebar_name = $wp_registered_sidebars [$sidebar_id]['name'];
 
-    foreach ($widgets as $widget_id) {
-      // Block widgets have IDs like "block-1", "block-2", etc.
-      if (substr ($widget_id, 0, 6 ) !== 'block-') {
-        continue;
-      }
+      foreach ($widgets as $widget_id) {
+        // Block widgets have IDs like "block-1", "block-2", etc.
+        if (substr ($widget_id, 0, 6 ) !== 'block-') {
+          continue;
+        }
 
-      $number = (int) str_replace ('block-', '', $widget_id);
-      $content = $widget_data [$number]['content'] ?? '';
+        $number = (int) str_replace ('block-', '', $widget_id);
+        $content = $widget_data [$number]['content'] ?? '';
 
-      if ($content) {
-        $matches = ai_find_blocks_by_name ($content);
+        if ($content) {
+          $matches = ai_find_blocks_by_name ($content);
 
-        if ($matches) {
-          foreach ($matches as $match) {
-            $widget_block = $match ['attrs']['blockNumber'] ?? 1;
-            if ($widget_block >= 1 && $widget_block <= 96 && !in_array ($sidebar_name, $sidebars_with_widgets [$widget_block])) {
-              $sidebars_with_widgets [$widget_block] []= $sidebar_name;
+          if ($matches) {
+            foreach ($matches as $match) {
+              $widget_block = $match ['attrs']['blockNumber'] ?? 1;
+              if ($widget_block >= 1 && $widget_block <= 96 && !in_array ($sidebar_name, $sidebars_with_widgets [$widget_block])) {
+                $sidebars_with_widgets [$widget_block] []= $sidebar_name;
+              }
             }
           }
         }
@@ -6222,7 +6260,7 @@ function sidebar_addense_alternative () { ?>
 
 <?php
 
-  switch (rand (1, 12)) {
+  switch (rand (1, 8)) {
     case 1:
     case 2:
     case 3:
@@ -6257,22 +6295,22 @@ function sidebar_addense_alternative () { ?>
 <?php
       break;
 
-    case 9:
-    case 10:
-    case 11:
-    case 12:
+//    case 9:
+//    case 10:
+//    case 11:
+//    case 12:
 ?>
-      <div class="ai-form header ai-rounded">
-        <div style="float: left;">
-          <h2 style="display: inline-block; margin: 5px 0;">WinUp</h2>
-        </div>
-        <div style="clear: both;"></div>
-      </div>
-      <div class="ai-form ai-rounded" style="height: 90px; padding: 8px 4px 8px 12px;">
-        <a href="https://winup.network/?utm_source=ad-inserter&utm_medium=display&utm_campaign=prospeccao-maio2026&utm_content=banner-728x90" class="clear-link" title="WinUp" target="_blank"><img id="wu-72" src="<?php echo AD_INSERTER_PLUGIN_IMAGES_URL; ?>wu-72.png" /></a>
-      </div>
+<!--      <div class="ai-form header ai-rounded">-->
+<!--        <div style="float: left;">-->
+<!--          <h2 style="display: inline-block; margin: 5px 0;">WinUp</h2>-->
+<!--        </div>-->
+<!--        <div style="clear: both;"></div>-->
+<!--      </div>-->
+<!--      <div class="ai-form ai-rounded" style="height: 90px; padding: 8px 4px 8px 12px;">-->
+<!--        <a href="https://winup.network/?utm_source=ad-inserter&utm_medium=display&utm_campaign=prospeccao-maio2026&utm_content=banner-728x90" class="clear-link" title="WinUp" target="_blank"><img id="wu-72" src="<?php echo AD_INSERTER_PLUGIN_IMAGES_URL; ?>wu-72.png" /></a>-->
+<!--      </div>-->
 <?php
-      break;
+//      break;
 
   }
 ?>
@@ -6444,14 +6482,14 @@ function sidebar_pro () {
           <div class="ai-image-left">
 <?php switch ($version) {
         case 0: ?>
-            <a href="https://adinserter.pro/documentation/ad-impression-and-click-tracking" class="clear-link" title="<?php _e ('A/B testing - Track ad impressions and clicks', 'ad-inserter'); ?>" target="_blank"><img id="ai-pro-2" src="<?php echo AD_INSERTER_PLUGIN_IMAGES_URL; ?>ai-charts-250.png" /></a>
-<!--            <a href='https://adinserter.pro/documentation/code-preview' class="clear-link" title="<?php _e ('Code preview with visual CSS editor', 'ad-inserter'); ?>" target="_blank"><img id="ai-preview" src="<?php echo AD_INSERTER_PLUGIN_IMAGES_URL; ?>ai-preview-250.png" /></a>-->
+<!--            <a href="https://adinserter.pro/documentation/ad-impression-and-click-tracking" class="clear-link" title="<?php _e ('A/B testing - Track ad impressions and clicks', 'ad-inserter'); ?>" target="_blank"><img id="ai-pro-2" src="<?php echo AD_INSERTER_PLUGIN_IMAGES_URL; ?>ai-charts-250.png" /></a>-->
+            <a href='https://adinserter.pro/documentation/code-preview' class="clear-link" title="<?php _e ('Code preview with visual CSS editor', 'ad-inserter'); ?>" target="_blank"><img id="ai-preview" src="<?php echo AD_INSERTER_PLUGIN_IMAGES_URL; ?>ai-preview-250.png" /></a>
 <!--            <a href="https://www.ezoic.com/?utm_source=ad-inserter&utm_medium=ads&utm_campaign=ad-inserter-ads&utm_term=adinserter&utm_content=ezoic&loc=2" class="clear-link" title="<?php _e ('Looking for AdSense alternative?', 'ad-inserter'); ?>" target="_blank"><img id="ai-ez-5" src="<?php echo AD_INSERTER_PLUGIN_IMAGES_URL; ?>ez-5.png" /></a>-->
 <?php   break; case 1: ?>
 <!--            <a href="https://www.ezoic.com/?utm_source=ad-inserter&utm_medium=ads&utm_campaign=ad-inserter-ads&utm_term=adinserter&utm_content=ezoic&loc=2" class="clear-link" title="<?php _e ('Looking for AdSense alternative?', 'ad-inserter'); ?>" target="_blank"><img id="ai-ez-5" src="<?php echo AD_INSERTER_PLUGIN_IMAGES_URL; ?>ez-5.png" /></a>-->
 <!--            <a href="https://publisher.joinads.me/conversao-en?utm_source=AdInserter&utm_medium=banner&utm_campaign=lead&utm_content=carrossel" class="clear-link" title="<?php _e ('Maximize the revenue', 'ad-inserter'); ?>" target="_blank"><img id="ja25-1-1" src="<?php echo AD_INSERTER_PLUGIN_IMAGES_URL; ?>ja25-1.png" /></a>-->
-<!--            <a href='https://adinserter.pro/documentation/code-preview' class="clear-link" title="<?php _e ('Code preview with visual CSS editor', 'ad-inserter'); ?>" target="_blank"><img id="ai-preview" src="<?php echo AD_INSERTER_PLUGIN_IMAGES_URL; ?>ai-preview-250.png" /></a>-->
-            <a href='https://winup.network/?utm_source=ad-inserter&utm_medium=display&utm_campaign=prospeccao-maio2026&utm_content=banner-250x250' class="clear-link" target="_blank"><img id="wu-25" src="<?php echo AD_INSERTER_PLUGIN_IMAGES_URL; ?>wu-25.png" /></a>
+            <a href='https://adinserter.pro/documentation/code-preview' class="clear-link" title="<?php _e ('Code preview with visual CSS editor', 'ad-inserter'); ?>" target="_blank"><img id="ai-preview" src="<?php echo AD_INSERTER_PLUGIN_IMAGES_URL; ?>ai-preview-250.png" /></a>
+<!--            <a href='https://winup.network/?utm_source=ad-inserter&utm_medium=display&utm_campaign=prospeccao-maio2026&utm_content=banner-250x250' class="clear-link" target="_blank"><img id="wu-25" src="<?php echo AD_INSERTER_PLUGIN_IMAGES_URL; ?>wu-25.png" /></a>-->
 <?php   break; case 2: ?>
 <!--            <a href='https://adinserter.pro/documentation/ad-blocking-detection' class="clear-link" title="<?php _e ('Ad blocking detection and content protection', 'ad-inserter'); ?>" target="_blank"><img id="ai-adb" src="<?php echo AD_INSERTER_PLUGIN_IMAGES_URL; ?>ai-adb.png" /></a>-->
             <a href="https://api.whatsapp.com/send?phone=34611051180&text=Hi%20there!%20I%27d%20like%20to%20access%20Google%20Ad%20Manager%20%f0%9f%98%8a" class="clear-link" title="<?php _e ('Join to AdManager', 'ad-inserter'); ?>" target="_blank"><img id="ai-ha-1" src="<?php echo AD_INSERTER_PLUGIN_IMAGES_URL; ?>ha-1.png" /></a>
@@ -6487,9 +6525,9 @@ function sidebar_pro () {
 <?php   break;
         case 3:
         ?>
-<!--            <a href="https://adinserter.pro/documentation/black-and-white-lists#geo-targeting" class="clear-link" title="Geotargeting - black/white-list countries" target="_blank"><img id="ai-pro-3" src="<?php echo AD_INSERTER_PLUGIN_IMAGES_URL; ?>ai-countries-250.png" /></a>-->
+            <a href="https://adinserter.pro/documentation/black-and-white-lists#geo-targeting" class="clear-link" title="Geotargeting - black/white-list countries" target="_blank"><img id="ai-pro-3" src="<?php echo AD_INSERTER_PLUGIN_IMAGES_URL; ?>ai-countries-250.png" /></a>
 <!--            <a href="https://www.ezoic.com/?utm_source=ad-inserter&utm_medium=ads&utm_campaign=ad-inserter-ads&utm_term=adinserter&utm_content=ezoic&loc=2" class="clear-link" title="<?php _e ('Looking for AdSense alternative?', 'ad-inserter'); ?>" target="_blank"><img id="ai-ez-5" src="<?php echo AD_INSERTER_PLUGIN_IMAGES_URL; ?>ez-5.png" /></a>-->
-            <a href='https://winup.network/?utm_source=ad-inserter&utm_medium=display&utm_campaign=prospeccao-maio2026&utm_content=banner-250x250' class="clear-link" target="_blank"><img id="wu-25" src="<?php echo AD_INSERTER_PLUGIN_IMAGES_URL; ?>wu-25.png" /></a>
+<!--            <a href='https://winup.network/?utm_source=ad-inserter&utm_medium=display&utm_campaign=prospeccao-maio2026&utm_content=banner-250x250' class="clear-link" target="_blank"><img id="wu-25" src="<?php echo AD_INSERTER_PLUGIN_IMAGES_URL; ?>wu-25.png" /></a>-->
 <?php   break;
       } ?>
           </div>
@@ -6506,9 +6544,9 @@ function sidebar_pro () {
 <!--            <a href='https://magicbid.ai/content-monetization-expert?utm_source=Plugin&utm_medium=referal&utm_campaign=Adinserter' class="clear-link" target="_blank"><img id="mb-25-1-2" src="<?php echo AD_INSERTER_PLUGIN_IMAGES_URL; ?>mb-25-1.gif" /></a>-->
 <!--            <a href='https://v3.adxpremium.services/dashboard/register-publisher' class="clear-link" target="_blank"><img id="lm-25" src="<?php echo AD_INSERTER_PLUGIN_IMAGES_URL; ?>lm-250.jpg" /></a>-->
 <?php   break; case 2: ?>
-<!--            <a href='https://adinserter.pro/documentation/plugin-settings#recaptcha' class="clear-link" title="<?php _e ('Stop invalid traffic with reCAPTCHA v3 score check', 'ad-inserter'); ?>" target="_blank"><img id="ai-recaptcha" src="<?php echo AD_INSERTER_PLUGIN_IMAGES_URL; ?>ai-recaptcha-250.png" /></a>-->
+            <a href='https://adinserter.pro/documentation/plugin-settings#recaptcha' class="clear-link" title="<?php _e ('Stop invalid traffic with reCAPTCHA v3 score check', 'ad-inserter'); ?>" target="_blank"><img id="ai-recaptcha" src="<?php echo AD_INSERTER_PLUGIN_IMAGES_URL; ?>ai-recaptcha-250.png" /></a>
 <!--            <a href="https://www.ezoic.com/?utm_source=ad-inserter&utm_medium=ads&utm_campaign=ad-inserter-ads&utm_term=adinserter&utm_content=ezoic&loc=2" class="clear-link" title="<?php _e ('Looking for AdSense alternative?', 'ad-inserter'); ?>" target="_blank"><img id="ai-ez-7" src="<?php echo AD_INSERTER_PLUGIN_IMAGES_URL; ?>ez-7.jpg" /></a>-->
-            <a href='https://winup.network/?utm_source=ad-inserter&utm_medium=display&utm_campaign=prospeccao-maio2026&utm_content=banner-250x250' class="clear-link" target="_blank"><img id="wu-25" src="<?php echo AD_INSERTER_PLUGIN_IMAGES_URL; ?>wu-25.png" /></a>
+<!--            <a href='https://winup.network/?utm_source=ad-inserter&utm_medium=display&utm_campaign=prospeccao-maio2026&utm_content=banner-250x250' class="clear-link" target="_blank"><img id="wu-25" src="<?php echo AD_INSERTER_PLUGIN_IMAGES_URL; ?>wu-25.png" /></a>-->
 <?php   break; case 3: ?>
             <a href='https://adinserter.pro/documentation/plugin-settings#recaptcha' class="clear-link" title="<?php _e ('Stop invalid traffic with reCAPTCHA v3 score check', 'ad-inserter'); ?>" target="_blank"><img id="ai-recaptcha" src="<?php echo AD_INSERTER_PLUGIN_IMAGES_URL; ?>ai-recaptcha-250.png" /></a>
 <!--            <a href='https://www.media.net/program?ha=e9Pw4uwo2Uw/5xjjsB3lnYZZWUI+hzRSONzDaYA9EwX+3jg/PJYwFshOFEjop5NH2wRNDfr357ZTY1zlhCk7zw%3D%3D&loc=2' class="clear-link" title="<?php _e ('Looking for AdSense alternative?', 'ad-inserter'); ?>" target="_blank"><img id="ai-media-9" src="<?php echo AD_INSERTER_PLUGIN_IMAGES_URL; ?>contextual-9.gif" /></a>-->
@@ -6523,9 +6561,9 @@ function sidebar_pro () {
         ?>
 <!--            <a href="https://www.ezoic.com/?utm_source=ad-inserter&utm_medium=ads&utm_campaign=ad-inserter-ads&utm_term=adinserter&utm_content=ezoic&loc=2" class="clear-link" title="<?php _e ('Looking for AdSense alternative?', 'ad-inserter'); ?>" target="_blank"><img id="ai-ez-5" src="<?php echo AD_INSERTER_PLUGIN_IMAGES_URL; ?>ez-5.png" /></a>-->
 <!--            <a href="https://publisher.joinads.me/conversao-en?utm_source=AdInserter&utm_medium=banner&utm_campaign=lead&utm_content=carrossel" class="clear-link" title="<?php _e ('Maximize the revenue', 'ad-inserter'); ?>" target="_blank"><img id="ja25-2-1" src="<?php echo AD_INSERTER_PLUGIN_IMAGES_URL; ?>ja25-2.png" /></a>-->
-<!--            <a href="https://adinserter.pro/documentation/ad-impression-and-click-tracking" class="clear-link" title="<?php _e ('A/B testing - Track ad impressions and clicks', 'ad-inserter'); ?>" target="_blank"><img id="ai-pro-2" src="<?php echo AD_INSERTER_PLUGIN_IMAGES_URL; ?>ai-charts-250.png" /></a>-->
+            <a href="https://adinserter.pro/documentation/ad-impression-and-click-tracking" class="clear-link" title="<?php _e ('A/B testing - Track ad impressions and clicks', 'ad-inserter'); ?>" target="_blank"><img id="ai-pro-2" src="<?php echo AD_INSERTER_PLUGIN_IMAGES_URL; ?>ai-charts-250.png" /></a>
 <!--            <a href='https://adinserter.pro/documentation/code-preview' class="clear-link" title="<?php _e ('Code preview with visual CSS editor', 'ad-inserter'); ?>" target="_blank"><img id="ai-preview" src="<?php echo AD_INSERTER_PLUGIN_IMAGES_URL; ?>ai-preview-250.png" /></a>-->
-            <a href='https://winup.network/?utm_source=ad-inserter&utm_medium=display&utm_campaign=prospeccao-maio2026&utm_content=banner-250x250' class="clear-link" target="_blank"><img id="wu-25" src="<?php echo AD_INSERTER_PLUGIN_IMAGES_URL; ?>wu-25.png" /></a>
+<!--            <a href='https://winup.network/?utm_source=ad-inserter&utm_medium=display&utm_campaign=prospeccao-maio2026&utm_content=banner-250x250' class="clear-link" target="_blank"><img id="wu-25" src="<?php echo AD_INSERTER_PLUGIN_IMAGES_URL; ?>wu-25.png" /></a>-->
 <?php   break;
         case 1:
 ?>
@@ -6580,7 +6618,7 @@ function sidebar_pro () {
 
         <h3 style="text-align: justify;"><?php _e('Looking for Pro Ad Management plugin?', 'ad-inserter'); ?></h3>
         <h4 style="text-align: justify;"><?php _e ('To Optimally Monetize your WordPress website?', 'ad-inserter'); ?></h4>
-        <h4 style="text-align: justify;"><?php /* Translators: %s: price of Ad Inserter Pro*/ echo sprintf (__('Different license types starting from %s', 'ad-inserter'), '<a href="https://adinserter.pro/documentation/features" class="simple-link" target="_blank">20 EUR</a>'); ?></h4>
+        <h4 style="text-align: justify;"><?php /* Translators: %s: price of Ad Inserter Pro*/ echo sprintf (__('Different license types starting from %s', 'ad-inserter'), '<a href="https://adinserter.pro/documentation/features" class="simple-link" target="_blank">30 EUR</a>'); ?></h4>
 
         <ul class="ai-help">
           <li><?php /* translators: %s HTML tags */ printf (__('%s AdSense Integration %s', 'ad-inserter'), '<a href="https://adinserter.pro/documentation/adsense-ads#integration" class="simple-link" target="_blank">', '</a>'); ?></li>
