@@ -1,5 +1,5 @@
 #ai-data {
-  font-family: "2.8.17"; /* Used for version number of the file */
+  font-family: "2.8.18"; /* Used for version number of the file */
 }
 
 #blocked-warning {
@@ -1598,6 +1598,10 @@ pre.ai-wrap {
 
 .ai-banner-top table {
   float: right;
+}
+
+button.ai-notice-dismiss a {
+  color: #fff;
 }
 
 #ai-sidebar .notice-dismiss {

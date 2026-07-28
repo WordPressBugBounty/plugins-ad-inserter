@@ -38,7 +38,7 @@ if (!defined( 'AD_INSERTER_NAME'))
   define ('AD_INSERTER_NAME', 'Ad Inserter');
 
 if (!defined( 'AD_INSERTER_VERSION'))
-  define ('AD_INSERTER_VERSION', '2.8.17');
+  define ('AD_INSERTER_VERSION', '2.8.18');
 
 if (!defined ('AD_INSERTER_PLUGIN_BASENAME'))
   define ('AD_INSERTER_PLUGIN_BASENAME', plugin_basename (__FILE__));
@@ -60,10 +60,6 @@ define ('AD_TWO',         '2');
 define ('AD_FLAGS_BLOCKS_STICKY',        0x01);
 define ('AD_FLAGS_SETTINGS_HIDDEN',      0x02);
 define ('AI_MAX_WP_QUERY_ITEMS',         500);
-
-// Old options
-define ('AD_OPTIONS',     'AdInserterOptions');   // general plugin options
-define ('AD_ADx_OPTIONS', 'AdInserter#Options');
 
 // Options
 define ('WP_FORM_FIELD_POSTFIX',                 '_block_');

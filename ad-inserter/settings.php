@@ -198,6 +198,9 @@ function generate_settings_form (){
     echo '<div class="notice notice-info is-dismissible" style="margin: 5px 15px 2px 0px;"><p>', __('Information', 'ad-inserter'), ': ', __('Legacy JavaScript code used', 'ad-inserter'), ', ', /* translators: disable feature */ __('disable', 'ad-inserter'), ' <a class="simple-link" href="https://adinserter.pro/documentation/plugin-settings#wait-for-jquery" target="_blank">', __ ('Wait for jQuery', 'ad-inserter'), '</a></p></div>';
   }
 
+  if (file_exists (AD_INSERTER_PLUGIN_DIR."includes/js/ai-load.js") && !defined ('AI_WEBSITES')) {
+    echo '<div class="notice notice-error is-dismissible" style="margin: 5px 15px 2px 0px;"><p>', __('Error: plugin not loaded properly. Some plugin files are missing or not executed. Check documentation for possible ', 'ad-inserter'), ' <a class="simple-link" href="https://adinserter.pro/documentation/troubleshooting#plugin-files-missing" target="_blank">', __ ('reasons', 'ad-inserter'), '</a>.</p></div>';
+  }
 
   if (ai_current_user_role_ok () && (!is_multisite() || is_main_site () || multisite_exceptions_enabled ())) {
     if (isset ($_POST [AI_FORM_CLEAR_EXCEPTIONS])) {
@@ -6029,15 +6032,7 @@ function ai_clear_settings () {
     $connected_manager = get_transient (AI_CONNECTED_MANAGER);
   } else $connected_manager = false;
 
-  for ($block = 1; $block <= 96; $block ++) {
-    delete_option (str_replace ("#", $block, AD_ADx_OPTIONS));
-  }
-
   $saved_management_key = isset ($ai_db_options [AI_OPTION_GLOBAL]['MANAGEMENT_KEY']) ? $ai_db_options [AI_OPTION_GLOBAL]['MANAGEMENT_KEY'] : '';
-
-  delete_option (str_replace ("#", "Header", AD_ADx_OPTIONS));
-  delete_option (str_replace ("#", "Footer", AD_ADx_OPTIONS));
-  delete_option (AD_OPTIONS);
 
   delete_option (AI_OPTION_NAME);
   delete_option (AI_OPTION_GCF_NAME);
@@ -6260,7 +6255,7 @@ function sidebar_addense_alternative () { ?>
 
 <?php
 
-  switch (rand (1, 8)) {
+  switch (rand (1, 12)) {
     case 1:
     case 2:
     case 3:
@@ -6295,22 +6290,22 @@ function sidebar_addense_alternative () { ?>
 <?php
       break;
 
-//    case 9:
-//    case 10:
-//    case 11:
-//    case 12:
+    case 9:
+    case 10:
+    case 11:
+    case 12:
 ?>
-<!--      <div class="ai-form header ai-rounded">-->
-<!--        <div style="float: left;">-->
-<!--          <h2 style="display: inline-block; margin: 5px 0;">WinUp</h2>-->
-<!--        </div>-->
-<!--        <div style="clear: both;"></div>-->
-<!--      </div>-->
-<!--      <div class="ai-form ai-rounded" style="height: 90px; padding: 8px 4px 8px 12px;">-->
-<!--        <a href="https://winup.network/?utm_source=ad-inserter&utm_medium=display&utm_campaign=prospeccao-maio2026&utm_content=banner-728x90" class="clear-link" title="WinUp" target="_blank"><img id="wu-72" src="<?php echo AD_INSERTER_PLUGIN_IMAGES_URL; ?>wu-72.png" /></a>-->
-<!--      </div>-->
+      <div class="ai-form header ai-rounded">
+        <div style="float: left;">
+          <h2 style="display: inline-block; margin: 5px 0;">PubShine</h2>
+        </div>
+        <div style="clear: both;"></div>
+      </div>
+      <div class="ai-form ai-rounded" style="height: 90px; padding: 8px 4px 8px 12px;">
+        <a href="https://wa.me/923337849063?text=Hi%21%20I%27m%20interested%20in%20your%20monetization%20services.%20Could%20you%20please%20share%20more%20details%3F%20Thanks%21" class="clear-link" title="PubShine" target="_blank"><img id="wu-72" src="<?php echo AD_INSERTER_PLUGIN_IMAGES_URL; ?>ps-72.png" /></a>
+      </div>
 <?php
-//      break;
+      break;
 
   }
 ?>
@@ -6488,8 +6483,9 @@ function sidebar_pro () {
 <?php   break; case 1: ?>
 <!--            <a href="https://www.ezoic.com/?utm_source=ad-inserter&utm_medium=ads&utm_campaign=ad-inserter-ads&utm_term=adinserter&utm_content=ezoic&loc=2" class="clear-link" title="<?php _e ('Looking for AdSense alternative?', 'ad-inserter'); ?>" target="_blank"><img id="ai-ez-5" src="<?php echo AD_INSERTER_PLUGIN_IMAGES_URL; ?>ez-5.png" /></a>-->
 <!--            <a href="https://publisher.joinads.me/conversao-en?utm_source=AdInserter&utm_medium=banner&utm_campaign=lead&utm_content=carrossel" class="clear-link" title="<?php _e ('Maximize the revenue', 'ad-inserter'); ?>" target="_blank"><img id="ja25-1-1" src="<?php echo AD_INSERTER_PLUGIN_IMAGES_URL; ?>ja25-1.png" /></a>-->
-            <a href='https://adinserter.pro/documentation/code-preview' class="clear-link" title="<?php _e ('Code preview with visual CSS editor', 'ad-inserter'); ?>" target="_blank"><img id="ai-preview" src="<?php echo AD_INSERTER_PLUGIN_IMAGES_URL; ?>ai-preview-250.png" /></a>
+<!--            <a href='https://adinserter.pro/documentation/code-preview' class="clear-link" title="<?php _e ('Code preview with visual CSS editor', 'ad-inserter'); ?>" target="_blank"><img id="ai-preview" src="<?php echo AD_INSERTER_PLUGIN_IMAGES_URL; ?>ai-preview-250.png" /></a>-->
 <!--            <a href='https://winup.network/?utm_source=ad-inserter&utm_medium=display&utm_campaign=prospeccao-maio2026&utm_content=banner-250x250' class="clear-link" target="_blank"><img id="wu-25" src="<?php echo AD_INSERTER_PLUGIN_IMAGES_URL; ?>wu-25.png" /></a>-->
+            <a href='https://wa.me/923337849063?text=Hi%21%20I%27m%20interested%20in%20your%20monetization%20services.%20Could%20you%20please%20share%20more%20details%3F%20Thanks%21' class="clear-link" target="_blank"><img id="ps-25" src="<?php echo AD_INSERTER_PLUGIN_IMAGES_URL; ?>ps-25.png" /></a>
 <?php   break; case 2: ?>
 <!--            <a href='https://adinserter.pro/documentation/ad-blocking-detection' class="clear-link" title="<?php _e ('Ad blocking detection and content protection', 'ad-inserter'); ?>" target="_blank"><img id="ai-adb" src="<?php echo AD_INSERTER_PLUGIN_IMAGES_URL; ?>ai-adb.png" /></a>-->
             <a href="https://api.whatsapp.com/send?phone=34611051180&text=Hi%20there!%20I%27d%20like%20to%20access%20Google%20Ad%20Manager%20%f0%9f%98%8a" class="clear-link" title="<?php _e ('Join to AdManager', 'ad-inserter'); ?>" target="_blank"><img id="ai-ha-1" src="<?php echo AD_INSERTER_PLUGIN_IMAGES_URL; ?>ha-1.png" /></a>
@@ -6525,9 +6521,10 @@ function sidebar_pro () {
 <?php   break;
         case 3:
         ?>
-            <a href="https://adinserter.pro/documentation/black-and-white-lists#geo-targeting" class="clear-link" title="Geotargeting - black/white-list countries" target="_blank"><img id="ai-pro-3" src="<?php echo AD_INSERTER_PLUGIN_IMAGES_URL; ?>ai-countries-250.png" /></a>
+<!--            <a href="https://adinserter.pro/documentation/black-and-white-lists#geo-targeting" class="clear-link" title="Geotargeting - black/white-list countries" target="_blank"><img id="ai-pro-3" src="<?php echo AD_INSERTER_PLUGIN_IMAGES_URL; ?>ai-countries-250.png" /></a>-->
 <!--            <a href="https://www.ezoic.com/?utm_source=ad-inserter&utm_medium=ads&utm_campaign=ad-inserter-ads&utm_term=adinserter&utm_content=ezoic&loc=2" class="clear-link" title="<?php _e ('Looking for AdSense alternative?', 'ad-inserter'); ?>" target="_blank"><img id="ai-ez-5" src="<?php echo AD_INSERTER_PLUGIN_IMAGES_URL; ?>ez-5.png" /></a>-->
 <!--            <a href='https://winup.network/?utm_source=ad-inserter&utm_medium=display&utm_campaign=prospeccao-maio2026&utm_content=banner-250x250' class="clear-link" target="_blank"><img id="wu-25" src="<?php echo AD_INSERTER_PLUGIN_IMAGES_URL; ?>wu-25.png" /></a>-->
+            <a href='https://wa.me/923337849063?text=Hi%21%20I%27m%20interested%20in%20your%20monetization%20services.%20Could%20you%20please%20share%20more%20details%3F%20Thanks%21' class="clear-link" target="_blank"><img id="ps-25" src="<?php echo AD_INSERTER_PLUGIN_IMAGES_URL; ?>ps-25.png" /></a>
 <?php   break;
       } ?>
           </div>
@@ -6544,9 +6541,10 @@ function sidebar_pro () {
 <!--            <a href='https://magicbid.ai/content-monetization-expert?utm_source=Plugin&utm_medium=referal&utm_campaign=Adinserter' class="clear-link" target="_blank"><img id="mb-25-1-2" src="<?php echo AD_INSERTER_PLUGIN_IMAGES_URL; ?>mb-25-1.gif" /></a>-->
 <!--            <a href='https://v3.adxpremium.services/dashboard/register-publisher' class="clear-link" target="_blank"><img id="lm-25" src="<?php echo AD_INSERTER_PLUGIN_IMAGES_URL; ?>lm-250.jpg" /></a>-->
 <?php   break; case 2: ?>
-            <a href='https://adinserter.pro/documentation/plugin-settings#recaptcha' class="clear-link" title="<?php _e ('Stop invalid traffic with reCAPTCHA v3 score check', 'ad-inserter'); ?>" target="_blank"><img id="ai-recaptcha" src="<?php echo AD_INSERTER_PLUGIN_IMAGES_URL; ?>ai-recaptcha-250.png" /></a>
+<!--            <a href='https://adinserter.pro/documentation/plugin-settings#recaptcha' class="clear-link" title="<?php _e ('Stop invalid traffic with reCAPTCHA v3 score check', 'ad-inserter'); ?>" target="_blank"><img id="ai-recaptcha" src="<?php echo AD_INSERTER_PLUGIN_IMAGES_URL; ?>ai-recaptcha-250.png" /></a>-->
 <!--            <a href="https://www.ezoic.com/?utm_source=ad-inserter&utm_medium=ads&utm_campaign=ad-inserter-ads&utm_term=adinserter&utm_content=ezoic&loc=2" class="clear-link" title="<?php _e ('Looking for AdSense alternative?', 'ad-inserter'); ?>" target="_blank"><img id="ai-ez-7" src="<?php echo AD_INSERTER_PLUGIN_IMAGES_URL; ?>ez-7.jpg" /></a>-->
 <!--            <a href='https://winup.network/?utm_source=ad-inserter&utm_medium=display&utm_campaign=prospeccao-maio2026&utm_content=banner-250x250' class="clear-link" target="_blank"><img id="wu-25" src="<?php echo AD_INSERTER_PLUGIN_IMAGES_URL; ?>wu-25.png" /></a>-->
+            <a href='https://wa.me/923337849063?text=Hi%21%20I%27m%20interested%20in%20your%20monetization%20services.%20Could%20you%20please%20share%20more%20details%3F%20Thanks%21' class="clear-link" target="_blank"><img id="ps-25" src="<?php echo AD_INSERTER_PLUGIN_IMAGES_URL; ?>ps-25.png" /></a>
 <?php   break; case 3: ?>
             <a href='https://adinserter.pro/documentation/plugin-settings#recaptcha' class="clear-link" title="<?php _e ('Stop invalid traffic with reCAPTCHA v3 score check', 'ad-inserter'); ?>" target="_blank"><img id="ai-recaptcha" src="<?php echo AD_INSERTER_PLUGIN_IMAGES_URL; ?>ai-recaptcha-250.png" /></a>
 <!--            <a href='https://www.media.net/program?ha=e9Pw4uwo2Uw/5xjjsB3lnYZZWUI+hzRSONzDaYA9EwX+3jg/PJYwFshOFEjop5NH2wRNDfr357ZTY1zlhCk7zw%3D%3D&loc=2' class="clear-link" title="<?php _e ('Looking for AdSense alternative?', 'ad-inserter'); ?>" target="_blank"><img id="ai-media-9" src="<?php echo AD_INSERTER_PLUGIN_IMAGES_URL; ?>contextual-9.gif" /></a>-->
@@ -6561,9 +6559,10 @@ function sidebar_pro () {
         ?>
 <!--            <a href="https://www.ezoic.com/?utm_source=ad-inserter&utm_medium=ads&utm_campaign=ad-inserter-ads&utm_term=adinserter&utm_content=ezoic&loc=2" class="clear-link" title="<?php _e ('Looking for AdSense alternative?', 'ad-inserter'); ?>" target="_blank"><img id="ai-ez-5" src="<?php echo AD_INSERTER_PLUGIN_IMAGES_URL; ?>ez-5.png" /></a>-->
 <!--            <a href="https://publisher.joinads.me/conversao-en?utm_source=AdInserter&utm_medium=banner&utm_campaign=lead&utm_content=carrossel" class="clear-link" title="<?php _e ('Maximize the revenue', 'ad-inserter'); ?>" target="_blank"><img id="ja25-2-1" src="<?php echo AD_INSERTER_PLUGIN_IMAGES_URL; ?>ja25-2.png" /></a>-->
-            <a href="https://adinserter.pro/documentation/ad-impression-and-click-tracking" class="clear-link" title="<?php _e ('A/B testing - Track ad impressions and clicks', 'ad-inserter'); ?>" target="_blank"><img id="ai-pro-2" src="<?php echo AD_INSERTER_PLUGIN_IMAGES_URL; ?>ai-charts-250.png" /></a>
+<!--            <a href="https://adinserter.pro/documentation/ad-impression-and-click-tracking" class="clear-link" title="<?php _e ('A/B testing - Track ad impressions and clicks', 'ad-inserter'); ?>" target="_blank"><img id="ai-pro-2" src="<?php echo AD_INSERTER_PLUGIN_IMAGES_URL; ?>ai-charts-250.png" /></a>-->
 <!--            <a href='https://adinserter.pro/documentation/code-preview' class="clear-link" title="<?php _e ('Code preview with visual CSS editor', 'ad-inserter'); ?>" target="_blank"><img id="ai-preview" src="<?php echo AD_INSERTER_PLUGIN_IMAGES_URL; ?>ai-preview-250.png" /></a>-->
 <!--            <a href='https://winup.network/?utm_source=ad-inserter&utm_medium=display&utm_campaign=prospeccao-maio2026&utm_content=banner-250x250' class="clear-link" target="_blank"><img id="wu-25" src="<?php echo AD_INSERTER_PLUGIN_IMAGES_URL; ?>wu-25.png" /></a>-->
+            <a href='https://wa.me/923337849063?text=Hi%21%20I%27m%20interested%20in%20your%20monetization%20services.%20Could%20you%20please%20share%20more%20details%3F%20Thanks%21' class="clear-link" target="_blank"><img id="ps-25" src="<?php echo AD_INSERTER_PLUGIN_IMAGES_URL; ?>ps-25.png" /></a>
 <?php   break;
         case 1:
 ?>

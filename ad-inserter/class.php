@@ -160,211 +160,6 @@ abstract class ai_BaseCodeBlock {
 
     if (isset ($ai_db_options [$block])) $options = $ai_db_options [$block]; else $options = array ();
 
-    // Convert old options
-    if (empty ($options) && !isset ($ai_db_options [AI_OPTION_GLOBAL]['VERSION'])) {
-
-      if     ($block == "h") $options = ai_get_old_option (str_replace ("#", "Header", AD_ADx_OPTIONS));
-      elseif ($block == "f") $options = ai_get_old_option (str_replace ("#", "Footer", AD_ADx_OPTIONS));
-      else                   $options = ai_get_old_option (str_replace ("#", $block, AD_ADx_OPTIONS));
-
-      if (is_array ($options)) {
-
-        $old_name = "ad" . $block . "_data";
-        if (isset ($options [$old_name])) {
-          $options [AI_OPTION_CODE] = $options [$old_name];
-          unset ($options [$old_name]);
-        }
-        $old_name = "ad" . $block . "_enable_manual";
-        if (isset ($options [$old_name])) {
-          $options [AI_OPTION_ENABLE_MANUAL] = $options [$old_name];
-          unset ($options [$old_name]);
-        }
-        $old_name = "ad" . $block . "_process_php";
-        if (isset ($options [$old_name])) {
-          $options [AI_OPTION_PROCESS_PHP] = $options [$old_name];
-          unset ($options [$old_name]);
-        }
-
-        $old_name = "adH_data";
-        if (isset ($options [$old_name])) {
-          $options [AI_OPTION_CODE] = $options [$old_name];
-          unset ($options [$old_name]);
-        }
-        $old_name = "adH_enable";
-        if (isset ($options [$old_name])) {
-          $options [AI_OPTION_ENABLE_MANUAL] = $options [$old_name];
-          unset ($options [$old_name]);
-        }
-        $old_name = "adH_process_php";
-        if (isset ($options [$old_name])) {
-          $options [AI_OPTION_PROCESS_PHP] = $options [$old_name];
-          unset ($options [$old_name]);
-        }
-
-        $old_name = "adF_data";
-        if (isset ($options [$old_name])) {
-          $options [AI_OPTION_CODE] = $options [$old_name];
-          unset ($options [$old_name]);
-        }
-        $old_name = "adF_enable";
-        if (isset ($options [$old_name])) {
-          $options [AI_OPTION_ENABLE_MANUAL] = $options [$old_name];
-          unset ($options [$old_name]);
-        }
-        $old_name = "adF_process_php";
-        if (isset ($options [$old_name])) {
-          $options [AI_OPTION_PROCESS_PHP] = $options [$old_name];
-          unset ($options [$old_name]);
-        }
-
-        $old_name = "ad" . $block . "_name";
-        if (isset ($options [$old_name])) {
-          $options [AI_OPTION_BLOCK_NAME] = $options [$old_name];
-          unset ($options [$old_name]);
-        }
-        $old_name = "ad" . $block . "_displayType";
-        if (isset ($options [$old_name])) {
-          $options [AI_OPTION_AUTOMATIC_INSERTION] = $options [$old_name];
-          unset ($options [$old_name]);
-        }
-        $old_name = "ad" . $block . "_paragraphNumber";
-        if (isset ($options [$old_name])) {
-          $options [AI_OPTION_PARAGRAPH_NUMBER] = $options [$old_name];
-          unset ($options [$old_name]);
-        }
-        $old_name = "ad" . $block . "_minimum_paragraphs";
-        if (isset ($options [$old_name])) {
-          $options [AI_OPTION_MIN_PARAGRAPHS] = $options [$old_name];
-          unset ($options [$old_name]);
-        }
-        $old_name = "ad" . $block . "_minimum_words";
-        if (isset ($options [$old_name])) {
-          $options [AI_OPTION_MIN_WORDS] = $options [$old_name];
-          unset ($options [$old_name]);
-        }
-        $old_name = "ad" . $block . "_excerptNumber";
-        if (isset ($options [$old_name])) {
-          $options [AI_OPTION_EXCERPT_NUMBER] = $options [$old_name];
-          unset ($options [$old_name]);
-        }
-        $old_name = "ad" . $block . "_directionType";
-        if (isset ($options [$old_name])) {
-          $options [AI_OPTION_DIRECTION_TYPE] = $options [$old_name];
-          unset ($options [$old_name]);
-        }
-        $old_name = "ad" . $block . "_floatType";
-        if (isset ($options [$old_name])) {
-          $options [AI_OPTION_ALIGNMENT_TYPE] = $options [$old_name];
-          unset ($options [$old_name]);
-        }
-        $old_name = "ad" . $block . "_general_tag";
-        if (isset ($options [$old_name])) {
-          $options [AI_OPTION_GENERAL_TAG] = $options [$old_name];
-          unset ($options [$old_name]);
-        }
-        $old_name = "ad" . $block . "_after_day";
-        if (isset ($options [$old_name])) {
-          $options [AI_OPTION_AFTER_DAYS] = $options [$old_name];
-          unset ($options [$old_name]);
-        }
-        $old_name = "ad" . $block . "_block_user";
-        if (isset ($options [$old_name])) {
-          $options [AI_OPTION_DOMAIN_LIST] = $options [$old_name];
-          unset ($options [$old_name]);
-        }
-        $old_name = "ad" . $block . "_domain_list_type";
-        if (isset ($options [$old_name])) {
-          $options [AI_OPTION_DOMAIN_LIST_TYPE] = $options [$old_name];
-          unset ($options [$old_name]);
-        }
-        $old_name = "ad" . $block . "_block_cat";
-        if (isset ($options [$old_name])) {
-          $options [AI_OPTION_CATEGORY_LIST] = $options [$old_name];
-          unset ($options [$old_name]);
-        }
-        $old_name = "ad" . $block . "_block_cat_type";
-        if (isset ($options [$old_name])) {
-          $options [AI_OPTION_CATEGORY_LIST_TYPE] = $options [$old_name];
-          unset ($options [$old_name]);
-        }
-        $old_name = "ad" . $block . "_block_tag";
-        if (isset ($options [$old_name])) {
-          $options [AI_OPTION_TAG_LIST] = $options [$old_name];
-          unset ($options [$old_name]);
-        }
-        $old_name = "ad" . $block . "_block_tag_type";
-        if (isset ($options [$old_name])) {
-          $options [AI_OPTION_TAG_LIST_TYPE] = $options [$old_name];
-          unset ($options [$old_name]);
-        }
-        $old_name = "ad" . $block . "_widget_settings_home";
-        if (isset ($options [$old_name])) {
-          $options [AI_OPTION_DISPLAY_ON_HOMEPAGE] = $options [$old_name];
-          unset ($options [$old_name]);
-        }
-        $old_name = "ad" . $block . "_widget_settings_page";
-        if (isset ($options [$old_name])) {
-          $options [AI_OPTION_DISPLAY_ON_PAGES] = $options [$old_name];
-          unset ($options [$old_name]);
-        }
-        $old_name = "ad" . $block . "_widget_settings_post";
-        if (isset ($options [$old_name])) {
-          $options [AI_OPTION_DISPLAY_ON_POSTS] = $options [$old_name];
-          unset ($options [$old_name]);
-        }
-        $old_name = "ad" . $block . "_widget_settings_category";
-        if (isset ($options [$old_name])) {
-          $options [AI_OPTION_DISPLAY_ON_CATEGORY_PAGES] = $options [$old_name];
-          unset ($options [$old_name]);
-        }
-        $old_name = "ad" . $block . "_widget_settings_search";
-        if (isset ($options [$old_name])) {
-          $options [AI_OPTION_DISPLAY_ON_SEARCH_PAGES] = $options [$old_name];
-          unset ($options [$old_name]);
-        }
-        $old_name = "ad" . $block . "_widget_settings_archive";
-        if (isset ($options [$old_name])) {
-          $options [AI_OPTION_DISPLAY_ON_ARCHIVE_PAGES] = $options [$old_name];
-          unset ($options [$old_name]);
-        }
-        $old_name = "ad" . $block . "_enabled_on_which_pages";
-        if (isset ($options [$old_name])) {
-          $options [AI_OPTION_ENABLED_ON_WHICH_PAGES] = $options [$old_name];
-          unset ($options [$old_name]);
-        }
-        $old_name = "ad" . $block . "_enabled_on_which_posts";
-        if (isset ($options [$old_name])) {
-          $options [AI_OPTION_ENABLED_ON_WHICH_POSTS] = $options [$old_name];
-          unset ($options [$old_name]);
-        }
-        $old_name = "ad" . $block . "_enable_php_call";
-        if (isset ($options [$old_name])) {
-          $options [AI_OPTION_ENABLE_PHP_CALL] = $options [$old_name];
-          unset ($options [$old_name]);
-        }
-        $old_name = "ad" . $block . "_paragraph_text";
-        if (isset ($options [$old_name])) {
-          $options [AI_OPTION_PARAGRAPH_TEXT] = $options [$old_name];
-          unset ($options [$old_name]);
-        }
-        $old_name = "ad" . $block . "_custom_css";
-        if (isset ($options [$old_name])) {
-          $options [AI_OPTION_CUSTOM_CSS] = $options [$old_name];
-          unset ($options [$old_name]);
-        }
-        $old_name = "ad" . $block . "_display_for_users";
-        if (isset ($options [$old_name])) {
-          $options [AI_OPTION_DISPLAY_FOR_USERS] = $options [$old_name];
-          unset ($options [$old_name]);
-        }
-        $old_name = "ad" . $block . "_display_for_devices";
-        if (isset ($options [$old_name])) {
-          $options [AI_OPTION_DISPLAY_FOR_DEVICES] = $options [$old_name];
-          unset ($options [$old_name]);
-        }
-      }
-    }
-
     if (!empty ($options)) $this->wp_options = array_merge ($this->wp_options, $options);
     unset ($this->wp_options ['']);
   }
@@ -2776,7 +2571,8 @@ abstract class ai_CodeBlock extends ai_BaseCodeBlock {
     }
 
     return (
-      '<!-- mfunc '.W3TC_DYNAMIC_SECURITY.' ' . $code . ' if (!isset ($ai_enabled) || $ai_enabled) echo $ai_code; else {echo ai_extract_debug_bar ($ai_code);}' . ' --><!-- /mfunc '. W3TC_DYNAMIC_SECURITY.' -->'
+//      '<!-- mfunc '.W3TC_DYNAMIC_SECURITY.' ' . $code . ' if (!isset ($ai_enabled) || $ai_enabled) echo $ai_code; else {echo ai_extract_debug_bar ($ai_code);}' . ' --><!-- /mfunc '. W3TC_DYNAMIC_SECURITY.' -->'
+      '<!-- mfunc '.W3TC_DYNAMIC_SECURITY.' call:ai_w3tc_code {"id":'. ai_store_w3tc_code ($code . ' if (!isset ($ai_enabled) || $ai_enabled) echo $ai_code; else {echo ai_extract_debug_bar ($ai_code);}') .'} --><!-- /mfunc '. W3TC_DYNAMIC_SECURITY.' -->'
     );
   }
 
@@ -2794,13 +2590,14 @@ abstract class ai_CodeBlock extends ai_BaseCodeBlock {
   }
 
   public function regenerate_w3tc_code ($code, $update_w3tc = true) {
-    global $ai_wp_data;
+    global $ai_wp_data, $ai_w3tc_code;
 
     if ($ai_wp_data [AI_W3TC_DEBUGGING]) {
       $this->w3tc_debug []= '  REGENERATE W3TC';
     }
 
-    preg_match_all ('#<!-- mfunc '.W3TC_DYNAMIC_SECURITY.' (.*?) --><!-- /mfunc '.W3TC_DYNAMIC_SECURITY.' -->#', $code, $php_codes);
+//    preg_match_all ('#<!-- mfunc '.W3TC_DYNAMIC_SECURITY.' (.*?) --><!-- /mfunc '.W3TC_DYNAMIC_SECURITY.' -->#', $code, $php_codes);
+    preg_match_all ('#<!-- mfunc '.W3TC_DYNAMIC_SECURITY.' call:ai_w3tc_code {"id":(\d*?)} --><!-- /mfunc '.W3TC_DYNAMIC_SECURITY.' -->#', $code, $php_codes);
     $html_codes = explode ('[?#?]', preg_replace ('#<!-- mfunc '.W3TC_DYNAMIC_SECURITY.' (.*?) --><!-- /mfunc '.W3TC_DYNAMIC_SECURITY.' -->#', '[?#?]', $code));
 
     $w3tc_code = 'ob_start (); $ai_enabled = true;';
@@ -2810,7 +2607,8 @@ abstract class ai_CodeBlock extends ai_BaseCodeBlock {
         $w3tc_code .= 'echo base64_decode (\'' . base64_encode ($html_code) . '\');';
       }
       if ($index < count ($html_codes) - 1) {
-        $w3tc_code .= $php_codes [1][$index];
+//        $w3tc_code .= $php_codes [1][$index];
+        $w3tc_code .= $ai_w3tc_code [$php_codes [1][$index]];
       }
     }
 
@@ -2824,7 +2622,7 @@ abstract class ai_CodeBlock extends ai_BaseCodeBlock {
   }
 
   public function base64_encode_w3tc ($code, $w3tc = true) {
-    global $ai_wp_data;
+    global $ai_wp_data, $ai_w3tc_code;
 
     if ($w3tc && $this->w3tc_code != '') {
       if ($ai_wp_data [AI_W3TC_DEBUGGING]) {
@@ -2832,7 +2630,8 @@ abstract class ai_CodeBlock extends ai_BaseCodeBlock {
       }
 
       $base64_code  = '<!-- mfunc '.W3TC_DYNAMIC_SECURITY.' ';
-      $base64_code .= $this->w3tc_code . ' if (!isset ($ai_enabled) || $ai_enabled) echo base64_encode ($ai_code);';
+//      $base64_code .= $this->w3tc_code . ' if (!isset ($ai_enabled) || $ai_enabled) echo base64_encode ($ai_code);';
+      $base64_code .= 'call:ai_w3tc_code {"id":'. ai_store_w3tc_code ($this->w3tc_code . ' if (!isset ($ai_enabled) || $ai_enabled) echo base64_encode ($ai_code);') . '}';
       $base64_code .= ' --><!-- /mfunc '.W3TC_DYNAMIC_SECURITY.' -->';
 
       return ($base64_code);
@@ -2843,25 +2642,30 @@ abstract class ai_CodeBlock extends ai_BaseCodeBlock {
         $this->w3tc_debug []= '  BASE64 ENCODE FROM HTML';
       }
 
-      preg_match_all ('#<!-- mfunc '.W3TC_DYNAMIC_SECURITY.' (.*?) --><!-- /mfunc '.W3TC_DYNAMIC_SECURITY.' -->#', $code, $php_codes);
+//      preg_match_all ('#<!-- mfunc '.W3TC_DYNAMIC_SECURITY.' (.*?) --><!-- /mfunc '.W3TC_DYNAMIC_SECURITY.' -->#', $code, $php_codes);
+      preg_match_all ('#<!-- mfunc '.W3TC_DYNAMIC_SECURITY.' call:ai_w3tc_code {"id":(\d*?)} --><!-- /mfunc '.W3TC_DYNAMIC_SECURITY.' -->#', $code, $php_codes);
       $html_codes = explode ('[?#?]', preg_replace ('#<!-- mfunc '.W3TC_DYNAMIC_SECURITY.' (.*?) --><!-- /mfunc '.W3TC_DYNAMIC_SECURITY.' -->#', '[?#?]', $code));
 
-      $base64_code  = '<!-- mfunc '.W3TC_DYNAMIC_SECURITY.' ';
-      $base64_code .= 'ob_start ();';
+//      $base64_code  = '<!-- mfunc '.W3TC_DYNAMIC_SECURITY.' ';
+      $base64_code = 'ob_start ();';
 
       foreach ($html_codes as $index => $html_code) {
         if ($html_code != '') {
           $base64_code .= 'echo base64_decode (\'' . base64_encode ($html_code) . '\');';
         }
         if ($index < count ($html_codes) - 1) {
-          $base64_code .= $php_codes [1][$index];
+//          $base64_code .= $php_codes [1][$index];
+          $base64_code .= $ai_w3tc_code [$php_codes [1][$index]];
         }
       }
 
       $base64_code .= 'echo base64_encode (ob_get_clean());';
-      $base64_code .= ' --><!-- /mfunc '.W3TC_DYNAMIC_SECURITY.' -->';
 
-      return ($base64_code);
+      $w3tc_base64_code  = '<!-- mfunc '.W3TC_DYNAMIC_SECURITY.' ';
+      $w3tc_base64_code .= 'call:ai_w3tc_code {"id":'. ai_store_w3tc_code ($base64_code);
+      $w3tc_base64_code .= ' --><!-- /mfunc '.W3TC_DYNAMIC_SECURITY.' -->';
+
+      return ($w3tc_base64_code);
     }
 
     if ($ai_wp_data [AI_W3TC_DEBUGGING]) {
@@ -3377,7 +3181,6 @@ abstract class ai_CodeBlock extends ai_BaseCodeBlock {
       switch (get_dynamic_blocks ()) {
         case AI_DYNAMIC_BLOCKS_CLIENT_SIDE_SHOW:
         case AI_DYNAMIC_BLOCKS_CLIENT_SIDE_INSERT:
-//        case AI_DYNAMIC_BLOCKS_SERVER_SIDE_W3TC: // ?
           $check_client_side_limits =
             $this->get_max_impressions () || ($this->get_limit_impressions_per_time_period () && $this->get_limit_impressions_time_period ()) ||
             $this->get_max_clicks ()      || ($this->get_limit_clicks_per_time_period ()      && $this->get_limit_clicks_time_period ());
@@ -3688,9 +3491,10 @@ abstract class ai_CodeBlock extends ai_BaseCodeBlock {
                 case 'server-side':
                   $rotation_dynamic_blocks = AI_DYNAMIC_BLOCKS_SERVER_SIDE;
                   break;
-                case 'server-side-w3tc':
-                  $rotation_dynamic_blocks = AI_DYNAMIC_BLOCKS_SERVER_SIDE_W3TC;
-                  break;
+                  // Rotation only can't be AI_DYNAMIC_BLOCKS_SERVER_SIDE_W3TC
+//                case 'server-side-w3tc':
+//                  $rotation_dynamic_blocks = AI_DYNAMIC_BLOCKS_SERVER_SIDE_W3TC;
+//                  break;
                 case 'client-side-show':
                   $rotation_dynamic_blocks = AI_DYNAMIC_BLOCKS_CLIENT_SIDE_SHOW;
                   break;
@@ -4651,13 +4455,13 @@ abstract class ai_CodeBlock extends ai_BaseCodeBlock {
                 break;
               case AI_DYNAMIC_BLOCKS_SERVER_SIDE_W3TC:
                 if ($ai_wp_data [AI_W3TC_DEBUGGING]) {
-                  $this->w3tc_debug []= 'PROCESS LISTS';
+                  $this->w3tc_debug []= 'PROCESS CONDITIONS';
                 }
 
                 $this->generate_w3tc_code_from_html ($processed_code);
 
                 if ($ai_wp_data [AI_W3TC_DEBUGGING]) {
-                  $this->w3tc_code .= ' ai_w3tc_log_run (\'PROCESS LISTS\' . ($ai_enabled ? \'\' : \', NOT ENABLED\'));';
+                  $this->w3tc_code .= ' ai_w3tc_log_run (\'PROCESS CONDITIONS\' . ($ai_enabled ? \'\' : \', NOT ENABLED\'));';
                 }
 
                 if ($referers != '') {
@@ -5305,7 +5109,7 @@ abstract class ai_CodeBlock extends ai_BaseCodeBlock {
       $this->additional_code_before = '';
       $this->additional_code_after = '';
 
-      $this->w3tc_code  = ' ai_w3tc_block_start ('.$this->number.');' . $this->w3tc_code . ' $ai_code = ai_w3tc_block_end ('.$this->number.', $ai_code, $ai_enabled, (isset ($ai_fallback) ? $ai_fallback : \'\'), (isset ($ai_index) ? $ai_index : \'\'));';
+      $this->w3tc_code  = ' ai_w3tc_block_start ('.$this->number.');' . $this->w3tc_code . ' $ai_code = ai_w3tc_block_end ('.$this->number.', $ai_code, $ai_enabled, (isset ($ai_fallback) ? $ai_fallback : \'-\'), (isset ($ai_index) ? $ai_index : \'-\'));';
 
       $code = $this->generate_html_from_w3tc_code ();
     }
@@ -5629,9 +5433,6 @@ abstract class ai_CodeBlock extends ai_BaseCodeBlock {
 
       $check_options ++;
       if ($this->w3tc_code != '') {
-
-
-
         $w3tc_options = true;
         $w3tc_code = $this->w3tc_code;
       } else {
@@ -5861,8 +5662,9 @@ abstract class ai_CodeBlock extends ai_BaseCodeBlock {
       $this->w3tc_code .= ' $ai_code = str_replace ("[#AI_CODE#]", base64_encode ($ai_code), base64_decode ("'. base64_encode (ai_strip_js_markers ($serverside_insertion_code)) . '"));';
 
       $serverside_insertion_code = '<!-- mfunc '.W3TC_DYNAMIC_SECURITY.' ';
-      $serverside_insertion_code .= $this->w3tc_code.' if ($ai_enabled) echo $ai_code;';
-      $serverside_insertion_code .= ' --><!-- /mfunc '.W3TC_DYNAMIC_SECURITY.' -->';
+//      $serverside_insertion_code .= $this->w3tc_code.' if ($ai_enabled) echo $ai_code;';
+      $serverside_insertion_code .= 'call:ai_w3tc_code {"id":'. ai_store_w3tc_code ($this->w3tc_code.' if ($ai_enabled) echo $ai_code;');
+      $serverside_insertion_code .= ' --><!-- / mfunc '.W3TC_DYNAMIC_SECURITY.' -->';
 
     } else {
         $serverside_insertion_code = str_replace ('[#AI_CODE#]', $block_code, $serverside_insertion_code);
@@ -5883,6 +5685,10 @@ abstract class ai_CodeBlock extends ai_BaseCodeBlock {
 
   public function get_code_for_serverside_insertion ($include_viewport_classes = true, $hidden_widgets = false, $code_only = false) {
     global $ai_wp_data, $ai_total_hook_php_time, $filter_hooks;
+
+    if (get_dynamic_blocks () == AI_DYNAMIC_BLOCKS_SERVER_SIDE_W3TC) {
+      return '<!-- mfunc '.W3TC_DYNAMIC_SECURITY.' call:ai_w3tc_code_block {"id":'. $this->number . '} --><!-- /mfunc '. W3TC_DYNAMIC_SECURITY.' -->';
+    }
 
     if (!isset ($ai_wp_data [AI_NESTING_LEVEL])) $ai_wp_data [AI_NESTING_LEVEL] = 0; else $ai_wp_data [AI_NESTING_LEVEL] ++;
 
