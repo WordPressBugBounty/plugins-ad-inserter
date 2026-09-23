@@ -6,7 +6,7 @@ Tags: ads, adsense, amp, ad rotation, ad manager
 Requires at least: 5.0
 Tested up to: 7.0
 Requires PHP: 7.4
-Stable tag: 2.8.18
+Stable tag: 2.8.19
 License: GPLv3
 
 Manage Google AdSense ads, banners, ad rotation, sticky widgets, AMP ads, ads.txt, tracking, header and footer code, PHP code, global custom fields
@@ -362,6 +362,12 @@ If you are not happy to reveal this information and you have opted in, simply di
 
 == Changelog ==
 
+= 2.8.19 =
+- Security fix for cross-site scripting (credits to momopon1415)
+- Security fix for access check for global custom fields (credits to Jakub Herman)
+- Security fix for sensitive information disclosure (credits to Michal Kanas (Thor) - ELZA a.s.)
+- Few minor bug fixes, cosmetic changes and code improvements
+
 = 2.8.18 =
 - Fix for dynamic blocks using W3 Total Cache fragment caching
 - Few minor bug fixes, cosmetic changes and code improvements
@@ -423,6 +429,12 @@ If you are not happy to reveal this information and you have opted in, simply di
 For the changelog of earlier versions, please refer to the separate changelog.txt file.
 
 == Upgrade Notice ==
+
+= 2.8.19 =
+Security fix for cross-site scripting (credits to momopon1415);
+Security fix for access check for global custom fields (credits to Jakub Herman);
+Security fix for sensitive information disclosure (credits to Michal Kanas (Thor) - ELZA a.s.);
+Few minor bug fixes, cosmetic changes and code improvements
 
 = 2.8.18 =
 Fix for dynamic blocks using W3 Total Cache fragment caching;

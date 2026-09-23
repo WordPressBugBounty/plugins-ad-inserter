@@ -5,7 +5,7 @@
 
 /*
 Plugin Name: Ad Inserter
-Version: 2.8.18
+Version: 2.8.19
 Description: Ad management with many advanced advertising features to insert ads at optimal positions
 Author: Igor Funa
 Author URI: http://igorfuna.com/
@@ -20,6 +20,12 @@ License: GPLv3
 /*
 
 Change Log
+
+Ad Inserter 2.8.19 - 2026-09-18
+- Security fix for cross-site scripting (credits to momopon1415)
+- Security fix for access check for global custom fields (credits to Jakub Herman)
+- Security fix for sensitive information disclosure (credits to Michal Kanas (Thor) - ELZA a.s.)
+- Few minor bug fixes, cosmetic changes and code improvements
 
 Ad Inserter 2.8.18 - 2026-07-11
 - Fix for dynamic blocks using W3 Total Cache fragment caching
@@ -1016,13 +1022,18 @@ function remove_debug_parameters_from_url ($url = false) {
         AI_URL_DEBUG_AD_BLOCKING_STATUS,
         AI_URL_DEBUG_COUNTRY,
         AI_URL_DEBUG_IP_ADDRESS,
+        AI_URL_DEBUG_META,
+        AI_URL_DEBUG_TRANSLATION,
+        AI_URL_DEBUG_TRACKING,
 
+        AI_URL_DEBUG_DISABLE_HTML_CODE,
         AI_URL_DEBUG_DISABLE_CSS_CODE,
         AI_URL_DEBUG_DISABLE_JS_CODE,
         AI_URL_DEBUG_DISABLE_PHP_PROCESSING,
         AI_URL_DEBUG_DISABLE_BLOCK_INSERTIONS,
         AI_URL_DEBUG_DISABLE_HEADER_CODE,
         AI_URL_DEBUG_DISABLE_FOOTER_CODE,
+        AI_URL_DEBUG_NO_JQUERY,
       );
 
       if (defined ('AI_ADBLOCKING_DETECTION') && AI_ADBLOCKING_DETECTION) {
@@ -1748,6 +1759,12 @@ function ai_wp_hook () {
   set_page_type ();
   set_user ();
 
+  // Disable processing log if user is not administrator
+  if (($ai_wp_data [AI_WP_DEBUGGING] & AI_DEBUG_PROCESSING) != 0 && ($ai_wp_data [AI_WP_USER] & AI_USER_ADMINISTRATOR) == 0) {
+     $ai_wp_data [AI_WP_DEBUGGING] &= ~AI_DEBUG_PROCESSING;
+     $ai_processing_log = array ();
+  }
+
   ai_http_header ();
 
   if (defined ('AI_NO_JQUERY')) {
@@ -1769,6 +1786,12 @@ function ai_wp_hook () {
     add_action ('admin_bar_menu', 'ai_toolbar', 9920);
 
   $url_debugging = get_remote_debugging () || ($ai_wp_data [AI_WP_USER] & AI_USER_ADMINISTRATOR) != 0 || defined ('AI_DEBUGGING_DEMO');
+
+  if (defined ('AI_DEBUGGING_DEMO')) {
+    unset ($_GET [AI_URL_DEBUG_PROCESSING]);
+    unset ($_GET [AI_URL_DEBUG_PROCESSING_FE]);
+    unset ($_GET [AI_URL_DEBUG_CODE]);
+  }
 
   if (!is_admin() || defined ('DOING_AJAX') || defined ('AI_DEBUGGING_DEMO')) {
     if (isset ($_GET [AI_URL_DEBUG]) && $_GET [AI_URL_DEBUG] == 0) {
@@ -3219,8 +3242,10 @@ function ai_adb_external_scripts () {
     $code .= '<object id="ai-adb-qu" data="https://secure.quantserve.com/quant.js" style="position:absolute; z-index: -100; top: -1000px; left: -1000px; visibility: hidden;"></object>' . "\n";
   }
   if (!defined ('AI_ADB_NO_DUMMYIMAGE')) {
-//    $code .= '<object id="ai-adb-di" data="https://dummyimage.com/468x60/0044FF/969697.png?text=banner-ads" style="position:absolute; z-index: -100; top: -1000px; left: -1000px; visibility: hidden;"></object>' . "\n";
     $code .= '<img id="ai-adb-di" src="https://dummyimage.com/468x60/0044FF/969697.png?text=banner-ads" style="position:absolute; z-index: -100; top: -1000px; left: -1000px; visibility: hidden;">' . "\n";
+  }
+  if (!defined ('AI_ADB_NO_AI_FUNCTIONS')) {
+    $code .= '<object id="ai-adb-fu" data="'.plugins_url ('js/ai-functions.min.js',  __FILE__).'" style="position:absolute; z-index: -100; top: -1000px; left: -1000px; visibility: hidden;"></object>' . "\n";
   }
 
   return $code;
@@ -3519,11 +3544,11 @@ function add_footer_inline_scripts () {
   }
 
   if (!$inline_js) {
-    if ($ai_wp_data [AI_FRONTEND_JS_DEBUGGING] || !file_exists (AD_INSERTER_PLUGIN_DIR."js/ai-functions.min.js")) {
-      $script = 'ai-functions.js';
-    } else $script = 'ai-functions.min.js';
+    if ($ai_wp_data [AI_FRONTEND_JS_DEBUGGING] || !file_exists (AD_INSERTER_PLUGIN_DIR."js/cs-functions.min.js")) {
+      $script = 'cs-functions.js';
+    } else $script = 'cs-functions.min.js';
 
-    echo '<script async id="ai-functions" src="', plugins_url ('js/' . $script,  __FILE__ ), "?ver=", AD_INSERTER_VERSION . ($ai_wp_data [AI_FRONTEND_JS_DEBUGGING] ? '-'.time () : ''), '"></script>', "\n";
+    echo '<script async id="cs-functions" src="', plugins_url ('js/' . $script,  __FILE__ ), "?ver=", AD_INSERTER_VERSION . ($ai_wp_data [AI_FRONTEND_JS_DEBUGGING] ? '-'.time () : ''), '"></script>', "\n";
   }
 }
 
@@ -4375,19 +4400,16 @@ function ai_wp_head_hook () {
     if (defined ('AI_ADBLOCKING_DETECTION') && AI_ADBLOCKING_DETECTION) {
       // No scripts on AMP pages
       if (($ai_wp_data [AI_WP_DEBUGGING] & (AI_DEBUG_AD_BLOCKING_STATUS | AI_DEBUG_POSITIONS | AI_DEBUG_BLOCKS)) != 0 && $ai_wp_data [AI_ADB_DETECTION]) {
-//        $ai_wp_data [AI_FOOTER_JS_CODE_DOM_READY] .= "  jQuery('body').prepend (\"" . get_adb_status_debug_info () . "\");
         $ai_wp_data [AI_FOOTER_JS_CODE_DOM_READY] .= "document.querySelector ('body').insertAdjacentHTML ('afterbegin', \"" . get_adb_status_debug_info () . "\");
 ";
       }
     }
 
     if (($ai_wp_data [AI_WP_DEBUGGING] & (AI_DEBUG_AD_BLOCKING_STATUS | AI_DEBUG_BLOCKS)) != 0) {
-//      $ai_wp_data [AI_FOOTER_JS_CODE_DOM_READY] .= "  jQuery('body').prepend (\"<section id='ai-iab-tcf-bar' class='".AI_DEBUG_STATUS_CLASS."' style='cursor: pointer; display: none;' title='". __('Click to delete the cookie for the consents', 'ad-inserter') ."'><span id='ai-iab-tcf-status'>IAB TCF 2.0</span></section>\");
       $ai_wp_data [AI_FOOTER_JS_CODE_DOM_READY] .= "document.querySelector ('body').insertAdjacentHTML ('afterbegin', \"<section id='ai-iab-tcf-bar' class='".AI_DEBUG_STATUS_CLASS."' style='cursor: pointer; display: none;' title='". __('Click to delete the cookie for the consents', 'ad-inserter') ."'><span id='ai-iab-tcf-status'>IAB TCF 2.0</span></section>\");
 ";
 
       if (!$ai_wp_data [AI_UNFILTERED_HTML]) {
-//        $ai_wp_data [AI_FOOTER_JS_CODE_DOM_READY] .= "  jQuery('body').prepend (\"<section class='".AI_DEBUG_STATUS_CLASS." status-error'>".__('UNFILTERED HTML DISABLED', 'ad-inserter')."</section>\");
         $ai_wp_data [AI_FOOTER_JS_CODE_DOM_READY] .= "document.querySelector ('body').insertAdjacentHTML ('afterbegin', \"<section class='".AI_DEBUG_STATUS_CLASS." status-error'>".__('UNFILTERED HTML DISABLED', 'ad-inserter')."</section>\");
 ";
       }
@@ -4642,7 +4664,7 @@ function ai_wp_footer_hook () {
     }
 
     if (!get_disable_js_code () &&
-        (get_remote_debugging () || ($ai_wp_data [AI_WP_USER] & AI_USER_LOGGED_IN) != 0) &&
+        (get_remote_debugging () || ($ai_wp_data [AI_WP_USER] & AI_USER_ADMINISTRATOR) != 0) &&
         (($ai_wp_data [AI_WP_DEBUGGING] & (AI_DEBUG_POSITIONS | AI_DEBUG_BLOCKS)) != 0 || (isset ($_GET [AI_URL_DEBUG_PROCESSING_FE]) && $_GET [AI_URL_DEBUG_PROCESSING_FE] != 0))) {
 
 
@@ -4688,7 +4710,7 @@ function ai_wp_footer_hook () {
   }
 
   if (!$ai_wp_data [AI_CODE_FOR_IFRAME]) {
-    if ((get_remote_debugging () || ($ai_wp_data [AI_WP_USER] & AI_USER_LOGGED_IN) != 0)) {
+    if ((get_remote_debugging () || ($ai_wp_data [AI_WP_USER] & AI_USER_ADMINISTRATOR) != 0)) {
       if (($ai_wp_data [AI_WP_DEBUGGING] & AI_DEBUG_PROCESSING) != 0 && isset ($_GET [AI_URL_DEBUG_PROCESSING_FE]) && $_GET [AI_URL_DEBUG_PROCESSING_FE] != 0) {
         echo "\n<pre class='ai-processing-log'>\n\n";
         ai_write_debug_info (true);
@@ -4748,7 +4770,7 @@ function ai_amp_footer_hook () {
     echo get_page_type_debug_info ('AMP ') , "\n";
   }
 
-  if ((get_remote_debugging () || ($ai_wp_data [AI_WP_USER] & AI_USER_LOGGED_IN) != 0) &&
+  if ((get_remote_debugging () || ($ai_wp_data [AI_WP_USER] & AI_USER_ADMINISTRATOR) != 0) &&
       ($ai_wp_data [AI_WP_DEBUGGING] & AI_DEBUG_PROCESSING) != 0 &&
       isset ($_GET [AI_URL_DEBUG_PROCESSING_FE]) && $_GET [AI_URL_DEBUG_PROCESSING_FE] != 0) {
     echo "\n<pre class='ai-processing-log'>\n\n";
@@ -4765,9 +4787,24 @@ function ai_amp_footer_hook () {
   }
 }
 
+function ai_show_processing_log () {
+  global $ai_wp_data, $ad_inserter_globals;
+
+  $global_name = implode ('_', array (
+    'AI',
+    'STATUS')
+  );
+
+  return ($ai_wp_data [AI_WP_DEBUGGING] & AI_DEBUG_PROCESSING) != 0 && (get_remote_debugging () || (isset ($ad_inserter_globals [$global_name]) && $ad_inserter_globals [$global_name] == 1) || ($ai_wp_data [AI_WP_USER] & AI_USER_ADMINISTRATOR) != 0);
+}
+
 function ai_write_debug_info ($write_processing_log = false) {
   global $block_object, $ai_last_time, $ai_total_plugin_time, $ai_total_block_php_time, $ai_total_hook_php_time, $ai_processing_log, $ai_db_options_extract, $ai_wp_data, $ai_db_options, $block_insertion_log,
          $ai_custom_hooks, $version_string, $subversion_string, $filter_hooks, $wpdb;
+
+  if (!ai_show_processing_log ()) {
+    return;
+  }
 
   ob_start ();
 
@@ -4932,7 +4969,7 @@ function ai_write_debug_info ($write_processing_log = false) {
       }
       echo 'PARENT TAXONOMIES:       ', implode (', ', $taxonomies), "\n";
 
-      if (isset ($_GET [AI_URL_DEBUG_META])) {
+      if (isset ($_GET [AI_URL_DEBUG_META]) && ($ai_wp_data [AI_WP_USER] & AI_USER_ADMINISTRATOR)) {
         $post_meta = get_post_meta (get_the_ID());
         $meta_string = array ();
         foreach ($post_meta as $key => $post_meta_field) {
@@ -5572,7 +5609,9 @@ function ai_shutdown_hook () {
 
   if (function_exists ('ai_system_output')) ai_system_output ();
 
-  if (($ai_wp_data [AI_WP_DEBUGGING] & AI_DEBUG_PROCESSING) != 0 && (get_remote_debugging () || (isset ($ad_inserter_globals [$global_name]) && $ad_inserter_globals [$global_name] == 1) || ($ai_wp_data [AI_WP_USER] & AI_USER_LOGGED_IN) != 0)) {
+//  if (($ai_wp_data [AI_WP_DEBUGGING] & AI_DEBUG_PROCESSING) != 0 && (get_remote_debugging () || (isset ($ad_inserter_globals [$global_name]) && $ad_inserter_globals [$global_name] == 1) || ($ai_wp_data [AI_WP_USER] & AI_USER_LOGGED_IN) != 0)) {
+  if (ai_show_processing_log ()) {
+
     if ($ai_wp_data [AI_WP_PAGE_TYPE] == AI_PT_HOMEPAGE ||
         $ai_wp_data [AI_WP_PAGE_TYPE] == AI_PT_STATIC ||
         $ai_wp_data [AI_WP_PAGE_TYPE] == AI_PT_POST ||
@@ -12796,6 +12835,38 @@ function ai_process_fallback_separator ($code, $shortcode_data) {
 }
 
 
+function ai_is_referrer_search_engine () {
+  if (empty ($_SERVER ['HTTP_REFERER'])) {
+    return false;
+  }
+
+  $host = strtolower (parse_url ($_SERVER['HTTP_REFERER'], PHP_URL_HOST));
+
+  if (!$host) {
+    return false;
+  }
+
+  $search_engines = [
+    'google.com',
+    'bing.com',
+    'yahoo.com',
+    'duckduckgo.com',
+    'yandex.com',
+    'baidu.com',
+    'ecosia.org',
+    'search.brave.com',
+    'startpage.com',
+  ];
+
+  foreach ($search_engines as $domain) {
+    if ($host === $domain || substr ($host, - strlen ('.' . $domain)) === '.' . $domain) {
+      return true;
+    }
+  }
+
+  return false;
+}
+
 function replace_ai_tags ($content, $general_tag = '') {
   global $ai_wp_data;
 
@@ -13014,14 +13085,10 @@ function replace_ai_tags ($content, $general_tag = '') {
     $short_title = str_replace (array ("'", '"'), array ("&#8217;", "&#8221;"), $short_title);
     $short_title = html_entity_decode ($short_title, ENT_QUOTES, "utf-8");
 
-    $search_query = "";
-    if (isset ($_SERVER['HTTP_REFERER'])) {
-      $referrer = $_SERVER['HTTP_REFERER'];
-    } else $referrer = '';
-
-    if (preg_match ("/[\.\/](google|yahoo|bing|ask)\.[a-z\.]{2,5}[\/]/i", $referrer, $search_engine)){
-       $referrer_query = parse_url ($referrer);
-       $referrer_query = isset ($referrer_query ["query"]) ? $referrer_query ["query"] : "";
+    $search_query = '';
+    if (ai_is_referrer_search_engine ()) {
+       $url_parts = parse_url ($_SERVER ['HTTP_REFERER']);
+       $referrer_query = isset ($url_parts ["query"]) ? $url_parts ["query"] : "";
        parse_str ($referrer_query, $value);
        $search_query = isset ($value ["q"]) ? $value ["q"] : "";
        if ($search_query == "") {
@@ -13029,10 +13096,6 @@ function replace_ai_tags ($content, $general_tag = '') {
        }
     }
     if ($search_query == "") $search_query = $smart_tag;
-
-//    $author = get_the_author_meta ('display_name');
-//    $author_name = get_the_author_meta ('first_name') . " " . get_the_author_meta ('last_name');
-//    if ($author_name == ' ') $author_name = $author;
 
     $host = isset ($_SERVER ['HTTP_HOST']) ? $_SERVER ['HTTP_HOST'] : '';
     if ($host == '' && isset ($_SERVER ['SERVER_NAME'])) {
@@ -13059,9 +13122,7 @@ function replace_ai_tags ($content, $general_tag = '') {
     $ai_wp_data [AI_TAGS]['TAG_SLUGS_ARRAY']      = $tag_slugs_array;
     $ai_wp_data [AI_TAGS]['TAGS_SPACES']          = $tags_spaces;
     $ai_wp_data [AI_TAGS]['SMART_TAG']            = $smart_tag;
-    $ai_wp_data [AI_TAGS]['SEARCH_QUERY']         = $search_query;
-//    $ai_wp_data [AI_TAGS]['AUTHOR']               = $author;
-//    $ai_wp_data [AI_TAGS]['AUTHOR_NAME']          = $author_name;
+    $ai_wp_data [AI_TAGS]['SEARCH_QUERY']         = esc_html ($search_query);
     $ai_wp_data [AI_TAGS]['POST_ID']              = $post_id;
     $ai_wp_data [AI_TAGS]['POST_DATE']            = get_the_date ();
     $ai_wp_data [AI_TAGS]['URL']                  = $url;
@@ -13078,8 +13139,8 @@ function replace_ai_tags ($content, $general_tag = '') {
   $ai_wp_data [AI_TAGS]['AUTHOR_NAME']          = $author_name;
   $ai_wp_data [AI_TAGS]['AUTHOR_LOGIN']         = $author_login;
 
-  $ad_data = preg_replace ("/{title}/i",              $ai_wp_data [AI_TAGS]['TITLE'],             $content);
-  $ad_data = preg_replace ("/{short-title}/i",        $ai_wp_data [AI_TAGS]['SHORT_TITLE'],       $ad_data);
+  $ad_data = preg_replace ("/{title}/i",              esc_html ($ai_wp_data [AI_TAGS]['TITLE']),             $content);
+  $ad_data = preg_replace ("/{short-title}/i",        esc_html ($ai_wp_data [AI_TAGS]['SHORT_TITLE']),       $ad_data);
   $ad_data = preg_replace ("/{category}/i",           $ai_wp_data [AI_TAGS]['CATEGORY'],          $ad_data);
   $ad_data = preg_replace ("/{categories}/i",         $ai_wp_data [AI_TAGS]['CATEGORIES'],        $ad_data);
   $ad_data = preg_replace ("/{categories-spaces}/i",          $ai_wp_data [AI_TAGS]['CATEGORIES_SPACES'], $ad_data);
@@ -13090,14 +13151,14 @@ function replace_ai_tags ($content, $general_tag = '') {
   $ad_data = preg_replace ("/{tags}/i",               $ai_wp_data [AI_TAGS]['TAGS'],              $ad_data);
   $ad_data = preg_replace ("/{tags-spaces}/i",        $ai_wp_data [AI_TAGS]['TAGS_SPACES'],       $ad_data);
   $ad_data = preg_replace ("/{smart-tag}/i",          $ai_wp_data [AI_TAGS]['SMART_TAG'],         $ad_data);
-  $ad_data = preg_replace ("/{search-query}/i",       $ai_wp_data [AI_TAGS]['SEARCH_QUERY'],      $ad_data);
+  $ad_data = preg_replace ("/{search-query}/i",       esc_html ($ai_wp_data [AI_TAGS]['SEARCH_QUERY']),      $ad_data);
   $ad_data = preg_replace ("/{author}/i",             $ai_wp_data [AI_TAGS]['AUTHOR'],            $ad_data);
   $ad_data = preg_replace ("/{author-name}/i",        $ai_wp_data [AI_TAGS]['AUTHOR_NAME'],       $ad_data);
   $ad_data = preg_replace ("/{author-login}/i",       $ai_wp_data [AI_TAGS]['AUTHOR_LOGIN'],      $ad_data);
   $ad_data = preg_replace ("/{post-id}/i",            $ai_wp_data [AI_TAGS]['POST_ID'],           $ad_data);
   $ad_data = preg_replace ("/{post-date}/i",          $ai_wp_data [AI_TAGS]['POST_DATE'],         $ad_data);
 
-  $ad_data = preg_replace ("/{short_title}/i",        $ai_wp_data [AI_TAGS]['SHORT_TITLE'],       $ad_data);
+  $ad_data = preg_replace ("/{short_title}/i",        esc_html ($ai_wp_data [AI_TAGS]['SHORT_TITLE']),       $ad_data);
   $ad_data = preg_replace ("/{short_category}/i",     $ai_wp_data [AI_TAGS]['SHORT_CATEGORY'],    $ad_data);
   $ad_data = preg_replace ("/{smart_tag}/i",          $ai_wp_data [AI_TAGS]['SMART_TAG'],         $ad_data);
   $ad_data = preg_replace ("/{search_query}/i",       $ai_wp_data [AI_TAGS]['SEARCH_QUERY'],      $ad_data);

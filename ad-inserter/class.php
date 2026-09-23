@@ -10965,9 +10965,14 @@ class ai_global_fileds {
         add_action ( 'admin_menu', array ($this, 'add_admin_menu'));
 
         add_action ('admin_head', function () {
+          $ai_global_fields_pos        = false;
+          $ai_remote_global_fields_pos = false;
+
           $current_screen = get_current_screen ();
-          $ai_global_fields_pos        = strpos ($current_screen->base, 'ai-global-fields-');
-          $ai_remote_global_fields_pos = strpos ($current_screen->base, 'ai-remote_global-fields-');
+          if (isset ($current_screen)) {
+            $ai_global_fields_pos        = strpos ($current_screen->base, 'ai-global-fields-');
+            $ai_remote_global_fields_pos = strpos ($current_screen->base, 'ai-remote_global-fields-');
+          }
           $ai_global_fields_page = $ai_global_fields_pos !== false || $ai_remote_global_fields_pos !== false;
 
           if ($ai_global_fields_page && wp_is_mobile ()) {
@@ -11283,10 +11288,9 @@ class ai_global_fileds {
         $current_user = wp_get_current_user ();
         return $current_user->user_login == str_replace ('user:', '', $access);
       } else {
-          $wp_roles = wp_roles ();
-          $roles = array_keys ($wp_roles->role_names);
+          $default_roles = array ("super-admin", "administrator", "editor", "author", "contributor", "subscriber");
 
-          if (!in_array ($access, $roles)) {
+          if (!in_array ($access, $default_roles)) {
             $access = DEFAULT_GLOBAL_PAGE_USER_ROLE;
           }
 
@@ -12802,9 +12806,14 @@ jQuery (document).find ('[title]')
 
           $page_name = '';
 
+          $ai_global_fields_pos        = false;
+          $ai_remote_global_fields_pos = false;
+
           $current_screen = get_current_screen ();
-          $ai_global_fields_pos        = strpos ($current_screen->base, 'ai-global-fields-');
-          $ai_remote_global_fields_pos = strpos ($current_screen->base, 'ai-remote-global-fields-');
+          if (isset ($current_screen)) {
+            $ai_global_fields_pos        = strpos ($current_screen->base, 'ai-global-fields-');
+            $ai_remote_global_fields_pos = strpos ($current_screen->base, 'ai-remote-global-fields-');
+          }
 
           if ($ai_global_fields_pos !== false) {
             $current_global_page_index = str_replace ('ai-global-fields-', '', substr ($current_screen->base, $ai_global_fields_pos)) - 1;
