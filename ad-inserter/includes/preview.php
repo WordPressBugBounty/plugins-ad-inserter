@@ -299,12 +299,9 @@ function generate_code_preview (
 <title><?php echo AD_INSERTER_NAME; ?> <?php if ($sticky) _e ('Sticky Code Preview', 'ad-inserter'); else _e ('Code Preview', 'ad-inserter'); ?></title>
 <meta name="viewport" content="width=device-width,initial-scale=1.0">
 
-<script type='text/javascript' src='<?php echo includes_url ('js/jquery/jquery.js'); ?>?ver=<?php echo $wp_version, '+', AD_INSERTER_VERSION; ?>'></script>
-<script type='text/javascript' src='<?php echo admin_url ('load-scripts.php?c=0&amp;load%5B%5D=jquery-core,jquery-migrate,utils,jquery-ui-core&amp;ver='); ?><?php echo $wp_version, '+', AD_INSERTER_VERSION; ?>'></script>
+<?php wp_print_scripts (array ('jquery-ui-button', 'jquery-ui-spinner', 'utils')); ?>
+
 <script type='text/javascript' src='<?php echo includes_url ('js/jquery/ui/effect.min.js'); ?>?ver=<?php echo $wp_version, '+', AD_INSERTER_VERSION; ?>'></script>
-<!--<script type='text/javascript' src='<?php echo includes_url ('js/jquery/ui/widget.min.js'); ?>?ver=<?php echo $wp_version, '+', AD_INSERTER_VERSION; ?>'></script>-->
-<script type='text/javascript' src='<?php echo includes_url ('js/jquery/ui/button.min.js'); ?>?ver=<?php echo $wp_version, '+', AD_INSERTER_VERSION; ?>'></script>
-<script type='text/javascript' src='<?php echo includes_url ('js/jquery/ui/spinner.min.js'); ?>?ver=<?php echo $wp_version, '+', AD_INSERTER_VERSION; ?>'></script>
 <link rel='stylesheet' href='<?php echo plugins_url ('css/jquery-ui-1.10.3.custom.min.css', AD_INSERTER_FILE); ?>?ver=<?php echo AD_INSERTER_VERSION; ?>' media='all' />
 
 <script src='<?php echo plugins_url ('includes/js/jquery.mousewheel.min.js', AD_INSERTER_FILE); ?>?ver=<?php echo AD_INSERTER_VERSION; ?>'></script>

@@ -4,9 +4,9 @@ Contributors: adinserter, spacetime
 Donate link: https://www.paypal.com/cgi-bin/webscr?cmd=_s-xclick&hosted_button_id=LHGZEMRTR7WB4
 Tags: ads, adsense, amp, ad rotation, ad manager
 Requires at least: 5.0
-Tested up to: 7.0
+Tested up to: 7.2
 Requires PHP: 7.4
-Stable tag: 2.8.19
+Stable tag: 2.8.20
 License: GPLv3
 
 Manage Google AdSense ads, banners, ad rotation, sticky widgets, AMP ads, ads.txt, tracking, header and footer code, PHP code, global custom fields
@@ -362,6 +362,15 @@ If you are not happy to reveal this information and you have opted in, simply di
 
 == Changelog ==
 
+= 2.8.20 =
+- Security fix for arbitrary shortcode execution (credits to Kuba)
+- Security fix for cross Site Scripting (XSS) (credits to Md. Moniruzzaman Prodhan)
+- Security fix for cross Site Scripting (XSS) (credits to nh4tvd)
+- Security fix for cross Site Scripting (XSS) (credits to yzx001)
+- Security fix for cross Site Scripting (XSS) (credits to Deva Parekh)
+- Fixes for compatibility with WordPress 7.2
+- Few minor bug fixes, cosmetic changes and code improvements
+
 = 2.8.19 =
 - Security fix for cross-site scripting (credits to momopon1415)
 - Security fix for access check for global custom fields (credits to Jakub Herman)
@@ -429,6 +438,15 @@ If you are not happy to reveal this information and you have opted in, simply di
 For the changelog of earlier versions, please refer to the separate changelog.txt file.
 
 == Upgrade Notice ==
+
+= 2.8.20 =
+Security fix for arbitrary shortcode execution (credits to Kuba);
+Security fix for cross Site Scripting (XSS) (credits to Md. Moniruzzaman Prodhan);
+Security fix for cross Site Scripting (XSS) (credits to nh4tvd);
+Security fix for cross Site Scripting (XSS) (credits to yzx001);
+Security fix for cross Site Scripting (XSS) (credits to Deva Parekh);
+Fixes for compatibility with WordPress 7.2;
+Few minor bug fixes, cosmetic changes and code improvements
 
 = 2.8.19 =
 Security fix for cross-site scripting (credits to momopon1415);

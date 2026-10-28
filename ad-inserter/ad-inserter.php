@@ -5,7 +5,7 @@
 
 /*
 Plugin Name: Ad Inserter
-Version: 2.8.19
+Version: 2.8.20
 Description: Ad management with many advanced advertising features to insert ads at optimal positions
 Author: Igor Funa
 Author URI: http://igorfuna.com/
@@ -20,6 +20,15 @@ License: GPLv3
 /*
 
 Change Log
+
+Ad Inserter 2.8.20 - 2026-10-27
+- Security fix for arbitrary shortcode execution (credits to Kuba)
+- Security fix for cross Site Scripting (XSS) (credits to Md. Moniruzzaman Prodhan)
+- Security fix for cross Site Scripting (XSS) (credits to nh4tvd)
+- Security fix for cross Site Scripting (XSS) (credits to yzx001)
+- Security fix for cross Site Scripting (XSS) (credits to Deva Parekh)
+- Fixes for compatibility with WordPress 7.2
+- Few minor bug fixes, cosmetic changes and code improvements
 
 Ad Inserter 2.8.19 - 2026-09-18
 - Security fix for cross-site scripting (credits to momopon1415)
@@ -68,393 +77,6 @@ Ad Inserter 2.8.11 - 2026-02-08
 
 Ad Inserter 2.8.10 - 2026-01-25
 - Added support for global custom fields
-- Few minor bug fixes, cosmetic changes and code improvements
-
-Ad Inserter 2.8.9 - 2025-11-30
-- Few minor bug fixes, cosmetic changes and code improvements
-
-Ad Inserter 2.8.8 - 2025-10-28
-- Security fix for potential cross site scripting
-- Few minor bug fixes, cosmetic changes and code improvements
-
-Ad Inserter 2.8.7 - 2025-09-26
-- Few minor bug fixes, cosmetic changes and code improvements
-
-Ad Inserter 2.8.6 - 2025-08-30
-- Few minor bug fixes, cosmetic changes and code improvements
-
-Ad Inserter 2.8.5 - 2025-07-26
-- Support for individual virtual ads.txt files on multisite sites
-- Few minor bug fixes, cosmetic changes and code improvements
-
-Ad Inserter 2.8.4 - 2025-06-22
-- Few minor bug fixes, cosmetic changes and code improvements
-
-Ad Inserter 2.8.3 - 2025-05-25
-- Added support to override dynamic blocks setting for each rotation
-- Few minor bug fixes, cosmetic changes and code improvements
-
-Ad Inserter 2.8.2 - 2025-04-12
-- Fix for ad blocking detection with AdBlock
-- Added support for any post tag list check
-- Few minor bug fixes, cosmetic changes and code improvements
-
-Ad Inserter 2.8.1 - 2025-02-12
-- Updated depercated backend jQuery code
-- Fix for reflected cross-site scripting (XSS)
-- Few minor bug fixes, cosmetic changes and code improvements
-
-Ad Inserter 2.8.0 - 2025-01-21
-- Replaced placeholder image generator service - changed to dummyimage.com
-- Fix for false ad blocking detection when using external scripts
-- Security fix for potential cross site scripting (Pro only)
-- Added support to show rotation options in the list of blocks
-- Added support for custom reports for clients (Pro only)
-- Few minor bug fixes, cosmetic changes and code improvements
-
-Ad Inserter 2.7.39 - 2024-12-17
-- Improved frontend code
-- Fix for warning "Function _load_textdomain_just_in_time was called incorrectly"
-- Updated Maxmind library (Pro only)
-- Few minor bug fixes, cosmetic changes and code improvements
-
-Ad Inserter 2.7.38 - 2024-10-03
-- Security fix for potential cross site scripting
-
-Ad Inserter 2.7.37 - 2024-09-16
-- Removed deprecated setting Wait for jQuery
-- Few minor bug fixes, cosmetic changes and code improvements
-
-Ad Inserter 2.7.36 - 2024-08-11
-- Added support for WPML languages in the taxonomy list
-- Added support to disable caching for LiteSpeed Cache and WP Fastest Cache plugins
-- Added support to define the minimal block height for the close button to appear (Pro only)
-- Few minor bug fixes, cosmetic changes and code improvements
-
-Ad Inserter 2.7.35 - 2024-04-23
-- Added support for "Simple History – user activity log, audit tool" plugin
-- Added support for external tracking for Google Tag Manager code (Pro only)
-- Few minor bug fixes, cosmetic changes and code improvements
-
-Ad Inserter 2.7.34 - 2024-03-14
-- Added support for ^ character to invert viewports in the VIEWPORT separator
-- Added support for index parameter for counter shortcodes
-- Changed text for content marker
-- Few minor bug fixes, cosmetic changes and code improvements
-
-Ad Inserter 2.7.33 - 2024-01-03
-- Changed widget class name
-- Added option to define maximum number of list selection items
-- Fix for Amazon external script causing false ad blocking detection
-- Few minor bug fixes, cosmetic changes and code improvements
-
-Ad Inserter 2.7.32 - 2023-10-29
-- Added experimental support for REST requests
-- Added support for data shortcode for url parameters
-- Added option for shortcodes to ignore category, tag, taxonomy and post ID lists
-- Added support for background parallax ads (Pro only)
-- Few minor bug fixes, cosmetic changes and code improvements
-
-Ad Inserter 2.7.31 - 2023-09-11
-- Security fix for some data revealed via remote debugging data
-- Added support to remove ad label when no code is inserted
-- Few minor bug fixes, cosmetic changes and code improvements
-
-Ad Inserter 2.7.30 - 2023-07-15
-- Improved debugging
-- Few minor bug fixes, cosmetic changes and code improvements
-
-Ad Inserter 2.7.29 - 2023-06-03
-- Added support for shortcode for reusable blocks by name
-- Added support to force using get_queried_object function to get post id
-- Few minor bug fixes, cosmetic changes and code improvements
-
-Ad Inserter 2.7.28 - 2023-04-12
-- Added support for shortcode for reusable blocks
-- Fix for PDF reports when site_url is different from home_url (Pro only)
-- Few minor bug fixes, cosmetic changes and code improvements
-
-Ad Inserter 2.7.27 - 2023-03-29
-- Fix for ad blocking detection external script trying to download a file
-
-Ad Inserter 2.7.26 - 2023-03-20
-- Improved compatibility with PHP 8.2
-- Security fix for deserialization
-- Few minor bug fixes, cosmetic changes and code improvements
-
-Ad Inserter 2.7.25 - 2023-02-19
-- Improved theme compatibility for sticky widgets with CSS mode
-- Improved tracking for Google Analytics (Pro only)
-- Added information bar when Wait for jQuery is enabled
-- Few minor bug fixes, cosmetic changes and code improvements
-
-Ad Inserter 2.7.24 - 2023-01-18
-- Added CSS Push mode for sticky widgets
-- Added support for sticky ads (push mode) inside post/page content (Pro only)
-- Added support for frontend JavaScript code in external file
-- Added support for multiple activations of rotation groups
-- Added support for %N@M format for filter counting
-- Added support to prepend and append code to rotation option codes
-- Added hook for click on the close button (Pro only)
-- Improved front-end code
-- Fix for client-side device detection on AMP pages
-- Few minor bug fixes, cosmetic changes and code improvements
-
-Ad Inserter 2.7.23 - 2022-12-20
-- Few minor bug fixes, cosmetic changes and code improvements
-
-Ad Inserter 2.7.22 - 2022-11-30
-- Few minor bug fixes, cosmetic changes and code improvements
-
-Ad Inserter 2.7.21 - 2022-10-25
-- Added support for Ad Inserter menu position
-- Added support for random paragraph ranges
-- Added support for default waiting time for user interaction (Pro only)
-- Improved front-end code
-- Few minor bug fixes, cosmetic changes and code improvements
-
-Ad Inserter 2.7.20 - 2022-10-02
-- Fix for front-end translation
-
-Ad Inserter 2.7.19 - 2022-09-16
-- Added constant to disable AdSense API
-- Fix for rotation code editor
-- Fix for advaced click tracker for banners (Pro only)
-- Few minor bug fixes, cosmetic changes and code improvements
-
-Ad Inserter 2.7.18 - 2022-09-01
-- Added support to hide ad label when unfilled AdSense block is hidden
-- Simplified AdSense API authorization process
-- Few minor bug fixes, cosmetic changes and code improvements
-
-Ad Inserter 2.7.17 - 2022-07-06
-- Fixed bug for url parameters check
-- Added support for reCaptcha v3 score check (Pro only)
-- Few minor bug fixes, cosmetic changes and code improvements
-
-Ad Inserter 2.7.16 - 2022-06-23
-- Added support for adb redirection page with url queries
-- Added support for tcf-no-google shortcut
-- Few minor bug fixes, cosmetic changes and code improvements
-
-Ad Inserter 2.7.15 - 2022-06-01
-- Added filter hooks for ad labels
-- Added support for constants
-- Added support for rotation option index attribute
-- Added shortcodes for block number and block name
-- Few minor bug fixes, cosmetic changes and code improvements
-
-Ad Inserter 2.7.14 - 2022-04-28
-- Added support for demo settings
-- Added support for background transparency
-- Added support for background for sticky ads (Pro only)
-- Added support for statistics for check options (Pro only)
-- Added support for individual rotation option statistics (Pro only)
-- Few minor bug fixes, cosmetic changes and code improvements
-
-Ad Inserter 2.7.13 - 2022-04-02
-- Few minor bug fixes, cosmetic changes and code improvements
-
-Ad Inserter 2.7.12 - 2022-03-09
-- Security fix for settings page save url
-- Added support to disable ad blocking detection for specific devices
-- Few minor bug fixes, cosmetic changes and code improvements
-
-Ad Inserter 2.7.11 - 2022-01-28
-- Security fix for sites using constants to prevent file editing or unfiltered HTML
-- Added filters before the options are saved
-- Added support for a shortcode for comma separated list of categories with quotes (for Google Ad Manager)
-- Few minor bug fixes, cosmetic changes and code improvements
-
-Ad Inserter 2.7.10 - 2022-01-19
-- Security fix for XSS (Reported by Krzysztof Zajac via WPScan)
-- Added support to detect and replace blank AdSense blocks
-- Added support to load and save plugins settings to a file (Pro only)
-- Added support for parallax ads (Pro only)
-- Few fixes
-
-Ad Inserter 2.7.9 - 2022-01-05
-- Bug fix for timed rotations
-- Bug fix for tr_TR translation
-- Improved checks for cookies
-- Improved compatibility with PHP 8.1
-- Added separate list for cookies
-- Few minor bug fixes, cosmetic changes and code improvements
-
-Ad Inserter 2.7.8 - 2021-12-01
-- Bug fix for paragraph counting and clearance
-- Bug fix for undefined constant error
-
-Ad Inserter 2.7.7 - 2021-11-30
-- Few bug fixes
-
-Ad Inserter 2.7.6 - 2021-11-28
-- Improved compatibility with PHP 8
-- Added translation for tr_TR
-- Added support to wait for an interaction before the block is loaded (Pro only)
-- Added support to delay insertion of the block (Pro only)
-- Few minor bug fixes, cosmetic changes and code improvements
-
-Ad Inserter 2.7.5 - 2021-10-20
-- Added support for fallback block for limits (Pro only)
-- Added support to optimize rotation shares by CTR (Pro only)
-- Added support to animate out sticky ads (Pro only)
-- Few minor bug fixes, cosmetic changes and code improvements
-
-Ad Inserter 2.7.4 - 2021-09-16
-- Updated Google API
-- Improved labels for AdSense Auto ads
-- Added external tracking support for WP username (Pro only)
-- Few minor bug fixes, cosmetic changes and code improvements
-
-Ad Inserter 2.7.3 - 2021-08-10
-- Improved ad blocking detection
-- Improved compatibility with PHP 8
-- Improved check for update server accessibility (Pro only)
-- Few minor bug fixes, cosmetic changes and code improvements
-
-Ad Inserter 2.7.2 - 2021-07-05
-- Added shortcuts for TCF v2 consent cookie checks
-- Added support for adinserter shortcode to get post ID
-- Improved ad blocking detection
-- Changed internal IP to country database (Pro only)
-- Few minor bug fixes, cosmetic changes and code improvements
-
-Ad Inserter 2.7.1 - 2021-06-16
-- Improved ad blocking detection
-- Few minor bug fixes, cosmetic changes and code improvements
-
-Ad Inserter 2.7.0 - 2021-05-30
-- Added support to list range of post IDs
-- Added support for browser language in client lists
-- Added support for client-side checks for filter hook ai_block_insertion_check
-- Added support for remote plugin managenent (Pro only)
-- Added support for scheduling check shortcode (Pro only)
-- Added support for daily scheduling time (Pro onlyl)
-- Added support for css attribute in check options (Pro only)
-- Few minor bug fixes, cosmetic changes and code improvements
-
-Ad Inserter 2.6.27 - 2021-05-29
-- Added support for scheduled rotation
-- Few minor bug fixes, cosmetic changes and code improvements
-
-Ad Inserter 2.6.26 - 2021-05-27
-- Few bug fixes (Pro only)
-
-Ad Inserter 2.6.25 - 2021-05-24
-- Added support for block names in adinserter shortcode block attributes
-- Added support for browser language in client list (experimental)
-- Added support for client-side checks for filter hook ai_block_insertion_check (experimental)
-- Added support for remote plugin managenent (Pro only, experimental)
-- Added support for default custom field values
-- Added support for scheduled rotation (experimental)
-- Added support for scheduling check shortcode (Pro only, experimental)
-- Added support for daily scheduling time (Pro only, experimental)
-- Added support for css attribute in check options (Pro only, experimental)
-- Added support to list range of post IDs
-- Improved ad blocking detection
-- Reduced layout shift when using CHECK shortcodes
-- Fix for expanded shortcodes in the rotate code generator
-- Few minor bug fixes, cosmetic changes and code improvements
-
-Ad Inserter 2.6.24 - 2021-04-19
-- Added support for consent attribute for code generator for AdSense and Amazon AMP ads
-- Added support for random number shortcode
-- Added support for && and !! operators in client-side client list checks
-- Added scheduling time on blocks list (Pro only)
-- Improved undismissible message when ad blocking is detected
-- Few minor bug fixes, cosmetic changes and code improvements
-
-Ad Inserter 2.6.23 - 2021-03-17
-- Reduced layout shift when using lists and client-side dynamic blocks
-- Few minor bug fixes, cosmetic changes and code improvements
-
-Ad Inserter 2.6.22 - 2021-02-17
-- Various security fixes
-- Updated AdSense API authorization process
-- Reduced layout shift when using client-side device detection
-- Added option to block IP addresses for click fraud protection (Pro only)
-- Few minor bug fixes, cosmetic changes and code improvements
-
-Ad Inserter 2.6.21 - 2021-01-24
-- Improved compatibility with PHP 8
-- Few minor bug fixes, cosmetic changes and code improvements
-
-Ad Inserter 2.6.20 - 2021-01-06
-- Added support for alt text and lazy loading for banner code generator
-- Few minor bug fixes, cosmetic changes and code improvements
-
-Ad Inserter 2.6.19 - 2020-12-16
-- Improved code to reduce layout shift when using client-side device detection
-- Added translation for es_ES
-- Added translation for fr_FR
-- Added translation for it_IT
-- Improved compatibility with PHP 8
-- Few minor bug fixes, cosmetic changes and code improvements
-
-Ad Inserter 2.6.18 - 2020-11-21
-- Added support to change Dynamic blocks setting for adinserter PHP function call
-- Few minor bug fixes, cosmetic changes and code improvements
-
-Ad Inserter 2.6.17 - 2020-10-31
-- Fix for ADINSERTER shortcodes in block codes
-- Fix for double client-side insertions when using geolocation (Pro only)
-
-Ad Inserter 2.6.16 - 2020-10-20
-- Added support for ad blocking detection action every n pageviews
-- Added support to individually disable pageview or click tracking (Pro only)
-- Changed IAB TCF v2 cookie check name from euconsent-v2 to tcf-v2 (euconsent-v2 will still work)
-- Fix for category check on category pages
-- Fix for issues with Safari browser
-- Few minor bug fixes, cosmetic changes and code improvements
-
-Ad Inserter 2.6.15 - 2020-10-02
-- No ad blocking detection actions for crawlers and bots
-- Fix for processing Ad Inserter shortcodes inside HTML tags
-- Few minor bug fixes, cosmetic changes and code improvements
-
-Ad Inserter 2.6.14 - 2020-09-07
-- Added support to insert [embed] shortcodes
-- Few minor bug fixes, cosmetic changes and code improvements
-
-Ad Inserter 2.6.13 - 2020-08-26
-- Few minor bug fixes
-
-Ad Inserter 2.6.12 - 2020-08-23
-- Support for PHP 7.4
-- Improved ad blocking detection
-- Added options to delay client-side insertions at HTML element
-- Added support to check for multiple cookie values (needed for IAB TCF 2.0)
-- Added filter hooks for block processing
-- Few minor bug fixes, cosmetic changes and code improvements
-
-Ad Inserter 2.6.11 - 2020-07-23
-- Added support for IAB Transparency & Consent Framework 2.0
-- Added support for taxonomy for primary category
-- Added support for taxonomy for post meta data
-- Added support to invert contain/do not contain text condition for paragraph counting
-- Few minor bug fixes, cosmetic changes and code improvements
-
-Ad Inserter 2.6.10 - 2020-06-25
-- Added user taxonomy items for logged-in and not logged-in users
-- Added option to define tab setup delay (for the plugin settings page)
-- Added option to insert unique ad rotation options when block is inserted more than once
-- Added support for client-side device detection for AMP pages (for method Show)
-- Added support for code generator for Amazon AMP ads
-- Added support for custom tracking events (Pro only)
-- Few minor bug fixes, cosmetic changes and code improvements
-
-Ad Inserter 2.6.9 - 2020-05-22
-- Added option for paragraph counting to search only tag attributes for text
-- Added option to embed block Javascript code (to be loaded with Ajax calls)
-- Added support to prevent duplicate insertions when the_content filter is called more than once (experimental)
-- Added support for the client list to check for partial user agent strings
-- Added support for check of cookie object properties
-- Improved ad blocking detection
-- Viewports no longer need to be in descending width order
-- Added option to protect inserted block content (Pro only)
-- Added support for adb scripts path filter hook (Pro only)
-- Added support to export statistics data to CSV file (Pro only)
 - Few minor bug fixes, cosmetic changes and code improvements
 
 */
@@ -612,7 +234,7 @@ function ai_toolbar_menu_items () {
     $automatic_insertion = $obj->get_automatic_insertion();
     if ($block == 0 || !$obj->get_disable_insertion () && ($automatic_insertion == AI_AUTOMATIC_INSERTION_BEFORE_PARAGRAPH || $automatic_insertion == AI_AUTOMATIC_INSERTION_AFTER_PARAGRAPH)) {
 
-      $block_tags             = trim ($block_object [$block]->get_paragraph_tags ());
+      $block_tags             = esc_html (trim ($block_object [$block]->get_paragraph_tags ()));
       $direction              = $block_object [$block]->get_direction_type() == AI_DIRECTION_FROM_TOP ? 't' : 'b';
       $paragraph_min_words    = intval ($obj->get_minimum_paragraph_words());
       $paragraph_max_words    = intval ($obj->get_maximum_paragraph_words());
@@ -620,9 +242,9 @@ function ai_toolbar_menu_items () {
       $paragraph_text         = trim (html_entity_decode ($obj->get_paragraph_text()));
       $inside_blockquote      = $obj->get_count_inside_blockquote ();
       $count_inside_type      = $obj->get_count_inside ();
-      $count_inside_elements  = $obj->get_count_inside_elements ();
+      $count_inside_elements  = esc_html ($obj->get_count_inside_elements ());
       $that_contain_type      = $obj->get_count_inside_elements_contain ();
-      $that_contain_text      = trim (html_entity_decode ($obj->get_count_inside_elements_text ()));
+      $that_contain_text      = esc_attr (trim (html_entity_decode ($obj->get_count_inside_elements_text ())));
 
       if ($block_tags != '') {
         $found = false;
@@ -1045,7 +667,7 @@ function remove_debug_parameters_from_url ($url = false) {
 }
 
 function set_url_parameter ($parameter, $value) {
-  return add_query_arg ($parameter, $value, remove_debug_parameters_from_url ());
+  return add_query_arg ($parameter, $value, esc_url (remove_debug_parameters_from_url ()));
 }
 
 function number_of_words (&$content) {
@@ -4004,26 +3626,30 @@ function ai_register_php_only_gutenberg_blocks () {
       'sticky-height' => trim ($block_object [$ai_block]->get_sticky_height ()),
     );
   }
-  $ai_block_data [] = array (
-    'value'         => 97,
-    'name'          => __('Processing log', 'ad-inserter'),
-    'attributes'    => '',
-    'label'         => __('Processing log', 'ad-inserter'),
-    'paused'        => false,
-    'widget'        => true,
-    'sticky'        => false,
-    'sticky-height' => 0,
-  );
-  $ai_block_data [] = array (
-    'value'         => 98,
-    'name'          => __('Debugging tools', 'ad-inserter'),
-    'attributes'    => '',
-    'label'         => __('Debugging tools', 'ad-inserter'),
-    'paused'        => false,
-    'widget'        => true,
-    'sticky'        => false,
-    'sticky-height' => 0,
-  );
+  if (ai_show_processing_log ()) {
+    $ai_block_data [] = array (
+      'value'         => 97,
+      'name'          => __('Processing log', 'ad-inserter'),
+      'attributes'    => '',
+      'label'         => __('Processing log', 'ad-inserter'),
+      'paused'        => false,
+      'widget'        => true,
+      'sticky'        => false,
+      'sticky-height' => 0,
+    );
+  }
+  if (ai_show_debugging_tools ()) {
+    $ai_block_data [] = array (
+      'value'         => 98,
+      'name'          => __('Debugging tools', 'ad-inserter'),
+      'attributes'    => '',
+      'label'         => __('Debugging tools', 'ad-inserter'),
+      'paused'        => false,
+      'widget'        => true,
+      'sticky'        => false,
+      'sticky-height' => 0,
+    );
+  }
 
   wp_register_style (
     'ai-block-editor-style',
@@ -4123,7 +3749,7 @@ function ai_register_php_only_gutenberg_blocks () {
           }
 
           if ($attributes ['sticky']) {
-            $code = '<div style="position: sticky; top: calc(' . ((int) get_sticky_widget_margin ()) .'px + var(--wp-admin--admin-bar--height, 0px)); align-self: flex-start;">'."\n" . $code . '</div>'."\n" . '<div style="height: ' . $attributes ['stickyHeight'] . 'px;"></div>'."\n";
+            $code = '<div style="position: sticky; top: calc(' . ((int) get_sticky_widget_margin ()) .'px + var(--wp-admin--admin-bar--height, 0px)); align-self: flex-start;">'."\n" . $code . '</div>'."\n" . '<div style="height: ' . (int) $attributes ['stickyHeight'] . 'px;"></div>'."\n";
           }
 
           return $code;
@@ -4785,6 +4411,17 @@ function ai_amp_footer_hook () {
     }
     ai_log ("AMP FOOTER HOOK END: ". number_format (1000 * (microtime (true) - $start_time), 2)." ms\n");
   }
+}
+
+function ai_show_debugging_tools () {
+  global $ai_wp_data, $ad_inserter_globals;
+
+  $global_name = implode ('_', array (
+    'AI',
+    'STATUS')
+  );
+
+  return ($ai_wp_data [AI_WP_DEBUGGING] & AI_DEBUG_PROCESSING) != 0 && (get_remote_debugging () || (isset ($ad_inserter_globals [$global_name]) && $ad_inserter_globals [$global_name] == 1) || ($ai_wp_data [AI_WP_USER] & AI_USER_ADMINISTRATOR) != 0 || defined ('AI_DEBUGGING_DEMO'));
 }
 
 function ai_show_processing_log () {
@@ -10581,7 +10218,7 @@ function ai_process_shortcode (&$block, $atts) {
     if ($parameters ['url-parameter'] != '') {
       $url_parameter = trim ($parameters ['url-parameter']);
 
-      return isset ($_GET [$url_parameter]) && is_string ($_GET [$url_parameter]) ? htmlspecialchars ($_GET [$url_parameter]) : '';
+      return isset ($_GET [$url_parameter]) && is_string ($_GET [$url_parameter]) ? esc_js (htmlspecialchars ($_GET [$url_parameter], ENT_QUOTES)) : '';
     }
 
     if ($parameters ['random'] != '' || isset ($atts ['RANDOM']) || isset ($atts ['random'])) {
@@ -11094,6 +10731,10 @@ function ai_widget_draw ($args, $instance, &$block) {
 function ai_write_debugging_tools () {
   global $ai_wp_data;
 
+  if (!ai_show_debugging_tools ()) {
+    return;
+  }
+
   ai_toolbar_menu_items ();
 
 
@@ -11204,18 +10845,18 @@ ul.ai-debug-tools .ai-debug-tools-positions {
           echo "</li>\n";
         } else {
             echo '  <li class="ai-debug-', $menu_item ['id'], '">';
-            echo '<a href="', $menu_item ['href'], '">', $menu_item ['title'], '</a>';
+            echo '<a href="', esc_url ($menu_item ['href']), '">', $menu_item ['title'], '</a>';
             echo "</li>\n";
           }
       }
       elseif ($menu_item ['parent'] == 'ai-toolbar-positions') {
         echo '  <li class="ai-debug-', $menu_item ['id'], ' ai-debug-tools-positions">';
-        echo '<a href="', $menu_item ['href'], '">', $menu_item ['title'], '</a>';
+        echo '<a href="', esc_url ($menu_item ['href']), '">', $menu_item ['title'], '</a>';
         echo "</li>\n";
       }
     } else if ($menu_item ['id'] == 'ai-toolbar-settings') {
         echo '  <li class="ai-debug-', $menu_item ['id'], ' ai-debug-tools-title">';
-        echo '<a href="', $menu_item ['href'], '">', $menu_item ['title'], '</a>';
+        echo '<a href="', esc_url ($menu_item ['href']), '">', $menu_item ['title'], '</a>';
         echo "</li>\n";
       }
   }
@@ -12840,11 +12481,12 @@ function ai_is_referrer_search_engine () {
     return false;
   }
 
-  $host = strtolower (parse_url ($_SERVER['HTTP_REFERER'], PHP_URL_HOST));
-
-  if (!$host) {
+  $parsed_url = parse_url ($_SERVER['HTTP_REFERER'], PHP_URL_HOST);
+  if (empty ($parsed_url)) {
     return false;
   }
+
+  $host = strtolower ($parsed_url);
 
   $search_engines = [
     'google.com',
@@ -12867,6 +12509,10 @@ function ai_is_referrer_search_engine () {
   return false;
 }
 
+function ai_clean_shortcode_data ($data) {
+  return str_replace (array ('[', ']', '`', '$', '\\', '\''), array ('&lsqb;', '&rsqb;', ' &#96;', '&dollar;', '&bsol;', '&#39;'), esc_js (esc_html ($data)));
+}
+
 function replace_ai_tags ($content, $general_tag = '') {
   global $ai_wp_data;
 
@@ -12882,7 +12528,7 @@ function replace_ai_tags ($content, $general_tag = '') {
 
   if (isset ($ai_wp_data [AI_SHORTCODES]['atts']) && is_array ($ai_wp_data [AI_SHORTCODES]['atts']) && !empty ($ai_wp_data [AI_SHORTCODES]['atts'])) {
     foreach ($ai_wp_data [AI_SHORTCODES]['atts'] as $name => $value) {
-      $content = preg_replace ("/\{\#$name(\:[^{}]*?)?\#\}/i", $value, $content);
+      $content = preg_replace ("/\{\#$name(\:[^{}]*?)?\#\}/i", esc_attr ($value), $content);
     }
   }
 
@@ -13101,7 +12747,7 @@ function replace_ai_tags ($content, $general_tag = '') {
     if ($host == '' && isset ($_SERVER ['SERVER_NAME'])) {
       $host = $_SERVER ['SERVER_NAME'];
     }
-    $url = remove_debug_parameters_from_url ((isset ($_SERVER ['HTTPS']) && $_SERVER ['HTTPS'] === 'on' ? "https" : "http") . '://'. $host . $_SERVER ['REQUEST_URI']);
+    $url = esc_url (remove_debug_parameters_from_url ((isset ($_SERVER ['HTTPS']) && $_SERVER ['HTTPS'] === 'on' ? "https" : "http") . '://'. $host . $_SERVER ['REQUEST_URI']));
     $url_encoded = urlencode ($url);
 
     $post_id = ai_get_post_id ();
@@ -13122,7 +12768,7 @@ function replace_ai_tags ($content, $general_tag = '') {
     $ai_wp_data [AI_TAGS]['TAG_SLUGS_ARRAY']      = $tag_slugs_array;
     $ai_wp_data [AI_TAGS]['TAGS_SPACES']          = $tags_spaces;
     $ai_wp_data [AI_TAGS]['SMART_TAG']            = $smart_tag;
-    $ai_wp_data [AI_TAGS]['SEARCH_QUERY']         = esc_html ($search_query);
+    $ai_wp_data [AI_TAGS]['SEARCH_QUERY']         = $search_query;
     $ai_wp_data [AI_TAGS]['POST_ID']              = $post_id;
     $ai_wp_data [AI_TAGS]['POST_DATE']            = get_the_date ();
     $ai_wp_data [AI_TAGS]['URL']                  = $url;
@@ -13139,33 +12785,33 @@ function replace_ai_tags ($content, $general_tag = '') {
   $ai_wp_data [AI_TAGS]['AUTHOR_NAME']          = $author_name;
   $ai_wp_data [AI_TAGS]['AUTHOR_LOGIN']         = $author_login;
 
-  $ad_data = preg_replace ("/{title}/i",              esc_html ($ai_wp_data [AI_TAGS]['TITLE']),             $content);
-  $ad_data = preg_replace ("/{short-title}/i",        esc_html ($ai_wp_data [AI_TAGS]['SHORT_TITLE']),       $ad_data);
-  $ad_data = preg_replace ("/{category}/i",           $ai_wp_data [AI_TAGS]['CATEGORY'],          $ad_data);
-  $ad_data = preg_replace ("/{categories}/i",         $ai_wp_data [AI_TAGS]['CATEGORIES'],        $ad_data);
-  $ad_data = preg_replace ("/{categories-spaces}/i",          $ai_wp_data [AI_TAGS]['CATEGORIES_SPACES'], $ad_data);
-  $ad_data = preg_replace ("/{categories-single-quotes}/i",   $ai_wp_data [AI_TAGS]['CATEGORIES_SINGLE_QUOTES'], $ad_data);
-  $ad_data = preg_replace ("/{categories-double-quotes}/i",   $ai_wp_data [AI_TAGS]['CATEGORIES_DOUBLE_QUOTES'], $ad_data);
-  $ad_data = preg_replace ("/{short-category}/i",     $ai_wp_data [AI_TAGS]['SHORT_CATEGORY'],    $ad_data);
-  $ad_data = preg_replace ("/{tag}/i",                $ai_wp_data [AI_TAGS]['TAG'],               $ad_data);
-  $ad_data = preg_replace ("/{tags}/i",               $ai_wp_data [AI_TAGS]['TAGS'],              $ad_data);
-  $ad_data = preg_replace ("/{tags-spaces}/i",        $ai_wp_data [AI_TAGS]['TAGS_SPACES'],       $ad_data);
-  $ad_data = preg_replace ("/{smart-tag}/i",          $ai_wp_data [AI_TAGS]['SMART_TAG'],         $ad_data);
-  $ad_data = preg_replace ("/{search-query}/i",       esc_html ($ai_wp_data [AI_TAGS]['SEARCH_QUERY']),      $ad_data);
-  $ad_data = preg_replace ("/{author}/i",             $ai_wp_data [AI_TAGS]['AUTHOR'],            $ad_data);
-  $ad_data = preg_replace ("/{author-name}/i",        $ai_wp_data [AI_TAGS]['AUTHOR_NAME'],       $ad_data);
-  $ad_data = preg_replace ("/{author-login}/i",       $ai_wp_data [AI_TAGS]['AUTHOR_LOGIN'],      $ad_data);
+  $ad_data = preg_replace ("/{title}/i",              ai_clean_shortcode_data ($ai_wp_data [AI_TAGS]['TITLE']),  $content);
+  $ad_data = preg_replace ("/{short-title}/i",        ai_clean_shortcode_data ($ai_wp_data [AI_TAGS]['SHORT_TITLE']),       $ad_data);
+  $ad_data = preg_replace ("/{category}/i",           ai_clean_shortcode_data ($ai_wp_data [AI_TAGS]['CATEGORY']),          $ad_data);
+  $ad_data = preg_replace ("/{categories}/i",         ai_clean_shortcode_data ($ai_wp_data [AI_TAGS]['CATEGORIES']),        $ad_data);
+  $ad_data = preg_replace ("/{categories-spaces}/i",          ai_clean_shortcode_data ($ai_wp_data [AI_TAGS]['CATEGORIES_SPACES']), $ad_data);
+  $ad_data = preg_replace ("/{categories-single-quotes}/i",   ai_clean_shortcode_data ($ai_wp_data [AI_TAGS]['CATEGORIES_SINGLE_QUOTES']), $ad_data);
+  $ad_data = preg_replace ("/{categories-double-quotes}/i",   ai_clean_shortcode_data ($ai_wp_data [AI_TAGS]['CATEGORIES_DOUBLE_QUOTES']), $ad_data);
+  $ad_data = preg_replace ("/{short-category}/i",     ai_clean_shortcode_data ($ai_wp_data [AI_TAGS]['SHORT_CATEGORY']),    $ad_data);
+  $ad_data = preg_replace ("/{tag}/i",                ai_clean_shortcode_data ($ai_wp_data [AI_TAGS]['TAG']),               $ad_data);
+  $ad_data = preg_replace ("/{tags}/i",               ai_clean_shortcode_data ($ai_wp_data [AI_TAGS]['TAGS']),              $ad_data);
+  $ad_data = preg_replace ("/{tags-spaces}/i",        ai_clean_shortcode_data ($ai_wp_data [AI_TAGS]['TAGS_SPACES']),       $ad_data);
+  $ad_data = preg_replace ("/{smart-tag}/i",          ai_clean_shortcode_data ($ai_wp_data [AI_TAGS]['SMART_TAG']),         $ad_data);
+  $ad_data = preg_replace ("/{search-query}/i",       ai_clean_shortcode_data ($ai_wp_data [AI_TAGS]['SEARCH_QUERY']),      $ad_data);
+  $ad_data = preg_replace ("/{author}/i",             esc_attr (ai_clean_shortcode_data ($ai_wp_data [AI_TAGS]['AUTHOR'])), $ad_data);
+  $ad_data = preg_replace ("/{author-name}/i",        esc_attr (ai_clean_shortcode_data ($ai_wp_data [AI_TAGS]['AUTHOR_NAME'])), $ad_data);
+  $ad_data = preg_replace ("/{author-login}/i",       ai_clean_shortcode_data ($ai_wp_data [AI_TAGS]['AUTHOR_LOGIN']),      $ad_data);
   $ad_data = preg_replace ("/{post-id}/i",            $ai_wp_data [AI_TAGS]['POST_ID'],           $ad_data);
   $ad_data = preg_replace ("/{post-date}/i",          $ai_wp_data [AI_TAGS]['POST_DATE'],         $ad_data);
 
-  $ad_data = preg_replace ("/{short_title}/i",        esc_html ($ai_wp_data [AI_TAGS]['SHORT_TITLE']),       $ad_data);
-  $ad_data = preg_replace ("/{short_category}/i",     $ai_wp_data [AI_TAGS]['SHORT_CATEGORY'],    $ad_data);
-  $ad_data = preg_replace ("/{smart_tag}/i",          $ai_wp_data [AI_TAGS]['SMART_TAG'],         $ad_data);
-  $ad_data = preg_replace ("/{search_query}/i",       $ai_wp_data [AI_TAGS]['SEARCH_QUERY'],      $ad_data);
-  $ad_data = preg_replace ("/{author_name}/i",        $ai_wp_data [AI_TAGS]['AUTHOR_NAME'],       $ad_data);
+  $ad_data = preg_replace ("/{short_title}/i",        ai_clean_shortcode_data ($ai_wp_data [AI_TAGS]['SHORT_TITLE']),       $ad_data);
+  $ad_data = preg_replace ("/{short_category}/i",     ai_clean_shortcode_data ($ai_wp_data [AI_TAGS]['SHORT_CATEGORY']),    $ad_data);
+  $ad_data = preg_replace ("/{smart_tag}/i",          ai_clean_shortcode_data ($ai_wp_data [AI_TAGS]['SMART_TAG']),         $ad_data);
+  $ad_data = preg_replace ("/{search_query}/i",       ai_clean_shortcode_data ($ai_wp_data [AI_TAGS]['SEARCH_QUERY']),      $ad_data);
+  $ad_data = preg_replace ("/{author_name}/i",        esc_attr (ai_clean_shortcode_data ($ai_wp_data [AI_TAGS]['AUTHOR_NAME'])), $ad_data);
 
   $ad_data = preg_replace ("/{block-number}/i",       isset ($ai_wp_data [AI_CURRENT_BLOCK_NUMBER]) ? $ai_wp_data [AI_CURRENT_BLOCK_NUMBER] : '', $ad_data);
-  $ad_data = preg_replace ("/{block-name}/i",         isset ($ai_wp_data [AI_CURRENT_BLOCK_NAME])   ? $ai_wp_data [AI_CURRENT_BLOCK_NAME]   : '', $ad_data);
+  $ad_data = preg_replace ("/{block-name}/i",         isset ($ai_wp_data [AI_CURRENT_BLOCK_NAME])   ? ai_clean_shortcode_data ($ai_wp_data [AI_CURRENT_BLOCK_NAME])   : '', $ad_data);
   $ad_data = preg_replace ("/{block-name-encoded}/i", isset ($ai_wp_data [AI_CURRENT_BLOCK_NAME])   ? urlencode ($ai_wp_data [AI_CURRENT_BLOCK_NAME])   : '', $ad_data);
 
   $ad_data = preg_replace ("/{url}/i",                $ai_wp_data [AI_TAGS]['URL'],               $ad_data);
@@ -13187,7 +12833,7 @@ function replace_ai_tags ($content, $general_tag = '') {
 
   if (preg_match_all ("/{tag-([\d+])}/i", $ad_data, $tag_matches)) {
     foreach ($tag_matches [1] as $tag_index) {
-      $tag_to_replace = isset ($ai_wp_data [AI_TAGS]['TAGS_ARRAY'][$tag_index - 1]) ? $ai_wp_data [AI_TAGS]['TAGS_ARRAY'][$tag_index - 1] : '';
+      $tag_to_replace = isset ($ai_wp_data [AI_TAGS]['TAGS_ARRAY'][$tag_index - 1]) ? ai_clean_shortcode_data ($ai_wp_data [AI_TAGS]['TAGS_ARRAY'][$tag_index - 1]) : '';
       $ad_data = preg_replace ("/{tag-$tag_index}/i", $tag_to_replace, $ad_data);
     }
   }
@@ -13201,7 +12847,7 @@ function replace_ai_tags ($content, $general_tag = '') {
 
   if (preg_match_all ("/{category-([\d+])}/i", $ad_data, $category_matches)) {
     foreach ($category_matches [1] as $category_index) {
-      $category_to_replace = isset ($ai_wp_data [AI_TAGS]['CATEGORIES_ARRAY'][$category_index - 1]) ? $ai_wp_data [AI_TAGS]['CATEGORIES_ARRAY'][$category_index - 1] : '';
+      $category_to_replace = isset ($ai_wp_data [AI_TAGS]['CATEGORIES_ARRAY'][$category_index - 1]) ? ai_clean_shortcode_data ($ai_wp_data [AI_TAGS]['CATEGORIES_ARRAY'][$category_index - 1]) : '';
       $ad_data = preg_replace ("/{category-$category_index}/i", $category_to_replace, $ad_data);
     }
   }
